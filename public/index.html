@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartage — Dispatcher</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 36px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 700;
+      color: #d97706;
+      margin-bottom: 4px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      margin-bottom: 6px;
+      margin-top: 18px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      color: #1a1a1a;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #d97706;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 70px;
+    }
+
+    button {
+      margin-top: 28px;
+      width: 100%;
+      padding: 13px;
+      background: #d97706;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    button:hover { background: #b45309; }
+
+    .success {
+      display: none;
+      margin-top: 24px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      padding: 16px;
+      color: #166534;
+      font-size: 14px;
+    }
+
+    .success a {
+      color: #15803d;
+      font-weight: 600;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">Cartage</div>
+    <div class="subtitle">Dispatcher Portal</div>
+
+    <form id="jobForm">
+      <label>Customer Mobile Number</label>
+      <input type="tel" name="customerMobile" placeholder="+61 400 000 000" required>
+
+      <label>Pickup Address</label>
+      <input type="text" name="pickupAddress" placeholder="123 Farm Rd, Dubbo NSW" required>
+
+      <label>Delivery Address</label>
+      <input type="text" name="deliveryAddress" placeholder="456 Sale Yard Rd, Orange NSW" required>
+
+      <label>Driver Name</label>
+      <input type="text" name="driverName" placeholder="e.g. Mick Thompson" required>
+
+      <label>Load Details</label>
+      <textarea name="loadDetails" placeholder="e.g. 40 hd cattle" required></textarea>
+
+      <button type="submit">Create Job &amp; Send SMS</button>
+    </form>
+
+    <div class="success" id="successBox">
+      <strong>Job created!</strong><br>
+      Tracking link: <a id="trackingLink" href="#" target="_blank"></a>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('jobForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+
+      const res = await fetch('/jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const job = await res.json();
+      const link = `${window.location.origin}/track/${job.id}`;
+
+      document.getElementById('trackingLink').href = link;
+      document.getElementById('trackingLink').textContent = link;
+      document.getElementById('successBox').style.display = 'block';
+      form.reset();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cartage — Track Your Delivery</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: sans-serif;
+      background: #f4f4f4;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: white;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: 700;
+      color: #d97706;
+    }
+
+    .job-tag {
+      font-size: 13px;
+      color: #888;
+    }
+
+    #map {
+      height: 55vh;
+      width: 100%;
+    }
+
+    .info-card {
+      background: white;
+      margin: 16px;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+
+    .eta-block {
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .eta-label {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .eta-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #d97706;
+    }
+
+    .eta-sub {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 2px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 8px 0;
+      border-bottom: 1px solid #f9f9f9;
+      font-size: 14px;
+    }
+
+    .detail-row:last-child { border-bottom: none; }
+
+    .detail-label { color: #888; font-size: 13px; }
+    .detail-value { color: #1a1a1a; font-weight: 500; text-align: right; max-width: 60%; }
+
+    .status-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+    }
+
+    .delivered-screen {
+      display: none;
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .delivered-screen .tick {
+      font-size: 64px;
+      margin-bottom: 16px;
+    }
+
+    .delivered-screen h2 {
+      font-size: 24px;
+      color: #166534;
+      margin-bottom: 8px;
+    }
+
+    .delivered-screen p {
+      color: #888;
+      font-size: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="logo">Cartage</div>
+    <div class="job-tag">Live Tracking</div>
+  </div>
+
+  <div id="trackingView">
+    <div id="map"></div>
+    <div class="info-card">
+      <div class="eta-block">
+        <div class="eta-label">Estimated Arrival</div>
+        <div class="eta-value" id="etaDisplay">--:--</div>
+        <div class="eta-sub" id="etaSub">Calculating...</div>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Driver</span>
+        <span class="detail-value" id="driverName">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Load</span>
+        <span class="detail-value" id="loadDetails">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Pickup</span>
+        <span class="detail-value" id="pickupAddress">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Delivering to</span>
+        <span class="detail-value" id="deliveryAddress">—</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Status</span>
+        <span class="detail-value"><span class="status-badge">In Transit</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="delivered-screen" id="deliveredScreen">
+    <div class="tick">✅</div>
+    <h2>Delivered!</h2>
+    <p>Your load has been delivered successfully.<br>Thank you for using Cartage.</p>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const jobId = window.location.pathname.split('/').pop();
+
+    // Truck emoji icon for the map
+    const truckIcon = L.divIcon({
+      html: '🚛',
+      className: '',
+      iconSize: [32, 32],
+      iconAnchor: [16, 16]
+    });
+
+    const map = L.map('map');
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Simulated route: a straight line from pickup to delivery
+    // We'll use placeholder coords and animate along them
+    let routeCoords = [];
+    let truckMarker = null;
+    let step = 0;
+    let totalSteps = 120; // ~2 minute journey at 1 step/sec
+    let etaSeconds = 0;
+    let intervalId = null;
+
+    async function loadJob() {
+      const res = await fetch(`/jobs/${jobId}`);
+      if (!res.ok) {
+        document.body.innerHTML = '<p style="padding:40px;color:#888;">Job not found.</p>';
+        return;
+      }
+      const job = await res.json();
+
+      if (job.status === 'complete') {
+        showDelivered();
+        return;
+      }
+
+      // Fill in job details
+      document.getElementById('driverName').textContent = job.driverName;
+      document.getElementById('loadDetails').textContent = job.loadDetails;
+      document.getElementById('pickupAddress').textContent = job.pickupAddress;
+      document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
+
+      // Use simulated coordinates (central Australia region for demo)
+      // Pickup: slightly west, Delivery: slightly east
+      const pickup = [-32.2569, 148.6011];   // near Dubbo NSW
+      const delivery = [-33.2832, 149.1000]; // near Orange NSW
+
+      routeCoords = interpolate(pickup, delivery, totalSteps);
+      etaSeconds = totalSteps;
+
+      // Place markers
+      L.marker(pickup).addTo(map).bindPopup('Pickup').openPopup();
+      L.marker(delivery).addTo(map).bindPopup('Delivery');
+
+      // Draw the route line
+      L.polyline(routeCoords, { color: '#d97706', weight: 4, opacity: 0.5 }).addTo(map);
+
+      // Place truck at start
+      truckMarker = L.marker(routeCoords[0], { icon: truckIcon }).addTo(map);
+      map.setView(routeCoords[0], 9);
+
+      startAnimation();
+    }
+
+    function interpolate(start, end, steps) {
+      const coords = [];
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        coords.push([
+          start[0] + (end[0] - start[0]) * t,
+          start[1] + (end[1] - start[1]) * t
+        ]);
+      }
+      return coords;
+    }
+
+    function startAnimation() {
+      updateEta();
+      intervalId = setInterval(() => {
+        step++;
+        etaSeconds--;
+
+        if (step >= totalSteps) {
+          truckMarker.setLatLng(routeCoords[routeCoords.length - 1]);
+          clearInterval(intervalId);
+          document.getElementById('etaDisplay').textContent = 'Arrived';
+          document.getElementById('etaSub').textContent = 'Awaiting confirmation';
+          return;
+        }
+
+        truckMarker.setLatLng(routeCoords[step]);
+        map.panTo(routeCoords[step]);
+        updateEta();
+      }, 1000);
+    }
+
+    function updateEta() {
+      const mins = Math.floor(etaSeconds / 60);
+      const secs = etaSeconds % 60;
+      document.getElementById('etaDisplay').textContent =
+        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      document.getElementById('etaSub').textContent = 'minutes remaining';
+    }
+
+    function showDelivered() {
+      document.getElementById('trackingView').style.display = 'none';
+      document.getElementById('deliveredScreen').style.display = 'block';
+    }
+
+    loadJob();
+  </script>
+</body>
+</html>

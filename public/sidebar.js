@@ -58,7 +58,7 @@ const SIDEBAR_CSS = `
     padding: 22px 16px; border-bottom: 1px solid #2a2a2a;
   }
   .sidebar-logo img {
-    height: 44px; display: block; filter: brightness(0) invert(1); width: 100%; object-fit: contain; object-position: left;
+    height: 56px; display: block; filter: brightness(0) invert(1); width: 100%; object-fit: contain; object-position: left;
   }
   .sidebar-nav { padding: 16px 0; flex: 1; }
   .nav-item {

@@ -3,141 +3,269 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cartage — Dispatcher</title>
+  <title>Cartage — New Job</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: sans-serif;
-      background: #f4f4f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0ebe3;
       min-height: 100vh;
+    }
+
+    .topbar {
+      background: #1a1a1a;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      padding: 20px;
+      justify-content: space-between;
+    }
+
+    .topbar-logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: #f59e0b;
+      letter-spacing: -0.5px;
+    }
+
+    .topbar-nav a {
+      color: #aaa;
+      text-decoration: none;
+      font-size: 14px;
+      margin-left: 20px;
+    }
+
+    .topbar-nav a:hover { color: white; }
+
+    .hero {
+      background: #1a1a1a;
+      padding: 32px 24px 48px;
+      text-align: center;
+    }
+
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      color: #aaa;
+      font-size: 16px;
+    }
+
+    .form-wrapper {
+      max-width: 560px;
+      margin: -24px auto 40px;
+      padding: 0 16px;
     }
 
     .card {
       background: white;
-      border-radius: 12px;
-      padding: 36px;
-      width: 100%;
-      max-width: 480px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.12);
     }
 
-    .logo {
-      font-size: 24px;
+    .section-title {
+      font-size: 11px;
       font-weight: 700;
-      color: #d97706;
-      margin-bottom: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #f59e0b;
+      margin-bottom: 16px;
+      margin-top: 28px;
     }
 
-    .subtitle {
-      color: #888;
-      font-size: 14px;
-      margin-bottom: 28px;
-    }
+    .section-title:first-child { margin-top: 0; }
 
     label {
       display: block;
-      font-size: 13px;
+      font-size: 15px;
       font-weight: 600;
-      color: #444;
-      margin-bottom: 6px;
-      margin-top: 18px;
+      color: #333;
+      margin-bottom: 8px;
+      margin-top: 20px;
     }
+
+    label:first-of-type { margin-top: 0; }
 
     input, textarea {
       width: 100%;
-      padding: 10px 14px;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
+      padding: 14px 16px;
+      border: 2px solid #e5e5e5;
+      border-radius: 10px;
+      font-size: 16px;
       color: #1a1a1a;
-      transition: border-color 0.2s;
+      background: #fafafa;
+      transition: border-color 0.2s, background 0.2s;
     }
 
     input:focus, textarea:focus {
       outline: none;
-      border-color: #d97706;
+      border-color: #f59e0b;
+      background: white;
     }
 
     textarea {
       resize: vertical;
-      min-height: 70px;
+      min-height: 80px;
     }
 
-    button {
+    .divider {
+      height: 1px;
+      background: #f0f0f0;
+      margin: 28px 0 0;
+    }
+
+    .submit-btn {
       margin-top: 28px;
       width: 100%;
-      padding: 13px;
-      background: #d97706;
+      padding: 18px;
+      background: #f59e0b;
       color: white;
       border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: 600;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: 700;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.3px;
     }
 
-    button:hover { background: #b45309; }
+    .submit-btn:hover { background: #d97706; }
+    .submit-btn:active { transform: scale(0.98); }
 
-    .success {
+    .success-box {
       display: none;
-      margin-top: 24px;
+      margin-top: 20px;
       background: #f0fdf4;
-      border: 1px solid #86efac;
-      border-radius: 8px;
-      padding: 16px;
-      color: #166534;
-      font-size: 14px;
+      border: 2px solid #86efac;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
     }
 
-    .success a {
+    .success-box .tick {
+      font-size: 36px;
+      margin-bottom: 8px;
+    }
+
+    .success-box h3 {
+      font-size: 18px;
+      color: #166534;
+      margin-bottom: 6px;
+    }
+
+    .success-box p {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 12px;
+    }
+
+    .success-box a {
       color: #15803d;
       font-weight: 600;
       word-break: break-all;
+      font-size: 14px;
+    }
+
+    .success-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .success-actions a, .success-actions button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      text-align: center;
+    }
+
+    .btn-outline {
+      border: 2px solid #d97706;
+      color: #d97706;
+      background: white;
+    }
+
+    .btn-solid {
+      background: #f59e0b;
+      color: white;
+      border: none;
     }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo">Cartage</div>
-    <div class="subtitle">Dispatcher Portal</div>
 
-    <form id="jobForm">
-      <label>Customer Mobile Number</label>
-      <input type="tel" name="customerMobile" placeholder="+61 400 000 000" required>
+  <div class="topbar">
+    <div class="topbar-logo">CARTAGE</div>
+    <nav class="topbar-nav">
+      <a href="/dispatcher">Active Jobs</a>
+    </nav>
+  </div>
 
-      <label>Pickup Address</label>
-      <input type="text" name="pickupAddress" placeholder="123 Farm Rd, Dubbo NSW" required>
+  <div class="hero">
+    <h1>Create New Job</h1>
+    <p>Fill in the details below to dispatch a driver</p>
+  </div>
 
-      <label>Delivery Address</label>
-      <input type="text" name="deliveryAddress" placeholder="456 Sale Yard Rd, Orange NSW" required>
+  <div class="form-wrapper">
+    <div class="card">
+      <form id="jobForm">
 
-      <label>Driver Name</label>
-      <input type="text" name="driverName" placeholder="e.g. Mick Thompson" required>
+        <div class="section-title">Customer Details</div>
 
-      <label>Load Details</label>
-      <textarea name="loadDetails" placeholder="e.g. 40 hd cattle" required></textarea>
+        <label>Customer Mobile Number</label>
+        <input type="tel" name="customerMobile" placeholder="+61 400 000 000" required>
 
-      <button type="submit">Create Job &amp; Send SMS</button>
-    </form>
+        <div class="divider"></div>
+        <div class="section-title">Job Details</div>
 
-    <div class="success" id="successBox">
-      <strong>Job created!</strong><br>
-      Tracking link: <a id="trackingLink" href="#" target="_blank"></a>
+        <label>Driver Name</label>
+        <input type="text" name="driverName" placeholder="e.g. Mick Thompson" required>
+
+        <label>Load Details</label>
+        <textarea name="loadDetails" placeholder="e.g. 40 hd cattle" required></textarea>
+
+        <div class="divider"></div>
+        <div class="section-title">Route</div>
+
+        <label>Pickup Address</label>
+        <input type="text" name="pickupAddress" placeholder="e.g. 123 Farm Rd, Dubbo NSW" required>
+
+        <label>Delivery Address</label>
+        <input type="text" name="deliveryAddress" placeholder="e.g. 456 Sale Yard Rd, Orange NSW" required>
+
+        <button type="submit" class="submit-btn">Dispatch Job & Send SMS</button>
+      </form>
+
+      <div class="success-box" id="successBox">
+        <div class="tick">✅</div>
+        <h3>Job Dispatched!</h3>
+        <p>SMS sent to customer. Tracking link:</p>
+        <a id="trackingLink" href="#" target="_blank"></a>
+        <div class="success-actions">
+          <a class="btn-outline" id="trackingLinkBtn" href="#" target="_blank">Open Tracker</a>
+          <button class="btn-solid" onclick="resetForm()">New Job</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
     document.getElementById('jobForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const form = e.target;
-      const data = Object.fromEntries(new FormData(form));
+      const btn = e.target.querySelector('button[type=submit]');
+      btn.textContent = 'Dispatching...';
+      btn.disabled = true;
 
+      const data = Object.fromEntries(new FormData(e.target));
       const res = await fetch('/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,9 +277,18 @@
 
       document.getElementById('trackingLink').href = link;
       document.getElementById('trackingLink').textContent = link;
+      document.getElementById('trackingLinkBtn').href = link;
       document.getElementById('successBox').style.display = 'block';
-      form.reset();
+      e.target.style.display = 'none';
     });
+
+    function resetForm() {
+      document.getElementById('jobForm').reset();
+      document.getElementById('jobForm').style.display = 'block';
+      document.getElementById('successBox').style.display = 'none';
+      document.querySelector('button[type=submit]').textContent = 'Dispatch Job & Send SMS';
+      document.querySelector('button[type=submit]').disabled = false;
+    }
   </script>
 </body>
 </html>

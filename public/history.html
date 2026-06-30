@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drova — Job History</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
+  </style>
+  <script src="/sidebar.js"></script>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1>Job History</h1>
+        <p>Completed deliveries</p>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card" id="historyCard">
+        <div class="loading">Loading...</div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .main { margin-left: 220px; flex: 1; }
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .content { padding: 24px 32px; }
+    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
+    .loading { padding: 40px; text-align: center; color: #aaa; font-size: 14px; }
+    .empty { padding: 80px 20px; text-align: center; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .empty p { font-size: 14px; color: #aaa; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #fafafa; }
+    th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    td { padding: 16px 20px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .load-cell { font-weight: 600; color: #1a1a1a; }
+    .route-cell { color: #888; font-size: 13px; }
+    .done-badge { display: inline-flex; align-items: center; gap: 4px; background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
+    .job-id { font-size: 11px; color: #bbb; font-weight: 600; letter-spacing: 0.5px; }
+    @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px; } th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4) { display: none; } }
+  </style>
+
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('history');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    function formatDate(str) {
+      return new Date(str + 'Z').toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    async function load() {
+      const res = await fetch('/jobs/history');
+      const jobs = await res.json();
+      const card = document.getElementById('historyCard');
+
+      if (!jobs.length) {
+        card.innerHTML = `<div class="empty"><div class="empty-icon">📋</div><h3>No completed jobs yet</h3><p>Completed jobs will appear here.</p></div>`;
+        return;
+      }
+
+      card.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>Job</th>
+              <th>Driver</th>
+              <th>Route</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${jobs.map(j => `
+              <tr>
+                <td>
+                  <div class="job-id">JOB #${j.id.toUpperCase()}</div>
+                  <div class="load-cell">${j.loadDetails}</div>
+                </td>
+                <td>${j.driverName}</td>
+                <td class="route-cell">
+                  ${j.pickupAddress}<br>→ ${j.deliveryAddress}
+                </td>
+                <td>${formatDate(j.createdAt)}</td>
+                <td><span class="done-badge">✓ Delivered</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    load();
+  </script>
+</body>
+</html>

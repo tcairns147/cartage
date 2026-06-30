@@ -8,10 +8,10 @@ const app = express();
 const db = new Database('cartage.db');
 const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-// Set up the jobs table if it doesn't exist yet
 db.exec(`
   CREATE TABLE IF NOT EXISTS jobs (
     id TEXT PRIMARY KEY,
+    customerName TEXT,
     customerMobile TEXT,
     pickupAddress TEXT,
     deliveryAddress TEXT,
@@ -28,13 +28,36 @@ db.exec(`
   )
 `);
 
-// Add columns if upgrading from older schema
-for (const col of ['pickupLat', 'pickupLng', 'deliveryLat', 'deliveryLng', 'currentLat', 'currentLng']) {
+db.exec(`
+  CREATE TABLE IF NOT EXISTS drivers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    mobile TEXT,
+    licenceClass TEXT,
+    status TEXT DEFAULT 'available',
+    createdAt TEXT DEFAULT (datetime('now'))
+  )
+`);
+
+db.exec(`
+  CREATE TABLE IF NOT EXISTS locations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    address TEXT NOT NULL,
+    lat REAL,
+    lng REAL,
+    type TEXT DEFAULT 'farm',
+    createdAt TEXT DEFAULT (datetime('now'))
+  )
+`);
+
+// Schema migrations
+for (const col of ['pickupLat','pickupLng','deliveryLat','deliveryLng','currentLat','currentLng']) {
   try { db.exec(`ALTER TABLE jobs ADD COLUMN ${col} REAL`); } catch {}
 }
 try { db.exec(`ALTER TABLE jobs ADD COLUMN notified15min INTEGER DEFAULT 0`); } catch {}
+try { db.exec(`ALTER TABLE jobs ADD COLUMN customerName TEXT`); } catch {}
 
-// Haversine distance in km between two lat/lng points
 function distanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -47,21 +70,45 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Create a new job and send SMS
+// Pages
+app.get('/dispatcher', (req, res) => res.sendFile(__dirname + '/public/dispatcher.html'));
+app.get('/history',    (req, res) => res.sendFile(__dirname + '/public/history.html'));
+app.get('/drivers',    (req, res) => res.sendFile(__dirname + '/public/drivers.html'));
+app.get('/clients',    (req, res) => res.sendFile(__dirname + '/public/clients.html'));
+app.get('/locations',  (req, res) => res.sendFile(__dirname + '/public/locations.html'));
+app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.html'));
+app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
+
+// Jobs
+app.get('/jobs', (req, res) => {
+  res.json(db.prepare("SELECT * FROM jobs WHERE status = 'active' ORDER BY createdAt DESC").all());
+});
+
+app.get('/jobs/history', (req, res) => {
+  res.json(db.prepare("SELECT * FROM jobs WHERE status = 'complete' ORDER BY createdAt DESC").all());
+});
+
+app.get('/jobs/:id', (req, res) => {
+  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
+  if (!job) return res.status(404).json({ error: 'Job not found' });
+  res.json(job);
+});
+
 app.post('/jobs', async (req, res) => {
-  let { customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails } = req.body;
+  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails } = req.body;
+  const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
 
-  // Convert Australian local numbers (04xx) to international format (+61)
   customerMobile = customerMobile.replace(/\s/g, '');
   if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
 
-  const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
-
   db.prepare(`
-    INSERT INTO jobs (id, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails);
+    INSERT INTO jobs (id, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails);
+
+  // Update driver status to on-job
+  db.prepare("UPDATE drivers SET status = 'on-job' WHERE name = ?").run(driverName);
 
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
@@ -80,47 +127,14 @@ app.post('/jobs', async (req, res) => {
   res.json({ id, driverUrl });
 });
 
-// Serve the dispatcher dashboard
-app.get('/dispatcher', (req, res) => {
-  res.sendFile(__dirname + '/public/dispatcher.html');
-});
-
-// Serve the customer tracking page
-app.get('/track/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/track.html');
-});
-
-// Serve the driver GPS page
-app.get('/drive/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/drive.html');
-});
-
-// List all active jobs
-app.get('/jobs', (req, res) => {
-  const jobs = db.prepare("SELECT * FROM jobs WHERE status = 'active' ORDER BY createdAt DESC").all();
-  res.json(jobs);
-});
-
-// Get a job by id
-app.get('/jobs/:id', (req, res) => {
-  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
-  if (!job) return res.status(404).json({ error: 'Job not found' });
-  res.json(job);
-});
-
-// Driver updates their GPS location
 app.post('/jobs/:id/location', async (req, res) => {
   const { lat, lng } = req.body;
   db.prepare('UPDATE jobs SET currentLat = ?, currentLng = ? WHERE id = ?').run(lat, lng, req.params.id);
-
   const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
 
-  // Send 15-minute warning SMS if delivery coords are known and not yet sent
   if (job && !job.notified15min && job.deliveryLat && job.deliveryLng) {
     const km = distanceKm(lat, lng, job.deliveryLat, job.deliveryLng);
-    const etaMins = km / 80 * 60; // estimate at 80km/h
-
-    if (etaMins <= 15) {
+    if (km / 80 * 60 <= 15) {
       db.prepare('UPDATE jobs SET notified15min = 1 WHERE id = ?').run(job.id);
       try {
         await twilioClient.messages.create({
@@ -134,17 +148,61 @@ app.post('/jobs/:id/location', async (req, res) => {
       }
     }
   }
-
   res.json({ success: true });
 });
 
-// Mark a job as complete
 app.post('/jobs/:id/complete', (req, res) => {
-  db.prepare('UPDATE jobs SET status = ? WHERE id = ?').run('complete', req.params.id);
+  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
+  db.prepare("UPDATE jobs SET status = 'complete' WHERE id = ?").run(req.params.id);
+  if (job) db.prepare("UPDATE drivers SET status = 'available' WHERE name = ?").run(job.driverName);
+  res.json({ success: true });
+});
+
+// Drivers
+app.get('/api/drivers', (req, res) => {
+  res.json(db.prepare('SELECT * FROM drivers ORDER BY name ASC').all());
+});
+
+app.post('/api/drivers', (req, res) => {
+  const { name, mobile, licenceClass } = req.body;
+  const result = db.prepare('INSERT INTO drivers (name, mobile, licenceClass) VALUES (?, ?, ?)').run(name, mobile || null, licenceClass || null);
+  res.json({ id: result.lastInsertRowid, name, mobile, licenceClass, status: 'available' });
+});
+
+app.delete('/api/drivers/:id', (req, res) => {
+  db.prepare('DELETE FROM drivers WHERE id = ?').run(req.params.id);
+  res.json({ success: true });
+});
+
+// Clients — derived from jobs
+app.get('/api/clients', (req, res) => {
+  const clients = db.prepare(`
+    SELECT customerMobile, customerName,
+           COUNT(*) as totalJobs,
+           SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as activeJobs,
+           MAX(createdAt) as lastJob
+    FROM jobs
+    GROUP BY customerMobile
+    ORDER BY lastJob DESC
+  `).all();
+  res.json(clients);
+});
+
+// Locations
+app.get('/api/locations', (req, res) => {
+  res.json(db.prepare('SELECT * FROM locations ORDER BY name ASC').all());
+});
+
+app.post('/api/locations', (req, res) => {
+  const { name, address, lat, lng, type } = req.body;
+  const result = db.prepare('INSERT INTO locations (name, address, lat, lng, type) VALUES (?, ?, ?, ?, ?)').run(name, address, lat || null, lng || null, type || 'farm');
+  res.json({ id: result.lastInsertRowid, name, address, lat, lng, type });
+});
+
+app.delete('/api/locations/:id', (req, res) => {
+  db.prepare('DELETE FROM locations WHERE id = ?').run(req.params.id);
   res.json({ success: true });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Drova server running at http://localhost:${PORT}`);
-});
+app.listen(PORT, '0.0.0.0', () => console.log(`Drova running at http://localhost:${PORT}`));

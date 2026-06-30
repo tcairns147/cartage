@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drova — Drivers</title>
+  <script src="/sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
+    .main { margin-left: 220px; flex: 1; }
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .content { padding: 24px 32px; }
+    .add-btn { background: #f59e0b; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .add-btn:hover { background: #d97706; }
+    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
+    .empty { padding: 80px 20px; text-align: center; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .empty p { font-size: 14px; color: #aaa; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #fafafa; }
+    th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    td { padding: 14px 20px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .driver-cell { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; color: #92400e; flex-shrink: 0; }
+    .driver-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+    .driver-mobile { font-size: 12px; color: #aaa; }
+    .badge-available { display: inline-block; background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .badge-onjob { display: inline-block; background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .delete-btn { background: none; border: none; color: #ddd; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 6px; }
+    .delete-btn:hover { background: #fff0f0; color: #dc2626; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; width: 92%; max-width: 440px; overflow: hidden; }
+    .modal-header { background: #1a1a1a; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { color: white; font-size: 16px; font-weight: 700; }
+    .modal-close { background: none; border: none; color: #888; font-size: 20px; cursor: pointer; }
+    .modal-close:hover { color: white; }
+    .modal-body { padding: 24px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    .field input, .field select { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e5e5; border-radius: 10px; font-size: 15px; font-family: inherit; background: #fafafa; }
+    .field input:focus, .field select:focus { outline: none; border-color: #f59e0b; background: white; }
+    .modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; }
+    .btn-cancel { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-save { flex: 1; padding: 13px; border-radius: 10px; background: #f59e0b; border: none; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-save:hover { background: #d97706; }
+    @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px; } }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1>Drivers</h1>
+        <p>Manage your driver roster</p>
+      </div>
+      <button class="add-btn" onclick="openModal()">＋ Add Driver</button>
+    </div>
+    <div class="content">
+      <div class="card" id="driversCard"><div style="padding:40px;text-align:center;color:#aaa;">Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Driver</h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Full Name</label><input type="text" id="dName" placeholder="e.g. Mick Thompson"></div>
+        <div class="field"><label>Mobile Number</label><input type="tel" id="dMobile" placeholder="0400 000 000"></div>
+        <div class="field">
+          <label>Licence Class</label>
+          <select id="dLicence">
+            <option value="">Select class</option>
+            <option value="HC">HC — Heavy Combination</option>
+            <option value="MC">MC — Multi Combination</option>
+            <option value="HR">HR — Heavy Rigid</option>
+            <option value="MR">MR — Medium Rigid</option>
+            <option value="LR">LR — Light Rigid</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveDriver()">Add Driver</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('drivers');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    function initials(name) { return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(); }
+
+    async function load() {
+      const res = await fetch('/api/drivers');
+      const drivers = await res.json();
+      const card = document.getElementById('driversCard');
+
+      if (!drivers.length) {
+        card.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><h3>No drivers yet</h3><p>Add your first driver to get started.</p></div>`;
+        return;
+      }
+
+      card.innerHTML = `
+        <table>
+          <thead><tr><th>Driver</th><th>Licence</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            ${drivers.map(d => `
+              <tr>
+                <td>
+                  <div class="driver-cell">
+                    <div class="avatar">${initials(d.name)}</div>
+                    <div>
+                      <div class="driver-name">${d.name}</div>
+                      <div class="driver-mobile">${d.mobile || '—'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>${d.licenceClass || '—'}</td>
+                <td>${d.status === 'on-job' ? '<span class="badge-onjob">On Job</span>' : '<span class="badge-available">Available</span>'}</td>
+                <td><button class="delete-btn" onclick="deleteDriver(${d.id})">✕</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    function openModal() { document.getElementById('modal').classList.add('open'); }
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+    async function saveDriver() {
+      const name = document.getElementById('dName').value.trim();
+      if (!name) return alert('Please enter a driver name.');
+      const mobile = document.getElementById('dMobile').value.trim();
+      const licenceClass = document.getElementById('dLicence').value;
+      await fetch('/api/drivers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, mobile, licenceClass }) });
+      closeModal();
+      document.getElementById('dName').value = '';
+      document.getElementById('dMobile').value = '';
+      document.getElementById('dLicence').value = '';
+      load();
+    }
+
+    async function deleteDriver(id) {
+      if (!confirm('Remove this driver?')) return;
+      await fetch(`/api/drivers/${id}`, { method: 'DELETE' });
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>

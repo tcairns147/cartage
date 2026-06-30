@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drova — Locations</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="/sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
+    .main { margin-left: 220px; flex: 1; }
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .add-btn { background: #f59e0b; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .add-btn:hover { background: #d97706; }
+    .content { padding: 24px 32px; display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
+    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
+    .empty { padding: 80px 20px; text-align: center; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .empty p { font-size: 14px; color: #aaa; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #fafafa; }
+    th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    td { padding: 14px 20px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .loc-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+    .loc-address { font-size: 12px; color: #aaa; margin-top: 2px; }
+    .type-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .type-farm { background: #fef3c7; color: #92400e; }
+    .type-saleyards { background: #dcfce7; color: #166534; }
+    .type-depot { background: #e0f2fe; color: #0369a1; }
+    .type-other { background: #f3f4f6; color: #555; }
+    .delete-btn { background: none; border: none; color: #ddd; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 6px; }
+    .delete-btn:hover { background: #fff0f0; color: #dc2626; }
+
+    /* Add form card */
+    .form-card { background: white; border-radius: 16px; border: 1px solid #eee; padding: 24px; }
+    .form-card h3 { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-bottom: 20px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 12px; font-weight: 600; color: #555; margin-bottom: 5px; }
+    .field input, .field select { width: 100%; padding: 11px 13px; border: 1.5px solid #e5e5e5; border-radius: 9px; font-size: 14px; font-family: inherit; background: #fafafa; }
+    .field input:focus, .field select:focus { outline: none; border-color: #f59e0b; background: white; }
+    .section-label { font-size: 11px; font-weight: 700; color: #f59e0b; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 12px; }
+    #addMap { height: 180px; border-radius: 9px; margin-bottom: 14px; border: 1.5px solid #e5e5e5; }
+    .map-tip { font-size: 12px; color: #aaa; margin-bottom: 14px; text-align: center; }
+    .pinned-note { font-size: 12px; color: #16a34a; font-weight: 600; margin-bottom: 14px; display: none; }
+    .save-btn { width: 100%; padding: 13px; background: #f59e0b; color: white; border: none; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .save-btn:hover { background: #d97706; }
+
+    @media (max-width: 900px) { .content { grid-template-columns: 1fr; } .main { margin-left: 0; } }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <h1>Locations</h1>
+        <p>Saved farms, saleyards and depots</p>
+      </div>
+    </div>
+    <div class="content">
+      <div class="card" id="locsCard"><div style="padding:40px;text-align:center;color:#aaa;">Loading...</div></div>
+
+      <div class="form-card">
+        <h3>Add Location</h3>
+        <div class="field"><label>Location Name</label><input type="text" id="lName" placeholder='e.g. "Springvale" or Dubbo Saleyards'></div>
+        <div class="field">
+          <label>Type</label>
+          <select id="lType">
+            <option value="farm">Farm / Property</option>
+            <option value="saleyards">Saleyards</option>
+            <option value="depot">Depot</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field"><label>Address</label><input type="text" id="lAddress" placeholder="Start typing to search..." autocomplete="off"></div>
+        <div class="section-label">Or drop a pin</div>
+        <div class="map-tip">Tap the map to pin the exact location</div>
+        <div id="addMap"></div>
+        <div class="pinned-note" id="pinnedNote">📍 Location pinned</div>
+        <button class="save-btn" onclick="saveLocation()">Save Location</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('locations');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    let pinLat = null, pinLng = null, pinMarker = null;
+
+    const addMap = L.map('addMap').setView([-25.2744, 133.7751], 4);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(addMap);
+    addMap.on('click', e => {
+      pinLat = e.latlng.lat; pinLng = e.latlng.lng;
+      if (pinMarker) addMap.removeLayer(pinMarker);
+      pinMarker = L.marker(e.latlng).addTo(addMap);
+      document.getElementById('pinnedNote').style.display = 'block';
+    });
+
+    // Address autocomplete
+    let debounce;
+    document.getElementById('lAddress').addEventListener('input', function() {
+      clearTimeout(debounce);
+      const q = this.value.trim();
+      if (q.length < 3) return;
+      debounce = setTimeout(async () => {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=au&limit=1`);
+        const data = await res.json();
+        if (data.length) {
+          pinLat = parseFloat(data[0].lat);
+          pinLng = parseFloat(data[0].lon);
+          addMap.setView([pinLat, pinLng], 13);
+          if (pinMarker) addMap.removeLayer(pinMarker);
+          pinMarker = L.marker([pinLat, pinLng]).addTo(addMap);
+          document.getElementById('pinnedNote').style.display = 'block';
+        }
+      }, 500);
+    });
+
+    async function load() {
+      const res = await fetch('/api/locations');
+      const locs = await res.json();
+      const card = document.getElementById('locsCard');
+      if (!locs.length) {
+        card.innerHTML = `<div class="empty"><div class="empty-icon">📍</div><h3>No saved locations</h3><p>Save farms, saleyards and depots for quick access when creating jobs.</p></div>`;
+        return;
+      }
+      card.innerHTML = `
+        <table>
+          <thead><tr><th>Name</th><th>Type</th><th></th></tr></thead>
+          <tbody>
+            ${locs.map(l => `
+              <tr>
+                <td>
+                  <div class="loc-name">${l.name}</div>
+                  <div class="loc-address">${l.address}</div>
+                </td>
+                <td><span class="type-badge type-${l.type}">${l.type.charAt(0).toUpperCase() + l.type.slice(1)}</span></td>
+                <td><button class="delete-btn" onclick="deleteLoc(${l.id})">✕</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    async function saveLocation() {
+      const name = document.getElementById('lName').value.trim();
+      const address = document.getElementById('lAddress').value.trim();
+      const type = document.getElementById('lType').value;
+      if (!name || !address) return alert('Please enter a name and address.');
+      await fetch('/api/locations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, address, lat: pinLat, lng: pinLng, type }) });
+      document.getElementById('lName').value = '';
+      document.getElementById('lAddress').value = '';
+      document.getElementById('pinnedNote').style.display = 'none';
+      if (pinMarker) { addMap.removeLayer(pinMarker); pinMarker = null; }
+      pinLat = null; pinLng = null;
+      load();
+    }
+
+    async function deleteLoc(id) {
+      if (!confirm('Remove this location?')) return;
+      await fetch(`/api/locations/${id}`, { method: 'DELETE' });
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>

@@ -5,340 +5,111 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Drova — New Job</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="/sidebar.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
-
-    .sidebar {
-      width: 220px;
-      background: #1a1a1a;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-    }
-
-    .sidebar-logo {
-      padding: 28px 24px 24px;
-      font-size: 26px;
-      font-weight: 900;
-      color: white;
-      letter-spacing: -1px;
-      border-bottom: 1px solid #2a2a2a;
-    }
-
-    .sidebar-nav { padding: 16px 0; flex: 1; }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 24px;
-      font-size: 14px;
-      color: #888;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .nav-item:hover { background: #242424; color: #ccc; }
-    .nav-item.active { background: #242424; color: #f59e0b; }
-
-    .nav-icon { font-size: 18px; width: 20px; text-align: center; }
-
-    .sidebar-user {
-      padding: 16px 24px;
-      border-top: 1px solid #2a2a2a;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .user-avatar {
-      width: 36px; height: 36px; border-radius: 50%;
-      background: #f59e0b;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 13px; font-weight: 700; color: #1a1a1a; flex-shrink: 0;
-    }
-
-    .user-name { font-size: 13px; font-weight: 600; color: white; }
-    .user-role { font-size: 11px; color: #666; }
-
     .main { margin-left: 220px; flex: 1; }
-
-    .topbar {
-      background: white;
-      padding: 20px 32px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 1px solid #eee;
-    }
-
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; }
     .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
     .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
-
     .content { padding: 32px; max-width: 680px; }
-
-    .card {
-      background: white;
-      border-radius: 16px;
-      border: 1px solid #eee;
-      overflow: hidden;
-    }
-
+    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
     .card-section { padding: 24px 28px; border-bottom: 1px solid #f5f5f5; }
     .card-section:last-child { border-bottom: none; }
-
-    .section-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: #f59e0b;
-      margin-bottom: 18px;
-    }
-
+    .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #f59e0b; margin-bottom: 18px; }
     .field { margin-bottom: 16px; }
     .field:last-child { margin-bottom: 0; }
-
-    label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #555;
-      margin-bottom: 6px;
-    }
-
-    input, textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid #e5e5e5;
-      border-radius: 10px;
-      font-size: 15px;
-      color: #1a1a1a;
-      background: #fafafa;
-      font-family: inherit;
-      transition: border-color 0.2s, background 0.2s;
-    }
-
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: #f59e0b;
-      background: white;
-    }
-
+    label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    input, textarea, select { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e5e5; border-radius: 10px; font-size: 15px; color: #1a1a1a; background: #fafafa; font-family: inherit; transition: border-color 0.2s, background 0.2s; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: #f59e0b; background: white; }
     textarea { resize: vertical; min-height: 80px; }
-
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .address-wrap { position: relative; }
     .address-wrap input { padding-right: 48px; }
-
-    .pin-btn {
-      position: absolute;
-      right: 8px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: #f59e0b;
-      border: none;
-      border-radius: 7px;
-      width: 34px;
-      height: 34px;
-      font-size: 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
+    .pin-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #f59e0b; border: none; border-radius: 7px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .pin-btn:hover { background: #d97706; }
-
-    .autocomplete-list {
-      position: absolute;
-      top: 100%;
-      left: 0; right: 0;
-      background: white;
-      border: 1.5px solid #f59e0b;
-      border-top: none;
-      border-radius: 0 0 10px 10px;
-      z-index: 100;
-      max-height: 200px;
-      overflow-y: auto;
-    }
-
-    .autocomplete-item {
-      padding: 11px 14px;
-      font-size: 13px;
-      color: #333;
-      cursor: pointer;
-      border-bottom: 1px solid #f5f5f5;
-    }
-
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid #f59e0b; border-top: none; border-radius: 0 0 10px 10px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .autocomplete-item { padding: 11px 14px; font-size: 13px; color: #333; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
     .autocomplete-item:last-child { border-bottom: none; }
     .autocomplete-item:hover { background: #fff8eb; }
-
-    .pinned-badge {
-      display: none;
-      margin-top: 5px;
-      font-size: 12px;
-      color: #16a34a;
-      font-weight: 600;
-    }
-
+    .pinned-badge { display: none; margin-top: 5px; font-size: 12px; color: #16a34a; font-weight: 600; }
     .pinned-badge.visible { display: block; }
-
-    .submit-btn {
-      width: 100%;
-      padding: 16px;
-      background: #f59e0b;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      font-family: inherit;
-      transition: background 0.2s;
-    }
-
+    .no-drivers-tip { font-size: 13px; color: #aaa; padding: 10px 0; }
+    .no-drivers-tip a { color: #f59e0b; font-weight: 600; text-decoration: none; }
+    .submit-btn { width: 100%; padding: 16px; background: #f59e0b; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
     .submit-btn:hover { background: #d97706; }
     .submit-btn:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; }
 
-    .success-box {
-      display: none;
-      padding: 28px;
-      text-align: center;
-    }
-
-    .success-tick { font-size: 48px; margin-bottom: 12px; }
+    .success-box { display: none; padding: 32px 28px; text-align: center; }
+    .success-tick { font-size: 52px; margin-bottom: 12px; }
     .success-box h3 { font-size: 20px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
     .success-box p { font-size: 14px; color: #888; margin-bottom: 20px; }
+    .success-actions { display: flex; gap: 10px; margin-bottom: 14px; }
+    .btn-outline { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid #f59e0b; color: #d97706; background: white; font-size: 14px; font-weight: 600; text-decoration: none; text-align: center; }
+    .btn-solid { flex: 1; padding: 13px; border-radius: 10px; background: #f59e0b; color: white; border: none; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; font-family: inherit; text-decoration: none; }
+    .btn-solid:hover { background: #d97706; }
+    .reset-btn { width: 100%; padding: 13px; border-radius: 10px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px; }
 
-    .success-actions { display: flex; gap: 10px; margin-bottom: 16px; }
-
-    .btn-outline {
-      flex: 1; padding: 13px; border-radius: 10px;
-      border: 1.5px solid #f59e0b; color: #d97706;
-      background: white; font-size: 14px; font-weight: 600;
-      text-decoration: none; text-align: center; cursor: pointer;
-    }
-
-    .btn-solid {
-      flex: 1; padding: 13px; border-radius: 10px;
-      background: #f59e0b; color: white;
-      border: none; font-size: 14px; font-weight: 600;
-      text-align: center; cursor: pointer; font-family: inherit;
-    }
-
-    /* Pin modal */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-      align-items: center;
-      justify-content: center;
-    }
-
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-
-    .modal {
-      background: white;
-      border-radius: 16px;
-      width: 92%;
-      max-width: 520px;
-      overflow: hidden;
-    }
-
-    .modal-header {
-      padding: 16px 20px;
-      background: #1a1a1a;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
+    .modal { background: white; border-radius: 16px; width: 92%; max-width: 520px; overflow: hidden; }
+    .modal-header { padding: 16px 20px; background: #1a1a1a; display: flex; align-items: center; justify-content: space-between; }
     .modal-header h3 { color: white; font-size: 15px; font-weight: 700; }
-
-    .modal-close {
-      background: none; border: none; color: #888;
-      font-size: 20px; cursor: pointer; line-height: 1;
-    }
-
+    .modal-close { background: none; border: none; color: #888; font-size: 20px; cursor: pointer; }
     .modal-close:hover { color: white; }
     .modal-tip { padding: 10px 20px; background: #fff8eb; font-size: 13px; color: #92400e; text-align: center; }
     #pinMap { height: 340px; }
-
     .modal-footer { padding: 14px 20px; display: flex; gap: 10px; }
-
-    .modal-footer button {
-      flex: 1; padding: 12px; border-radius: 8px;
-      font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
-    }
-
+    .modal-footer button { flex: 1; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
     .modal-cancel { background: #f5f5f5; border: none; color: #555; }
     .modal-confirm { background: #f59e0b; border: none; color: white; }
     .modal-confirm:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; }
 
-    @media (max-width: 768px) {
-      .sidebar { display: none; }
-      .main { margin-left: 0; }
-      .content { padding: 16px; }
-      .topbar { padding: 16px 20px; }
-    }
+    @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px; } .two-col { grid-template-columns: 1fr; } .topbar { padding: 16px 20px; } }
   </style>
 </head>
 <body>
-
-  <aside class="sidebar">
-    <div class="sidebar-logo">DROVA</div>
-    <nav class="sidebar-nav">
-      <a class="nav-item" href="/dispatcher">
-        <span class="nav-icon">🚛</span> Active Jobs
-      </a>
-      <a class="nav-item active" href="/">
-        <span class="nav-icon">＋</span> New Job
-      </a>
-    </nav>
-    <div class="sidebar-user">
-      <div class="user-avatar">D</div>
-      <div>
-        <div class="user-name">Dispatcher</div>
-        <div class="user-role">Drova</div>
-      </div>
-    </div>
-  </aside>
+  <div id="sidebar-root"></div>
 
   <div class="main">
     <div class="topbar">
-      <div>
-        <h1>Create New Job</h1>
-        <p>Fill in the details below to dispatch a driver</p>
-      </div>
+      <h1>Create New Job</h1>
+      <p>Fill in the details below to dispatch a driver</p>
     </div>
-
     <div class="content">
       <div class="card">
         <form id="jobForm">
           <div class="card-section">
             <div class="section-label">Customer Details</div>
-            <div class="field">
-              <label>Customer Mobile Number</label>
-              <input type="tel" name="customerMobile" placeholder="0400 000 000" required>
+            <div class="two-col">
+              <div class="field">
+                <label>Customer Name</label>
+                <input type="text" name="customerName" placeholder="e.g. John Smith">
+              </div>
+              <div class="field">
+                <label>Mobile Number</label>
+                <input type="tel" name="customerMobile" placeholder="0400 000 000" required>
+              </div>
             </div>
           </div>
 
           <div class="card-section">
             <div class="section-label">Job Details</div>
-            <div class="field">
-              <label>Driver Name</label>
-              <input type="text" name="driverName" placeholder="e.g. Mick Thompson" required>
-            </div>
-            <div class="field">
-              <label>Load Details</label>
-              <textarea name="loadDetails" placeholder="e.g. 40 hd cattle" required></textarea>
+            <div class="two-col">
+              <div class="field">
+                <label>Driver</label>
+                <select name="driverName" id="driverSelect" required>
+                  <option value="">Select driver...</option>
+                </select>
+                <div class="no-drivers-tip" id="noDriversTip" style="display:none">
+                  No drivers yet. <a href="/drivers">Add drivers →</a>
+                </div>
+              </div>
+              <div class="field">
+                <label>Load Details</label>
+                <input type="text" name="loadDetails" placeholder="e.g. 40 hd cattle" required>
+              </div>
             </div>
           </div>
 
@@ -346,9 +117,9 @@
             <div class="section-label">Route</div>
             <div class="field">
               <label>Pickup Address</label>
-              <div class="address-wrap" id="pickupWrap">
+              <div class="address-wrap">
                 <input type="text" id="pickupAddress" name="pickupAddress" placeholder="Start typing address..." required autocomplete="off">
-                <button type="button" class="pin-btn" onclick="openPinMap('pickup')" title="Drop a pin">📍</button>
+                <button type="button" class="pin-btn" onclick="openPin('pickup')" title="Drop a pin">📍</button>
                 <div class="autocomplete-list" id="pickupList"></div>
               </div>
               <div class="pinned-badge" id="pickupBadge">📍 Location pinned on map</div>
@@ -357,9 +128,9 @@
             </div>
             <div class="field">
               <label>Delivery Address</label>
-              <div class="address-wrap" id="deliveryWrap">
+              <div class="address-wrap">
                 <input type="text" id="deliveryAddress" name="deliveryAddress" placeholder="Start typing address..." required autocomplete="off">
-                <button type="button" class="pin-btn" onclick="openPinMap('delivery')" title="Drop a pin">📍</button>
+                <button type="button" class="pin-btn" onclick="openPin('delivery')" title="Drop a pin">📍</button>
                 <div class="autocomplete-list" id="deliveryList"></div>
               </div>
               <div class="pinned-badge" id="deliveryBadge">📍 Location pinned on map</div>
@@ -376,57 +147,72 @@
         <div class="success-box" id="successBox">
           <div class="success-tick">✅</div>
           <h3>Job Dispatched!</h3>
-          <p>SMS sent to customer. Share the driver link with your driver.</p>
+          <p>SMS sent to customer. Send the driver link to <strong id="driverDisplay"></strong>.</p>
           <div class="success-actions">
-            <a class="btn-outline" id="trackingLinkBtn" href="#" target="_blank">📍 Customer Tracker</a>
-            <a class="btn-solid" id="driverLinkBtn" href="#" target="_blank">🚛 Driver Link</a>
+            <a class="btn-outline" id="trackBtn" href="#" target="_blank">📍 Customer Tracker</a>
+            <a class="btn-solid" id="driverBtn" href="#" target="_blank">🚛 Driver Link</a>
           </div>
-          <p style="font-size:13px;color:#aaa;">Send the Driver Link to <strong id="driverNameDisplay" style="color:#555;"></strong> so their phone shares GPS.</p>
-          <button onclick="resetForm()" style="margin-top:16px;width:100%;padding:13px;border-radius:10px;border:1.5px solid #e5e5e5;background:white;color:#555;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">+ Create Another Job</button>
+          <button class="reset-btn" onclick="resetForm()">＋ Create Another Job</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Pin modal -->
   <div class="modal-overlay" id="pinModal">
     <div class="modal">
       <div class="modal-header">
-        <h3 id="pinModalTitle">Drop a Pin</h3>
-        <button class="modal-close" onclick="closePinMap()">✕</button>
+        <h3 id="pinTitle">Drop a Pin</h3>
+        <button class="modal-close" onclick="closePin()">✕</button>
       </div>
       <div class="modal-tip">Tap the map to place a pin on the exact location</div>
       <div id="pinMap"></div>
       <div class="modal-footer">
-        <button class="modal-cancel" onclick="closePinMap()">Cancel</button>
-        <button class="modal-confirm" id="pinConfirmBtn" onclick="confirmPin()" disabled>Confirm Location</button>
+        <button class="modal-cancel" onclick="closePin()">Cancel</button>
+        <button class="modal-confirm" id="pinConfirm" onclick="confirmPin()" disabled>Confirm Location</button>
       </div>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-    let debounceTimer;
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('new');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
 
+    // Load drivers into select
+    async function loadDrivers() {
+      const res = await fetch('/api/drivers');
+      const drivers = await res.json();
+      const sel = document.getElementById('driverSelect');
+      if (!drivers.length) {
+        document.getElementById('noDriversTip').style.display = 'block';
+      } else {
+        drivers.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d.name;
+          opt.textContent = `${d.name}${d.status === 'on-job' ? ' (On Job)' : ''}`;
+          if (d.status === 'on-job') opt.style.color = '#aaa';
+          sel.appendChild(opt);
+        });
+      }
+    }
+    loadDrivers();
+
+    // Autocomplete
+    let debounce;
     function setupAutocomplete(inputId, listId, latId, lngId, badgeId) {
       const input = document.getElementById(inputId);
       const list = document.getElementById(listId);
-
       input.addEventListener('input', () => {
         document.getElementById(latId).value = '';
         document.getElementById(lngId).value = '';
         document.getElementById(badgeId).classList.remove('visible');
-        clearTimeout(debounceTimer);
+        clearTimeout(debounce);
         const q = input.value.trim();
         if (q.length < 3) { list.innerHTML = ''; return; }
-        debounceTimer = setTimeout(async () => {
-          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=au&limit=5`;
-          const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+        debounce = setTimeout(async () => {
+          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=au&limit=5`, { headers: { 'Accept-Language': 'en' } });
           const results = await res.json();
-          list.innerHTML = results.map(r => `
-            <div class="autocomplete-item" data-lat="${r.lat}" data-lng="${r.lon}" data-name="${r.display_name}">
-              ${r.display_name}
-            </div>`).join('');
+          list.innerHTML = results.map(r => `<div class="autocomplete-item" data-lat="${r.lat}" data-lng="${r.lon}" data-name="${r.display_name}">${r.display_name}</div>`).join('');
           list.querySelectorAll('.autocomplete-item').forEach(item => {
             item.addEventListener('click', () => {
               input.value = item.dataset.name;
@@ -437,30 +223,26 @@
           });
         }, 350);
       });
-
-      document.addEventListener('click', (e) => {
-        if (!input.contains(e.target) && !list.contains(e.target)) list.innerHTML = '';
-      });
+      document.addEventListener('click', e => { if (!input.contains(e.target) && !list.contains(e.target)) list.innerHTML = ''; });
     }
-
     setupAutocomplete('pickupAddress', 'pickupList', 'pickupLat', 'pickupLng', 'pickupBadge');
     setupAutocomplete('deliveryAddress', 'deliveryList', 'deliveryLat', 'deliveryLng', 'deliveryBadge');
 
-    let pinMap = null, pinMarker = null, activePinField = null;
-
-    function openPinMap(field) {
-      activePinField = field;
-      document.getElementById('pinModalTitle').textContent = field === 'pickup' ? 'Pin Pickup Location' : 'Pin Delivery Location';
+    // Pin map
+    let pinMap = null, pinMarker = null, activePin = null;
+    function openPin(field) {
+      activePin = field;
+      document.getElementById('pinTitle').textContent = field === 'pickup' ? 'Pin Pickup Location' : 'Pin Delivery Location';
       document.getElementById('pinModal').classList.add('open');
-      document.getElementById('pinConfirmBtn').disabled = true;
+      document.getElementById('pinConfirm').disabled = true;
       setTimeout(() => {
         if (!pinMap) {
           pinMap = L.map('pinMap').setView([-25.2744, 133.7751], 5);
           L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(pinMap);
-          pinMap.on('click', (e) => {
+          pinMap.on('click', e => {
             if (pinMarker) pinMap.removeLayer(pinMarker);
             pinMarker = L.marker(e.latlng).addTo(pinMap);
-            document.getElementById('pinConfirmBtn').disabled = false;
+            document.getElementById('pinConfirm').disabled = false;
           });
         }
         pinMap.invalidateSize();
@@ -470,39 +252,32 @@
           pinMap.setView([lat, lng], 12);
           if (pinMarker) pinMap.removeLayer(pinMarker);
           pinMarker = L.marker([lat, lng]).addTo(pinMap);
-          document.getElementById('pinConfirmBtn').disabled = false;
+          document.getElementById('pinConfirm').disabled = false;
         }
       }, 50);
     }
-
-    function closePinMap() { document.getElementById('pinModal').classList.remove('open'); }
-
+    function closePin() { document.getElementById('pinModal').classList.remove('open'); }
     function confirmPin() {
-      if (!pinMarker) return;
       const { lat, lng } = pinMarker.getLatLng();
-      document.getElementById(`${activePinField}Lat`).value = lat;
-      document.getElementById(`${activePinField}Lng`).value = lng;
-      document.getElementById(`${activePinField}Address`).value = `Pin: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
-      document.getElementById(`${activePinField}Badge`).classList.add('visible');
-      document.getElementById(`${activePinField}List`).innerHTML = '';
-      closePinMap();
+      document.getElementById(`${activePin}Lat`).value = lat;
+      document.getElementById(`${activePin}Lng`).value = lng;
+      document.getElementById(`${activePin}Address`).value = `Pin: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      document.getElementById(`${activePin}Badge`).classList.add('visible');
+      document.getElementById(`${activePin}List`).innerHTML = '';
+      closePin();
     }
 
-    document.getElementById('jobForm').addEventListener('submit', async (e) => {
+    // Submit
+    document.getElementById('jobForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const btn = e.target.querySelector('button[type=submit]');
-      btn.textContent = 'Dispatching...';
-      btn.disabled = true;
+      const btn = e.target.querySelector('.submit-btn');
+      btn.textContent = 'Dispatching...'; btn.disabled = true;
       const data = Object.fromEntries(new FormData(e.target));
-      const res = await fetch('/jobs', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
+      const res = await fetch('/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
       const job = await res.json();
-      document.getElementById('trackingLinkBtn').href = `${window.location.origin}/track/${job.id}`;
-      document.getElementById('driverLinkBtn').href = `${window.location.origin}/drive/${job.id}`;
-      document.getElementById('driverNameDisplay').textContent = data.driverName;
+      document.getElementById('trackBtn').href = `${location.origin}/track/${job.id}`;
+      document.getElementById('driverBtn').href = `${location.origin}/drive/${job.id}`;
+      document.getElementById('driverDisplay').textContent = data.driverName;
       document.getElementById('jobForm').style.display = 'none';
       document.getElementById('successBox').style.display = 'block';
     });
@@ -513,9 +288,9 @@
       document.getElementById('successBox').style.display = 'none';
       document.getElementById('pickupBadge').classList.remove('visible');
       document.getElementById('deliveryBadge').classList.remove('visible');
-      const btn = document.querySelector('button[type=submit]');
-      btn.textContent = 'Dispatch Job & Send SMS';
-      btn.disabled = false;
+      const btn = document.querySelector('.submit-btn');
+      btn.textContent = 'Dispatch Job & Send SMS'; btn.disabled = false;
+      loadDrivers();
     }
   </script>
 </body>

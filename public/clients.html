@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drova — Clients</title>
+  <script src="/sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
+    .main { margin-left: 220px; flex: 1; }
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .content { padding: 24px 32px; }
+    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
+    .empty { padding: 80px 20px; text-align: center; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .empty p { font-size: 14px; color: #aaa; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #fafafa; }
+    th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    td { padding: 14px 20px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .client-cell { display: flex; align-items: center; gap: 12px; }
+    .avatar { width: 38px; height: 38px; border-radius: 50%; background: #e8f4fd; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #1a6fa8; flex-shrink: 0; }
+    .client-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+    .client-mobile { font-size: 12px; color: #aaa; }
+    .jobs-count { display: inline-block; background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .date-cell { font-size: 13px; color: #888; }
+    @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px; } th:nth-child(3), td:nth-child(3) { display: none; } }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>Clients</h1>
+      <p>Customers you've delivered for</p>
+    </div>
+    <div class="content">
+      <div class="card" id="clientsCard"><div style="padding:40px;text-align:center;color:#aaa;">Loading...</div></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('clients');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    function formatDate(str) {
+      return new Date(str + 'Z').toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    function avatarLetter(mobile) {
+      return mobile ? mobile.slice(-2) : '?';
+    }
+
+    async function load() {
+      const res = await fetch('/api/clients');
+      const clients = await res.json();
+      const card = document.getElementById('clientsCard');
+
+      if (!clients.length) {
+        card.innerHTML = `<div class="empty"><div class="empty-icon">🤝</div><h3>No clients yet</h3><p>Clients appear here automatically once you create jobs.</p></div>`;
+        return;
+      }
+
+      card.innerHTML = `
+        <table>
+          <thead><tr><th>Client</th><th>Total Jobs</th><th>Last Job</th></tr></thead>
+          <tbody>
+            ${clients.map(c => `
+              <tr>
+                <td>
+                  <div class="client-cell">
+                    <div class="avatar">🤝</div>
+                    <div>
+                      <div class="client-name">${c.customerName || 'Unknown'}</div>
+                      <div class="client-mobile">${c.customerMobile}</div>
+                    </div>
+                  </div>
+                </td>
+                <td><span class="jobs-count">${c.totalJobs} job${c.totalJobs !== 1 ? 's' : ''}</span></td>
+                <td class="date-cell">${formatDate(c.lastJob)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    load();
+  </script>
+</body>
+</html>

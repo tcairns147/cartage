@@ -28,6 +28,11 @@ db.exec(`
   )
 `);
 
+// Add columns if upgrading from older schema
+for (const col of ['pickupLat', 'pickupLng', 'deliveryLat', 'deliveryLng', 'currentLat', 'currentLng']) {
+  try { db.exec(`ALTER TABLE jobs ADD COLUMN ${col} REAL`); } catch {}
+}
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));

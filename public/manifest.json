@@ -1,0 +1,13 @@
+{
+  "name": "Drova",
+  "short_name": "Drova",
+  "description": "Livestock transport dispatch and tracking",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0ebe2",
+  "theme_color": "#1a1a1a",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

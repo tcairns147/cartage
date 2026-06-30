@@ -1,11 +1,21 @@
+const ICONS = {
+  truck: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
+  clipboard: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M9 12h6M9 16h4"/></svg>`,
+  user: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`,
+  users: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.85"/></svg>`,
+  mappin: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>`,
+  plus: `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  package: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>`,
+};
+
 function renderSidebar(active) {
   const nav = [
-    { id: 'dispatcher', icon: '🚛', label: 'Active Jobs',  href: '/dispatcher' },
-    { id: 'history',    icon: '📋', label: 'Job History',  href: '/history' },
-    { id: 'drivers',    icon: '👤', label: 'Drivers',      href: '/drivers' },
-    { id: 'clients',    icon: '🤝', label: 'Clients',      href: '/clients' },
-    { id: 'locations',  icon: '📍', label: 'Locations',    href: '/locations' },
-    { id: 'new',        icon: '＋', label: 'New Job',      href: '/' },
+    { id: 'dispatcher', icon: ICONS.truck,     label: 'Active Jobs',  href: '/dispatcher' },
+    { id: 'history',    icon: ICONS.clipboard,  label: 'Job History',  href: '/history' },
+    { id: 'drivers',    icon: ICONS.user,       label: 'Drivers',      href: '/drivers' },
+    { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
+    { id: 'locations',  icon: ICONS.mappin,     label: 'Locations',    href: '/locations' },
+    { id: 'new',        icon: ICONS.plus,       label: 'New Job',      href: '/' },
   ];
 
   return `
@@ -40,12 +50,13 @@ const SIDEBAR_CSS = `
   .sidebar-nav { padding: 16px 0; flex: 1; }
   .nav-item {
     display: flex; align-items: center; gap: 12px;
-    padding: 12px 24px; font-size: 14px; color: #888;
+    padding: 12px 24px; font-size: 14px; color: #666;
     text-decoration: none; transition: background 0.15s, color 0.15s;
   }
   .nav-item:hover { background: #242424; color: #ccc; }
   .nav-item.active { background: #242424; color: #f59e0b; }
-  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-icon { width: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .nav-icon svg { display: block; }
   .sidebar-user {
     padding: 16px 24px; border-top: 1px solid #2a2a2a;
     display: flex; align-items: center; gap: 10px;
@@ -56,6 +67,6 @@ const SIDEBAR_CSS = `
     font-size: 13px; font-weight: 700; color: #1a1a1a; flex-shrink: 0;
   }
   .user-name { font-size: 13px; font-weight: 600; color: white; }
-  .user-role { font-size: 11px; color: #666; }
+  .user-role { font-size: 11px; color: #555; }
   @media (max-width: 768px) { .sidebar { display: none; } }
 `;

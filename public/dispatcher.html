@@ -77,14 +77,8 @@
     document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
 
     function initials(name) { return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(); }
-    function loadIcon(load) {
-      const l = load.toLowerCase();
-      if (l.includes('cattle') || l.includes('cow') || l.includes('bull')) return '🐄';
-      if (l.includes('sheep') || l.includes('lamb')) return '🐑';
-      if (l.includes('horse')) return '🐎';
-      if (l.includes('pig')) return '🐷';
-      if (l.includes('hay') || l.includes('grain') || l.includes('wheat')) return '🌾';
-      return '📦';
+    function loadIcon() {
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>`;
     }
     function timeAgo(str) {
       const diff = Math.floor((Date.now() - new Date(str + 'Z')) / 60000);
@@ -140,8 +134,8 @@
                 </div>
               </div>
               <div class="actions-col">
-                <a class="btn-track" href="/track/${j.id}" target="_blank">🗺 View Tracker</a>
-                <button class="btn-done" onclick="complete('${j.id}')">✓ Mark Delivered</button>
+                <a class="btn-track" href="/track/${j.id}" target="_blank">View Tracker</a>
+                <button class="btn-done" onclick="complete('${j.id}')">Mark Delivered</button>
               </div>
             </div>
           </div>`).join('')}`;

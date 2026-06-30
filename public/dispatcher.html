@@ -6,218 +6,302 @@
   <title>Drova — Active Jobs</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #f0ebe3;
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: #1a1a1a;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
     }
 
-    .topbar {
-      background: #1a1a1a;
+    .sidebar-logo {
+      padding: 28px 24px 24px;
+      font-size: 26px;
+      font-weight: 900;
+      color: white;
+      letter-spacing: -1px;
+      border-bottom: 1px solid #2a2a2a;
+    }
+
+    .sidebar-logo span { color: #f59e0b; }
+
+    .sidebar-nav { padding: 16px 0; flex: 1; }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      font-size: 14px;
+      color: #888;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .nav-item:hover { background: #242424; color: #ccc; }
+    .nav-item.active { background: #242424; color: #f59e0b; }
+    .nav-item.active .nav-icon { color: #f59e0b; }
+
+    .nav-icon { font-size: 18px; width: 20px; text-align: center; }
+
+    .sidebar-user {
       padding: 16px 24px;
+      border-top: 1px solid #2a2a2a;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #f59e0b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1a1a1a;
+      flex-shrink: 0;
+    }
+
+    .user-name { font-size: 13px; font-weight: 600; color: white; }
+    .user-role { font-size: 11px; color: #666; }
+
+    /* Main content */
+    .main { margin-left: 220px; flex: 1; min-height: 100vh; }
+
+    .topbar {
+      background: white;
+      padding: 20px 32px;
       display: flex;
       align-items: center;
       justify-content: space-between;
+      border-bottom: 1px solid #eee;
     }
 
-    .topbar-logo { font-size: 22px; font-weight: 800; color: #f59e0b; letter-spacing: -0.5px; }
-    .topbar-nav a { color: #aaa; text-decoration: none; font-size: 14px; margin-left: 20px; }
-    .topbar-nav a:hover { color: white; }
-
-    .hero {
-      background: #1a1a1a;
-      padding: 32px 24px 48px;
-      text-align: center;
-    }
-
-    .hero h1 { font-size: 28px; font-weight: 800; color: white; margin-bottom: 8px; }
-    .hero p { color: #aaa; font-size: 16px; }
-
-    .page-wrap {
-      max-width: 640px;
-      margin: -24px auto 40px;
-      padding: 0 16px;
-    }
-
-    .empty-card {
-      background: white;
-      border-radius: 16px;
-      padding: 60px 20px;
-      text-align: center;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-    }
-
-    .empty-icon { font-size: 48px; margin-bottom: 16px; }
-    .empty-card h3 { font-size: 18px; color: #333; margin-bottom: 8px; }
-    .empty-card p { color: #aaa; font-size: 15px; margin-bottom: 24px; }
+    .topbar-left h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar-left p { font-size: 13px; color: #aaa; margin-top: 2px; }
 
     .new-job-btn {
-      display: inline-block;
       background: #f59e0b;
       color: white;
       text-decoration: none;
-      padding: 14px 28px;
+      padding: 12px 20px;
       border-radius: 10px;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .new-job-btn:hover { background: #d97706; }
 
-    .job-card {
+    .content { padding: 24px 32px; }
+
+    /* Empty state */
+    .empty-state {
       background: white;
       border-radius: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-      overflow: hidden;
-    }
-
-    .job-card-top {
-      padding: 20px 20px 16px;
-      border-bottom: 1px solid #f5f5f5;
-    }
-
-    .job-meta {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .job-id {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: #bbb;
-      text-transform: uppercase;
-    }
-
-    .job-time {
-      font-size: 12px;
-      color: #bbb;
-    }
-
-    .job-load {
-      font-size: 20px;
-      font-weight: 800;
-      color: #1a1a1a;
-      margin-bottom: 4px;
-    }
-
-    .job-driver {
-      font-size: 14px;
-      color: #888;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .job-card-route {
-      padding: 14px 20px;
-      background: #fafafa;
-      border-bottom: 1px solid #f5f5f5;
-    }
-
-    .route-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 8px;
-    }
-
-    .route-row:last-child { margin-bottom: 0; }
-
-    .route-icon { font-size: 16px; width: 20px; flex-shrink: 0; margin-top: 1px; }
-
-    .job-card-actions {
-      padding: 14px 16px;
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn-track {
-      flex: 1;
-      padding: 13px;
-      border: 2px solid #f59e0b;
-      background: white;
-      color: #d97706;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
+      padding: 80px 20px;
       text-align: center;
+      border: 1px solid #eee;
+    }
+
+    .empty-icon { font-size: 52px; margin-bottom: 16px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; color: #aaa; }
+
+    /* Job card */
+    .job-card {
+      background: white;
+      border-radius: 14px;
+      margin-bottom: 14px;
+      border: 1px solid #eee;
+      overflow: hidden;
+      transition: box-shadow 0.2s;
+    }
+
+    .job-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+
+    .job-card-inner {
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr 120px auto;
+      align-items: center;
+      padding: 20px 24px;
+      gap: 20px;
+    }
+
+    /* Load column */
+    .load-col { display: flex; align-items: center; gap: 12px; }
+
+    .load-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #fef3c7;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      font-size: 22px;
+      flex-shrink: 0;
     }
 
-    .btn-track:hover { background: #fff8eb; }
+    .load-id { font-size: 11px; color: #bbb; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .load-name { font-size: 16px; font-weight: 800; color: #1a1a1a; margin-bottom: 4px; }
 
-    .btn-complete {
-      flex: 1;
-      padding: 13px;
-      border: none;
-      background: #16a34a;
-      color: white;
-      border-radius: 10px;
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #16a34a; }
+
+    /* Driver column */
+    .driver-col { display: flex; align-items: center; gap: 10px; }
+
+    .driver-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 14px;
       font-weight: 700;
-      cursor: pointer;
+      color: #555;
+      flex-shrink: 0;
+    }
+
+    .driver-label { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+    .driver-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
+
+    /* Route column */
+    .route-col { display: flex; flex-direction: column; gap: 8px; }
+
+    .route-item { display: flex; align-items: flex-start; gap: 8px; }
+    .route-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .route-dot.pickup { background: #f59e0b; }
+    .route-dot.delivery { background: #1a1a1a; }
+    .route-label { font-size: 10px; color: #aaa; margin-bottom: 1px; }
+    .route-address { font-size: 13px; font-weight: 500; color: #1a1a1a; }
+
+    /* ETA column */
+    .eta-col { text-align: center; }
+    .eta-label { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+    .eta-value { font-size: 20px; font-weight: 800; color: #f59e0b; }
+    .eta-time { font-size: 11px; color: #bbb; margin-top: 2px; }
+
+    /* Actions column */
+    .actions-col { display: flex; flex-direction: column; gap: 8px; }
+
+    .btn-tracker {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 6px;
-    }
-
-    .btn-complete:hover { background: #15803d; }
-
-    .header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-    }
-
-    .jobs-count {
-      font-size: 13px;
-      color: #888;
-      font-weight: 600;
-    }
-
-    .new-job-small {
-      background: #f59e0b;
-      color: white;
-      text-decoration: none;
-      padding: 10px 18px;
+      padding: 10px 16px;
+      border: 1.5px solid #e5e5e5;
       border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
+      font-size: 13px;
+      font-weight: 600;
+      color: #555;
+      text-decoration: none;
+      cursor: pointer;
+      background: white;
+      white-space: nowrap;
     }
 
-    .new-job-small:hover { background: #d97706; }
+    .btn-tracker:hover { border-color: #f59e0b; color: #d97706; }
+
+    .btn-delivered {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+      background: #f59e0b;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .btn-delivered:hover { background: #d97706; }
+
+    .page-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .jobs-count { font-size: 13px; color: #888; font-weight: 600; }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; }
+      .job-card-inner { grid-template-columns: 1fr; }
+      .eta-col, .driver-col { display: none; }
+      .topbar { padding: 16px 20px; }
+      .content { padding: 16px 20px; }
+    }
   </style>
 </head>
 <body>
 
-  <div class="topbar">
-    <div class="topbar-logo">DROVA</div>
-    <nav class="topbar-nav">
-      <a href="/">+ New Job</a>
+  <aside class="sidebar">
+    <div class="sidebar-logo">DROVA</div>
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="/dispatcher">
+        <span class="nav-icon">🚛</span> Active Jobs
+      </a>
+      <a class="nav-item" href="/">
+        <span class="nav-icon">＋</span> New Job
+      </a>
     </nav>
-  </div>
+    <div class="sidebar-user">
+      <div class="user-avatar">D</div>
+      <div>
+        <div class="user-name">Dispatcher</div>
+        <div class="user-role">Drova</div>
+      </div>
+    </div>
+  </aside>
 
-  <div class="hero">
-    <h1>Active Jobs</h1>
-    <p>Jobs currently in transit</p>
-  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h1>Active Jobs</h1>
+        <p>Jobs currently in transit</p>
+      </div>
+      <a href="/" class="new-job-btn">＋ Create New Job</a>
+    </div>
 
-  <div class="page-wrap">
-    <div id="jobList"></div>
+    <div class="content">
+      <div id="jobList"></div>
+    </div>
   </div>
 
   <script>
@@ -228,6 +312,20 @@
       return `${Math.floor(diff / 60)}h ${diff % 60}m ago`;
     }
 
+    function getInitials(name) {
+      return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    function getLoadIcon(load) {
+      const l = load.toLowerCase();
+      if (l.includes('cattle') || l.includes('cow') || l.includes('bull')) return '🐄';
+      if (l.includes('sheep') || l.includes('lamb')) return '🐑';
+      if (l.includes('horse')) return '🐎';
+      if (l.includes('pig') || l.includes('pork')) return '🐷';
+      if (l.includes('hay') || l.includes('grain') || l.includes('wheat')) return '🌾';
+      return '📦';
+    }
+
     async function loadJobs() {
       const res = await fetch('/jobs');
       const jobs = await res.json();
@@ -235,43 +333,60 @@
 
       if (!jobs.length) {
         list.innerHTML = `
-          <div class="empty-card">
+          <div class="empty-state">
             <div class="empty-icon">🚛</div>
             <h3>No active jobs</h3>
             <p>Create a new job to get started</p>
-            <a href="/" class="new-job-btn">+ Create New Job</a>
           </div>`;
         return;
       }
 
       list.innerHTML = `
-        <div class="header-row">
-          <span class="jobs-count">${jobs.length} job${jobs.length > 1 ? 's' : ''} in transit</span>
-          <a href="/" class="new-job-small">+ New Job</a>
+        <div class="page-header-row">
+          <span class="jobs-count">${jobs.length} job${jobs.length !== 1 ? 's' : ''} in transit</span>
         </div>
         ${jobs.map(job => `
           <div class="job-card" id="job-${job.id}">
-            <div class="job-card-top">
-              <div class="job-meta">
-                <span class="job-id">Job #${job.id}</span>
-                <span class="job-time">${timeAgo(job.createdAt)}</span>
+            <div class="job-card-inner">
+              <div class="load-col">
+                <div class="load-icon">${getLoadIcon(job.loadDetails)}</div>
+                <div>
+                  <div class="load-id">JOB #${job.id.toUpperCase()}</div>
+                  <div class="load-name">${job.loadDetails}</div>
+                  <span class="status-badge"><span class="status-dot"></span> IN TRANSIT</span>
+                </div>
               </div>
-              <div class="job-load">${job.loadDetails}</div>
-              <div class="job-driver">🧑‍✈️ ${job.driverName}</div>
-            </div>
-            <div class="job-card-route">
-              <div class="route-row">
-                <span class="route-icon">📍</span>
-                <span>${job.pickupAddress}</span>
+              <div class="driver-col">
+                <div class="driver-avatar">${getInitials(job.driverName)}</div>
+                <div>
+                  <div class="driver-label">Driver</div>
+                  <div class="driver-name">${job.driverName}</div>
+                </div>
               </div>
-              <div class="route-row">
-                <span class="route-icon">🏁</span>
-                <span>${job.deliveryAddress}</span>
+              <div class="route-col">
+                <div class="route-item">
+                  <div class="route-dot pickup"></div>
+                  <div>
+                    <div class="route-label">From</div>
+                    <div class="route-address">${job.pickupAddress}</div>
+                  </div>
+                </div>
+                <div class="route-item">
+                  <div class="route-dot delivery"></div>
+                  <div>
+                    <div class="route-label">To</div>
+                    <div class="route-address">${job.deliveryAddress}</div>
+                  </div>
+                </div>
               </div>
-            </div>
-            <div class="job-card-actions">
-              <a class="btn-track" href="/track/${job.id}" target="_blank">🗺 View Tracker</a>
-              <button class="btn-complete" onclick="completeJob('${job.id}')">✓ Mark Delivered</button>
+              <div class="eta-col">
+                <div class="eta-label">Created</div>
+                <div class="eta-value" style="font-size:15px; color:#aaa;">${timeAgo(job.createdAt)}</div>
+              </div>
+              <div class="actions-col">
+                <a class="btn-tracker" href="/track/${job.id}" target="_blank">🗺 View Tracker</a>
+                <button class="btn-delivered" onclick="completeJob('${job.id}')">✓ Mark Delivered</button>
+              </div>
             </div>
           </div>
         `).join('')}`;
@@ -285,9 +400,8 @@
       card.style.pointerEvents = 'none';
       setTimeout(() => {
         card.remove();
-        const remaining = document.querySelectorAll('.job-card').length;
-        if (!remaining) loadJobs();
-      }, 600);
+        if (!document.querySelectorAll('.job-card').length) loadJobs();
+      }, 500);
     }
 
     loadJobs();

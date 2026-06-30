@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+
+<rect x="0" y="0" width="1024" height="1024" rx="220" fill="#1a1a1a"/><polyline points="286.7,286.7 392.3,216.3 624.6,216.3 737.3,258.6 793.6,371.2 814.7,554.2 737.3,695.0 610.6,793.6 427.5,807.7 286.7,737.3 258.6,568.3 258.6,371.2 286.7,286.7" fill="none" stroke="#ffffff" stroke-width="38.7" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="329.0,314.9 455.7,399.4 378.2,540.2 286.7,610.6" fill="none" stroke="#666666" stroke-width="9.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="455.7,399.4 596.5,420.5 688.0,314.9" fill="none" stroke="#666666" stroke-width="9.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="596.5,420.5 652.8,568.3 779.5,533.1" fill="none" stroke="#666666" stroke-width="9.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="378.2,540.2 497.9,702.1" fill="none" stroke="#666666" stroke-width="9.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="497.9,702.1 610.6,793.6" fill="none" stroke="#666666" stroke-width="9.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="378.2,540.2 652.8,568.3" fill="none" stroke="#666666" stroke-width="9.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="237.4,469.8 246.5,464.4 255.8,460.1 265.3,456.6 275.1,454.1 285.0,452.3 295.2,451.3 305.6,451.0 316.2,451.4 327.1,452.4 338.2,454.0 349.5,456.2 361.1,458.8 372.9,461.9 385.0,465.3 397.3,469.1 409.9,473.3 422.7,477.6 435.8,482.2 449.1,486.9 462.7,491.8 476.6,496.7 490.7,501.6 505.1,506.5 519.8,511.3 534.7,516.0 549.9,520.6 565.4,524.9 581.2,528.9 597.3,532.7 613.6,536.1 630.3,539.1 647.2,541.6 664.5,543.7 682.0,545.2 699.8,546.1 718.0,546.4 736.4,546.0 755.2,544.8 774.2,542.9 793.6,540.2" fill="none" stroke="#f59e0b" stroke-width="31.7" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="230.4" cy="469.8" r="49.3" fill="#1a1a1a" stroke="#f59e0b" stroke-width="19.7"/>
+<circle cx="800.6" cy="540.2" r="49.3" fill="#1a1a1a" stroke="#f59e0b" stroke-width="19.7"/>
+</svg>

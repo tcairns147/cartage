@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2400" height="700" viewBox="0 0 2400 700">
+
+<polyline points="145.6,195.6 208.6,153.6 347.2,153.6 414.4,178.8 448.0,246.0 460.6,355.2 414.4,439.2 338.8,498.0 229.6,506.4 145.6,464.4 128.8,363.6 128.8,246.0 145.6,195.6" fill="none" stroke="#1a1a1a" stroke-width="23.1" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="170.8,212.4 246.4,262.8 200.2,346.8 145.6,388.8" fill="none" stroke="#d8cdbc" stroke-width="5.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="246.4,262.8 330.4,275.4 385.0,212.4" fill="none" stroke="#d8cdbc" stroke-width="5.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="330.4,275.4 364.0,363.6 439.6,342.6" fill="none" stroke="#d8cdbc" stroke-width="5.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="200.2,346.8 271.6,443.4" fill="none" stroke="#d8cdbc" stroke-width="5.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="271.6,443.4 338.8,498.0" fill="none" stroke="#d8cdbc" stroke-width="5.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="200.2,346.8 364.0,363.6" fill="none" stroke="#d8cdbc" stroke-width="5.9" stroke-linecap="round" stroke-linejoin="round"/>
+<polyline points="116.2,304.8 121.6,301.6 127.2,299.0 132.8,297.0 138.6,295.4 144.6,294.4 150.7,293.8 156.9,293.6 163.2,293.8 169.7,294.5 176.3,295.4 183.1,296.7 190.0,298.3 197.0,300.1 204.2,302.2 211.6,304.4 219.1,306.9 226.7,309.5 234.5,312.2 242.5,315.0 250.6,317.9 258.9,320.9 267.3,323.8 275.9,326.7 284.6,329.6 293.6,332.4 302.6,335.1 311.9,337.7 321.3,340.1 330.9,342.3 340.6,344.4 350.6,346.2 360.7,347.7 371.0,348.9 381.4,349.8 392.1,350.3 402.9,350.5 413.9,350.3 425.1,349.6 436.4,348.4 448.0,346.8" fill="none" stroke="#f59e0b" stroke-width="18.9" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="112.0" cy="304.8" r="29.4" fill="white" stroke="#f59e0b" stroke-width="11.8"/>
+<circle cx="452.2" cy="346.8" r="29.4" fill="white" stroke="#f59e0b" stroke-width="11.8"/><text x="580" y="390" font-family="Arial, Helvetica, sans-serif" font-size="250" font-weight="900" fill="#1a1a1a">DROVA</text>
+</svg>

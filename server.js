@@ -32,6 +32,16 @@ db.exec(`
 for (const col of ['pickupLat', 'pickupLng', 'deliveryLat', 'deliveryLng', 'currentLat', 'currentLng']) {
   try { db.exec(`ALTER TABLE jobs ADD COLUMN ${col} REAL`); } catch {}
 }
+try { db.exec(`ALTER TABLE jobs ADD COLUMN notified15min INTEGER DEFAULT 0`); } catch {}
+
+// Haversine distance in km between two lat/lng points
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -99,9 +109,32 @@ app.get('/jobs/:id', (req, res) => {
 });
 
 // Driver updates their GPS location
-app.post('/jobs/:id/location', (req, res) => {
+app.post('/jobs/:id/location', async (req, res) => {
   const { lat, lng } = req.body;
   db.prepare('UPDATE jobs SET currentLat = ?, currentLng = ? WHERE id = ?').run(lat, lng, req.params.id);
+
+  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
+
+  // Send 15-minute warning SMS if delivery coords are known and not yet sent
+  if (job && !job.notified15min && job.deliveryLat && job.deliveryLng) {
+    const km = distanceKm(lat, lng, job.deliveryLat, job.deliveryLng);
+    const etaMins = km / 80 * 60; // estimate at 80km/h
+
+    if (etaMins <= 15) {
+      db.prepare('UPDATE jobs SET notified15min = 1 WHERE id = ?').run(job.id);
+      try {
+        await twilioClient.messages.create({
+          body: `Your Drova delivery is almost there! 🚛\n${job.driverName} is about 15 minutes away with your ${job.loadDetails}.`,
+          from: process.env.TWILIO_PHONE_NUMBER,
+          to: job.customerMobile
+        });
+        console.log(`15-min SMS sent to ${job.customerMobile}`);
+      } catch (err) {
+        console.error('15-min SMS failed:', err.message);
+      }
+    }
+  }
+
   res.json({ success: true });
 });
 

@@ -335,12 +335,13 @@
       <div class="success-box" id="successBox">
         <div class="tick">✅</div>
         <h3>Job Dispatched!</h3>
-        <p>SMS sent to customer. Tracking link:</p>
-        <a id="trackingLink" href="#" target="_blank"></a>
+        <p>SMS sent to customer.</p>
         <div class="success-actions">
-          <a class="btn-outline" id="trackingLinkBtn" href="#" target="_blank">Open Tracker</a>
-          <button class="btn-solid" onclick="resetForm()">New Job</button>
+          <a class="btn-outline" id="trackingLinkBtn" href="#" target="_blank">📍 Customer Tracker</a>
+          <a class="btn-solid" id="driverLinkBtn" href="#" target="_blank">🚛 Driver Link</a>
         </div>
+        <p style="font-size:13px;color:#888;margin-top:14px;">Send the Driver Link to <strong id="driverNameDisplay"></strong> so their phone shares GPS location.</p>
+        <button onclick="resetForm()" style="margin-top:16px;width:100%;padding:12px;border-radius:8px;border:none;background:#f5f5f5;color:#555;font-size:14px;font-weight:600;cursor:pointer;">+ Create Another Job</button>
       </div>
     </div>
   </div>
@@ -486,11 +487,12 @@
       });
 
       const job = await res.json();
-      const link = `${window.location.origin}/track/${job.id}`;
+      const trackLink = `${window.location.origin}/track/${job.id}`;
+      const driverLink = `${window.location.origin}/drive/${job.id}`;
 
-      document.getElementById('trackingLink').href = link;
-      document.getElementById('trackingLink').textContent = link;
-      document.getElementById('trackingLinkBtn').href = link;
+      document.getElementById('trackingLinkBtn').href = trackLink;
+      document.getElementById('driverLinkBtn').href = driverLink;
+      document.getElementById('driverNameDisplay').textContent = data.driverName;
       document.getElementById('successBox').style.display = 'block';
       e.target.style.display = 'none';
     });

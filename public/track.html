@@ -9,35 +9,23 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       background: #f4f4f4;
       min-height: 100vh;
     }
 
     .header {
-      background: white;
+      background: #1a1a1a;
       padding: 16px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
       display: flex;
       align-items: center;
       gap: 12px;
     }
 
-    .logo {
-      font-size: 20px;
-      font-weight: 700;
-      color: #d97706;
-    }
+    .logo { font-size: 20px; font-weight: 800; color: #f59e0b; }
+    .job-tag { font-size: 13px; color: #666; }
 
-    .job-tag {
-      font-size: 13px;
-      color: #888;
-    }
-
-    #map {
-      height: 55vh;
-      width: 100%;
-    }
+    #map { height: 55vh; width: 100%; }
 
     .info-card {
       background: white;
@@ -54,22 +42,19 @@
       border-bottom: 1px solid #f0f0f0;
     }
 
-    .eta-label {
-      font-size: 13px;
-      color: #888;
-      margin-bottom: 4px;
-    }
+    .eta-label { font-size: 13px; color: #888; margin-bottom: 4px; }
+    .eta-value { font-size: 36px; font-weight: 700; color: #d97706; }
+    .eta-sub { font-size: 13px; color: #aaa; margin-top: 2px; }
 
-    .eta-value {
-      font-size: 36px;
+    .live-badge {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      font-size: 12px;
       font-weight: 700;
-      color: #d97706;
-    }
-
-    .eta-sub {
-      font-size: 13px;
-      color: #aaa;
-      margin-top: 2px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 6px;
     }
 
     .detail-row {
@@ -82,7 +67,6 @@
     }
 
     .detail-row:last-child { border-bottom: none; }
-
     .detail-label { color: #888; font-size: 13px; }
     .detail-value { color: #1a1a1a; font-weight: 500; text-align: right; max-width: 60%; }
 
@@ -102,27 +86,15 @@
       padding: 60px 20px;
     }
 
-    .delivered-screen .tick {
-      font-size: 64px;
-      margin-bottom: 16px;
-    }
-
-    .delivered-screen h2 {
-      font-size: 24px;
-      color: #166534;
-      margin-bottom: 8px;
-    }
-
-    .delivered-screen p {
-      color: #888;
-      font-size: 15px;
-    }
+    .delivered-screen .tick { font-size: 64px; margin-bottom: 16px; }
+    .delivered-screen h2 { font-size: 24px; color: #166534; margin-bottom: 8px; }
+    .delivered-screen p { color: #888; font-size: 15px; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <div class="logo">Drova</div>
+    <div class="logo">DROVA</div>
     <div class="job-tag">Live Tracking</div>
   </div>
 
@@ -133,6 +105,7 @@
         <div class="eta-label">Estimated Arrival</div>
         <div class="eta-value" id="etaDisplay">--:--</div>
         <div class="eta-sub" id="etaSub">Calculating...</div>
+        <div class="live-badge" id="liveBadge" style="display:none">● LIVE GPS</div>
       </div>
       <div class="detail-row">
         <span class="detail-label">Driver</span>
@@ -167,7 +140,6 @@
   <script>
     const jobId = window.location.pathname.split('/').pop();
 
-    // Truck emoji icon for the map
     const truckIcon = L.divIcon({
       html: '🚛',
       className: '',
@@ -180,14 +152,12 @@
       attribution: '© OpenStreetMap contributors'
     }).addTo(map);
 
-    // Simulated route: a straight line from pickup to delivery
-    // We'll use placeholder coords and animate along them
-    let routeCoords = [];
     let truckMarker = null;
-    let step = 0;
-    let totalSteps = 120; // ~2 minute journey at 1 step/sec
+    let routeCoords = [];
+    let simStep = 0;
+    let simInterval = null;
+    let usingLiveGPS = false;
     let etaSeconds = 0;
-    let intervalId = null;
 
     async function geocode(address) {
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=au&limit=1`;
@@ -202,52 +172,10 @@
       const res = await fetch(url);
       const data = await res.json();
       if (data.code !== 'Ok') return null;
-      return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-    }
-
-    async function loadJob() {
-      const res = await fetch(`/jobs/${jobId}`);
-      if (!res.ok) {
-        document.body.innerHTML = '<p style="padding:40px;color:#888;">Job not found.</p>';
-        return;
-      }
-      const job = await res.json();
-
-      if (job.status === 'complete') {
-        showDelivered();
-        return;
-      }
-
-      document.getElementById('driverName').textContent = job.driverName;
-      document.getElementById('loadDetails').textContent = job.loadDetails;
-      document.getElementById('pickupAddress').textContent = job.pickupAddress;
-      document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
-      document.getElementById('etaSub').textContent = 'Loading route...';
-
-      // Use stored coords if available, otherwise geocode
-      let pickup = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
-      let delivery = (job.deliveryLat && job.deliveryLng) ? [job.deliveryLat, job.deliveryLng] : await geocode(job.deliveryAddress);
-      if (!pickup) pickup = [-32.2569, 148.6011];
-      if (!delivery) delivery = [-33.2832, 149.1000];
-
-      // Get road route, fall back to straight line if it fails
-      let coords = await getRoadRoute(pickup, delivery);
-      if (!coords || coords.length < 2) {
-        coords = [pickup, delivery];
-      }
-
-      // Spread route across totalSteps for smooth animation
-      routeCoords = resample(coords, totalSteps);
-      etaSeconds = totalSteps;
-
-      L.marker(pickup).addTo(map).bindPopup('Pickup').openPopup();
-      L.marker(delivery).addTo(map).bindPopup('Delivery');
-      L.polyline(routeCoords, { color: '#d97706', weight: 4, opacity: 0.6 }).addTo(map);
-
-      truckMarker = L.marker(routeCoords[0], { icon: truckIcon }).addTo(map);
-      map.fitBounds(L.polyline(routeCoords).getBounds(), { padding: [40, 40] });
-
-      startAnimation();
+      return {
+        coords: data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]),
+        durationSecs: data.routes[0].duration
+      };
     }
 
     function resample(coords, steps) {
@@ -263,32 +191,121 @@
       return result;
     }
 
-    function startAnimation() {
-      updateEta();
-      intervalId = setInterval(() => {
-        step++;
-        etaSeconds--;
+    function updateEtaDisplay(secs) {
+      if (secs <= 0) {
+        document.getElementById('etaDisplay').textContent = 'Arrived';
+        document.getElementById('etaSub').textContent = 'Awaiting confirmation';
+        return;
+      }
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      if (h > 0) {
+        document.getElementById('etaDisplay').textContent = `${h}h ${m}m`;
+      } else {
+        document.getElementById('etaDisplay').textContent = `${m} min`;
+      }
+      document.getElementById('etaSub').textContent = 'estimated arrival';
+    }
 
-        if (step >= totalSteps) {
-          truckMarker.setLatLng(routeCoords[routeCoords.length - 1]);
-          clearInterval(intervalId);
-          document.getElementById('etaDisplay').textContent = 'Arrived';
-          document.getElementById('etaSub').textContent = 'Awaiting confirmation';
+    function moveTruckTo(latlng) {
+      if (!truckMarker) {
+        truckMarker = L.marker(latlng, { icon: truckIcon }).addTo(map);
+      } else {
+        truckMarker.setLatLng(latlng);
+      }
+      map.panTo(latlng);
+    }
+
+    async function loadJob() {
+      const res = await fetch(`/jobs/${jobId}`);
+      if (!res.ok) {
+        document.body.innerHTML = '<p style="padding:40px;color:#888;">Job not found.</p>';
+        return;
+      }
+      const job = await res.json();
+
+      if (job.status === 'complete') { showDelivered(); return; }
+
+      document.getElementById('driverName').textContent = job.driverName;
+      document.getElementById('loadDetails').textContent = job.loadDetails;
+      document.getElementById('pickupAddress').textContent = job.pickupAddress;
+      document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
+      document.getElementById('etaSub').textContent = 'Loading route...';
+
+      let pickup = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
+      let delivery = (job.deliveryLat && job.deliveryLng) ? [job.deliveryLat, job.deliveryLng] : await geocode(job.deliveryAddress);
+      if (!pickup) pickup = [-32.2569, 148.6011];
+      if (!delivery) delivery = [-33.2832, 149.1000];
+
+      const route = await getRoadRoute(pickup, delivery);
+      let rawCoords = (route && route.coords.length >= 2) ? route.coords : [pickup, delivery];
+      etaSeconds = route ? Math.round(route.durationSecs) : 7200;
+
+      const totalSteps = 240;
+      routeCoords = resample(rawCoords, totalSteps);
+
+      L.marker(pickup).addTo(map).bindPopup('Pickup');
+      L.marker(delivery).addTo(map).bindPopup('Delivery');
+      L.polyline(routeCoords, { color: '#d97706', weight: 4, opacity: 0.6 }).addTo(map);
+      map.fitBounds(L.polyline(routeCoords).getBounds(), { padding: [40, 40] });
+
+      // If driver has real GPS, use it; otherwise simulate
+      if (job.currentLat && job.currentLng) {
+        startLiveTracking(job, delivery);
+      } else {
+        startSimulation(totalSteps);
+      }
+    }
+
+    function startSimulation(totalSteps) {
+      updateEtaDisplay(etaSeconds);
+      moveTruckTo(routeCoords[0]);
+
+      simInterval = setInterval(() => {
+        simStep++;
+        etaSeconds = Math.max(0, etaSeconds - 1);
+        if (simStep >= totalSteps) {
+          clearInterval(simInterval);
+          moveTruckTo(routeCoords[routeCoords.length - 1]);
+          updateEtaDisplay(0);
           return;
         }
-
-        truckMarker.setLatLng(routeCoords[step]);
-        map.panTo(routeCoords[step]);
-        updateEta();
+        moveTruckTo(routeCoords[simStep]);
+        updateEtaDisplay(etaSeconds);
       }, 1000);
     }
 
-    function updateEta() {
-      const mins = Math.floor(etaSeconds / 60);
-      const secs = etaSeconds % 60;
-      document.getElementById('etaDisplay').textContent =
-        `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-      document.getElementById('etaSub').textContent = 'minutes remaining';
+    function startLiveTracking(job, delivery) {
+      usingLiveGPS = true;
+      document.getElementById('liveBadge').style.display = 'inline-block';
+
+      if (simInterval) { clearInterval(simInterval); simInterval = null; }
+
+      // Poll server every 5 seconds for driver location
+      async function poll() {
+        const res = await fetch(`/jobs/${jobId}`);
+        const j = await res.json();
+
+        if (j.status === 'complete') { showDelivered(); return; }
+
+        if (j.currentLat && j.currentLng) {
+          const pos = [j.currentLat, j.currentLng];
+          moveTruckTo(pos);
+
+          // Rough ETA: straight-line distance at ~80km/h
+          const dlat = delivery[0] - j.currentLat;
+          const dlng = delivery[1] - j.currentLng;
+          const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
+          etaSeconds = Math.round(distKm / 80 * 3600);
+          updateEtaDisplay(etaSeconds);
+        }
+
+        setTimeout(poll, 5000);
+      }
+
+      moveTruckTo([job.currentLat, job.currentLng]);
+      updateEtaDisplay(etaSeconds);
+      setTimeout(poll, 5000);
     }
 
     function showDelivered() {

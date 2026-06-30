@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drova — Driver</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .logo { font-size: 28px; font-weight: 800; color: #f59e0b; margin-bottom: 8px; }
+    .subtitle { font-size: 14px; color: #666; margin-bottom: 40px; }
+
+    .status-circle {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background: #2a2a2a;
+      border: 4px solid #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 32px;
+      transition: border-color 0.4s, background 0.4s;
+    }
+
+    .status-circle.active {
+      border-color: #16a34a;
+      background: #052e16;
+      animation: pulse 2s infinite;
+    }
+
+    .status-circle.error {
+      border-color: #dc2626;
+      background: #2a0a0a;
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
+      50% { box-shadow: 0 0 0 16px rgba(22, 163, 74, 0); }
+    }
+
+    .status-icon { font-size: 40px; margin-bottom: 4px; }
+    .status-text { font-size: 13px; color: #aaa; font-weight: 600; }
+    .status-circle.active .status-text { color: #86efac; }
+    .status-circle.error .status-text { color: #fca5a5; }
+
+    .job-info {
+      background: #242424;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 360px;
+      margin-bottom: 24px;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #2e2e2e;
+      font-size: 14px;
+    }
+
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #666; }
+    .info-value { color: #eee; font-weight: 500; text-align: right; max-width: 60%; }
+
+    .start-btn {
+      width: 100%;
+      max-width: 360px;
+      padding: 18px;
+      background: #16a34a;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .start-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
+    .coords {
+      margin-top: 16px;
+      font-size: 12px;
+      color: #444;
+    }
+
+    .tip {
+      margin-top: 20px;
+      font-size: 13px;
+      color: #555;
+      max-width: 320px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="logo">DROVA</div>
+  <div class="subtitle">Driver Tracking</div>
+
+  <div class="status-circle" id="statusCircle">
+    <div class="status-icon">📍</div>
+    <div class="status-text" id="statusText">Not Started</div>
+  </div>
+
+  <div class="job-info" id="jobInfo">
+    <div class="info-row">
+      <span class="info-label">Driver</span>
+      <span class="info-value" id="driverName">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Load</span>
+      <span class="info-value" id="loadDetails">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Delivering to</span>
+      <span class="info-value" id="deliveryAddress">—</span>
+    </div>
+  </div>
+
+  <button class="start-btn" id="startBtn" onclick="startTracking()" disabled>
+    Start Sharing Location
+  </button>
+
+  <div class="coords" id="coords"></div>
+
+  <div class="tip">Keep this page open while driving. Your location will update automatically.</div>
+
+  <script>
+    const jobId = window.location.pathname.split('/').pop();
+    let watchId = null;
+
+    async function loadJob() {
+      const res = await fetch(`/jobs/${jobId}`);
+      if (!res.ok) {
+        document.getElementById('statusText').textContent = 'Job not found';
+        document.getElementById('statusCircle').classList.add('error');
+        return;
+      }
+      const job = await res.json();
+      document.getElementById('driverName').textContent = job.driverName;
+      document.getElementById('loadDetails').textContent = job.loadDetails;
+      document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
+      document.getElementById('startBtn').disabled = false;
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) {
+        alert('Your device does not support GPS tracking.');
+        return;
+      }
+
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('startBtn').textContent = 'Sharing Location...';
+      document.getElementById('statusText').textContent = 'Getting GPS...';
+
+      watchId = navigator.geolocation.watchPosition(
+        (pos) => {
+          const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+
+          fetch(`/jobs/${jobId}/location`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lat, lng })
+          });
+
+          document.getElementById('statusCircle').classList.add('active');
+          document.getElementById('statusCircle').classList.remove('error');
+          document.getElementById('statusText').textContent = 'Live';
+          document.getElementById('coords').textContent =
+            `${lat.toFixed(5)}, ${lng.toFixed(5)} · ±${Math.round(accuracy)}m`;
+        },
+        (err) => {
+          document.getElementById('statusCircle').classList.add('error');
+          document.getElementById('statusText').textContent = 'GPS Error';
+          document.getElementById('coords').textContent = err.message;
+        },
+        { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+      );
+    }
+
+    loadJob();
+  </script>
+</body>
+</html>

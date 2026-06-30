@@ -19,6 +19,8 @@ db.exec(`
     pickupLng REAL,
     deliveryLat REAL,
     deliveryLng REAL,
+    currentLat REAL,
+    currentLng REAL,
     driverName TEXT,
     loadDetails TEXT,
     status TEXT DEFAULT 'active',
@@ -47,6 +49,7 @@ app.post('/jobs', async (req, res) => {
   `).run(id, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails);
 
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
+  const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
 
   try {
     await twilioClient.messages.create({
@@ -59,7 +62,7 @@ app.post('/jobs', async (req, res) => {
     console.error('SMS failed:', err.message);
   }
 
-  res.json({ id });
+  res.json({ id, driverUrl });
 });
 
 // Serve the dispatcher dashboard
@@ -67,15 +70,15 @@ app.get('/dispatcher', (req, res) => {
   res.sendFile(__dirname + '/public/dispatcher.html');
 });
 
+// Serve the driver GPS page
+app.get('/drive/:id', (req, res) => {
+  res.sendFile(__dirname + '/public/drive.html');
+});
+
 // List all active jobs
 app.get('/jobs', (req, res) => {
   const jobs = db.prepare("SELECT * FROM jobs WHERE status = 'active' ORDER BY createdAt DESC").all();
   res.json(jobs);
-});
-
-// Serve the tracking page
-app.get('/track/:id', (req, res) => {
-  res.sendFile(__dirname + '/public/track.html');
 });
 
 // Get a job by id
@@ -85,13 +88,20 @@ app.get('/jobs/:id', (req, res) => {
   res.json(job);
 });
 
+// Driver updates their GPS location
+app.post('/jobs/:id/location', (req, res) => {
+  const { lat, lng } = req.body;
+  db.prepare('UPDATE jobs SET currentLat = ?, currentLng = ? WHERE id = ?').run(lat, lng, req.params.id);
+  res.json({ success: true });
+});
+
 // Mark a job as complete
 app.post('/jobs/:id/complete', (req, res) => {
   db.prepare('UPDATE jobs SET status = ? WHERE id = ?').run('complete', req.params.id);
   res.json({ success: true });
 });
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Drova server running at http://localhost:${PORT}`);
 });

@@ -106,12 +106,61 @@
       max-width: 320px;
       line-height: 1.5;
     }
+
+    .steps {
+      margin-bottom: 28px;
+      width: 100%;
+      max-width: 360px;
+      text-align: left;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #2a2a2a;
+      font-size: 13px;
+      color: #888;
+      line-height: 1.4;
+    }
+
+    .step:last-child { border-bottom: none; }
+
+    .step-num {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #2a2a2a;
+      color: #f59e0b;
+      font-size: 11px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .wake-badge {
+      display: none;
+      margin-top: 12px;
+      font-size: 11px;
+      color: #16a34a;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
 
   <div class="logo">DROVA</div>
   <div class="subtitle">Driver Tracking</div>
+
+  <div class="steps" id="stepsSection">
+    <div class="step"><div class="step-num">1</div><span>Tap <strong style="color:#eee">Start Sharing Location</strong> below</span></div>
+    <div class="step"><div class="step-num">2</div><span>When prompted, tap <strong style="color:#eee">Allow</strong> to give location access</span></div>
+    <div class="step"><div class="step-num">3</div><span>Keep this page open on your screen while driving — don't close the browser</span></div>
+  </div>
 
   <div class="status-circle" id="statusCircle">
     <div class="status-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
@@ -138,12 +187,29 @@
   </button>
 
   <div class="coords" id="coords"></div>
+  <div class="wake-badge" id="wakeBadge">Screen will stay on while tracking</div>
 
-  <div class="tip">Keep this page open while driving. Your location will update automatically.</div>
+  <div class="tip">Your location updates every few seconds. If GPS signal is lost, it will reconnect automatically.</div>
 
   <script>
     const jobId = window.location.pathname.split('/').pop();
     let watchId = null;
+    let wakeLock = null;
+
+    async function requestWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          document.getElementById('wakeBadge').style.display = 'block';
+        } catch(e) {}
+      }
+    }
+
+    document.addEventListener('visibilitychange', async () => {
+      if (wakeLock !== null && document.visibilityState === 'visible') {
+        await requestWakeLock();
+      }
+    });
 
     async function loadJob() {
       const res = await fetch(`/jobs/${jobId}`);
@@ -168,6 +234,8 @@
       document.getElementById('startBtn').disabled = true;
       document.getElementById('startBtn').textContent = 'Sharing Location...';
       document.getElementById('statusText').textContent = 'Getting GPS...';
+      document.getElementById('stepsSection').style.display = 'none';
+      requestWakeLock();
 
       watchId = navigator.geolocation.watchPosition(
         (pos) => {

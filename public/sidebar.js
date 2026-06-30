@@ -11,18 +11,22 @@ const ICONS = {
 function renderSidebar(active) {
   const nav = [
     { id: 'dispatcher', icon: ICONS.truck,     label: 'Active Jobs',  href: '/dispatcher' },
-    { id: 'history',    icon: ICONS.clipboard,  label: 'Job History',  href: '/history' },
-    { id: 'drivers',    icon: ICONS.user,       label: 'Drivers',      href: '/drivers' },
-    { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
-    { id: 'locations',  icon: ICONS.mappin,     label: 'Locations',    href: '/locations' },
+    { id: 'history',    icon: ICONS.clipboard,  label: 'History',      href: '/history' },
     { id: 'new',        icon: ICONS.plus,       label: 'New Job',      href: '/' },
+    { id: 'drivers',    icon: ICONS.user,       label: 'Drivers',      href: '/drivers' },
+    { id: 'locations',  icon: ICONS.mappin,     label: 'Locations',    href: '/locations' },
+  ];
+
+  const allNav = [
+    ...nav,
+    { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
   ];
 
   return `
     <aside class="sidebar">
       <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>
       <nav class="sidebar-nav">
-        ${nav.map(n => `
+        ${allNav.map(n => `
           <a class="nav-item${active === n.id ? ' active' : ''}" href="${n.href}">
             <span class="nav-icon">${n.icon}</span>${n.label}
           </a>`).join('')}
@@ -34,7 +38,14 @@ function renderSidebar(active) {
           <div class="user-role">Drova Demo</div>
         </div>
       </div>
-    </aside>`;
+    </aside>
+    <nav class="bottom-nav">
+      ${nav.map(n => `
+        <a class="bottom-nav-item${active === n.id ? ' active' : ''}" href="${n.href}">
+          <span class="bottom-nav-icon">${n.icon}</span>
+          <span class="bottom-nav-label">${n.label}</span>
+        </a>`).join('')}
+    </nav>`;
 }
 
 const SIDEBAR_CSS = `
@@ -70,5 +81,24 @@ const SIDEBAR_CSS = `
   }
   .user-name { font-size: 13px; font-weight: 600; color: white; }
   .user-role { font-size: 11px; color: #555; }
-  @media (max-width: 768px) { .sidebar { display: none; } }
+  .bottom-nav { display: none; }
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .bottom-nav {
+      display: flex; position: fixed; bottom: 0; left: 0; right: 0;
+      background: #1a1a1a; border-top: 1px solid #2a2a2a;
+      z-index: 100; padding-bottom: env(safe-area-inset-bottom);
+    }
+    .bottom-nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      justify-content: center; padding: 10px 4px 8px; gap: 4px;
+      text-decoration: none; color: #555; transition: color 0.15s;
+    }
+    .bottom-nav-item.active { color: #f59e0b; }
+    .bottom-nav-item:hover { color: #ccc; }
+    .bottom-nav-icon { display: flex; }
+    .bottom-nav-icon svg { width: 22px; height: 22px; }
+    .bottom-nav-label { font-size: 10px; font-weight: 600; }
+    .bottom-nav-item.active .bottom-nav-icon svg { stroke: #f59e0b; }
+  }
 `;

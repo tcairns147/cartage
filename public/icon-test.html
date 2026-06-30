@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><style>
+body { background: #f5f0e8; display: flex; gap: 24px; padding: 40px; flex-wrap: wrap; font-family: sans-serif; align-items: flex-start; }
+.item { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12px; color: #555; font-weight: 600; }
+.circle { width: 52px; height: 52px; border-radius: 50%; background: #f59e0b; display: flex; align-items: center; justify-content: center; }
+</style></head>
+<body>
+
+<div class="item">
+  <div class="circle">
+    <!-- CATTLE: front-facing cow face, wide horns curving up-out, round head, side ears, snout -->
+    <svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+      <!-- left horn curves up-left -->
+      <path d="M16 20 Q4 10 10 2" stroke="black" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <!-- right horn curves up-right -->
+      <path d="M44 20 Q56 10 50 2" stroke="black" stroke-width="6" fill="none" stroke-linecap="round"/>
+      <!-- left ear -->
+      <ellipse cx="7" cy="30" rx="7" ry="9" fill="black"/>
+      <!-- right ear -->
+      <ellipse cx="53" cy="30" rx="7" ry="9" fill="black"/>
+      <!-- head -->
+      <circle cx="30" cy="34" r="21" fill="black"/>
+      <!-- snout -->
+      <ellipse cx="30" cy="47" rx="12" ry="8" fill="#2a2a2a"/>
+      <!-- nostrils -->
+      <circle cx="25" cy="47" r="2.5" fill="white" opacity="0.5"/>
+      <circle cx="35" cy="47" r="2.5" fill="white" opacity="0.5"/>
+    </svg>
+  </div>
+  Cattle
+</div>
+
+<div class="item">
+  <div class="circle">
+    <!-- SHEEP: fluffy wool crown of large bumps, small oval face poking out below, floppy ears -->
+    <svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+      <!-- wool bumps - larger to be visible -->
+      <circle cx="6" cy="24" r="11" fill="black"/>
+      <circle cx="18" cy="8" r="11" fill="black"/>
+      <circle cx="32" cy="4" r="11" fill="black"/>
+      <circle cx="46" cy="8" r="11" fill="black"/>
+      <circle cx="54" cy="24" r="11" fill="black"/>
+      <!-- floppy side ears -->
+      <ellipse cx="8" cy="42" rx="8" ry="12" fill="black" transform="rotate(12,8,42)"/>
+      <ellipse cx="52" cy="42" rx="8" ry="12" fill="black" transform="rotate(-12,52,42)"/>
+      <!-- small oval face -->
+      <ellipse cx="30" cy="42" rx="16" ry="14" fill="black"/>
+      <!-- snout -->
+      <ellipse cx="30" cy="52" rx="9" ry="6" fill="#2a2a2a"/>
+      <circle cx="26" cy="52" r="2" fill="white" opacity="0.45"/>
+      <circle cx="34" cy="52" r="2" fill="white" opacity="0.45"/>
+    </svg>
+  </div>
+  Sheep
+</div>
+
+<div class="item">
+  <div class="circle">
+    <!-- HORSE: front-facing, long oval face, two pointed ears, large eyes, two nostrils -->
+    <svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+      <!-- mane / forelock at top -->
+      <ellipse cx="30" cy="7" rx="14" ry="8" fill="black"/>
+      <!-- two pointed ears -->
+      <polygon points="18,14 13,2 24,11" fill="black"/>
+      <polygon points="42,14 47,2 36,11" fill="black"/>
+      <!-- long oval face -->
+      <ellipse cx="30" cy="34" rx="17" ry="24" fill="black"/>
+      <!-- nostrils at bottom -->
+      <ellipse cx="24" cy="51" rx="4" ry="3" fill="#2a2a2a"/>
+      <ellipse cx="36" cy="51" rx="4" ry="3" fill="#2a2a2a"/>
+      <!-- eyes -->
+      <circle cx="21" cy="28" r="3.5" fill="white" opacity="0.3"/>
+      <circle cx="39" cy="28" r="3.5" fill="white" opacity="0.3"/>
+    </svg>
+  </div>
+  Horse
+</div>
+
+<div class="item">
+  <div class="circle">
+    <!-- PIG: round head, large round ears flopped forward, big disc snout -->
+    <svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="12" cy="18" rx="10" ry="13" fill="black" transform="rotate(15,12,18)"/>
+      <ellipse cx="48" cy="18" rx="10" ry="13" fill="black" transform="rotate(-15,48,18)"/>
+      <circle cx="30" cy="33" r="23" fill="black"/>
+      <circle cx="30" cy="47" r="11" fill="#2a2a2a"/>
+      <circle cx="24" cy="47" r="3.5" fill="white" opacity="0.45"/>
+      <circle cx="36" cy="47" r="3.5" fill="white" opacity="0.45"/>
+    </svg>
+  </div>
+  Pig
+</div>
+
+<div class="item">
+  <div class="circle">
+    <!-- HAY: square bale with horizontal stalks and vertical binding straps -->
+    <svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+      <!-- bale body -->
+      <rect x="5" y="12" width="50" height="36" rx="5" fill="black"/>
+      <!-- horizontal hay lines -->
+      <rect x="5" y="19" width="50" height="3" rx="1.5" fill="white" opacity="0.45"/>
+      <rect x="5" y="27" width="50" height="3" rx="1.5" fill="white" opacity="0.45"/>
+      <rect x="5" y="35" width="50" height="3" rx="1.5" fill="white" opacity="0.45"/>
+      <!-- vertical binding straps -->
+      <rect x="19" y="12" width="5" height="36" rx="2" fill="white" opacity="0.55"/>
+      <rect x="36" y="12" width="5" height="36" rx="2" fill="white" opacity="0.55"/>
+    </svg>
+  </div>
+  Hay
+</div>
+
+<div class="item">
+  <div class="circle">
+    <!-- FREIGHT: side-view truck -->
+    <svg viewBox="0 0 60 60" width="32" height="32" xmlns="http://www.w3.org/2000/svg">
+      <rect x="2" y="18" width="36" height="26" rx="3" fill="black"/>
+      <rect x="36" y="26" width="20" height="18" rx="3" fill="black"/>
+      <rect x="38" y="29" width="14" height="10" rx="2" fill="white" opacity="0.3"/>
+      <circle cx="12" cy="46" r="7" fill="black"/><circle cx="12" cy="46" r="3.5" fill="white" opacity="0.4"/>
+      <circle cx="30" cy="46" r="7" fill="black"/><circle cx="30" cy="46" r="3.5" fill="white" opacity="0.4"/>
+      <circle cx="48" cy="46" r="7" fill="black"/><circle cx="48" cy="46" r="3.5" fill="white" opacity="0.4"/>
+    </svg>
+  </div>
+  Freight
+</div>
+
+</body>
+</html>

@@ -55,10 +55,10 @@ const SIDEBAR_CSS = `
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
   }
   .sidebar-logo {
-    padding: 24px 20px; border-bottom: 1px solid #2a2a2a;
+    padding: 22px 16px; border-bottom: 1px solid #2a2a2a;
   }
   .sidebar-logo img {
-    height: 30px; display: block; filter: brightness(0) invert(1);
+    height: 44px; display: block; filter: brightness(0) invert(1); width: 100%; object-fit: contain; object-position: left;
   }
   .sidebar-nav { padding: 16px 0; flex: 1; }
   .nav-item {

@@ -27,7 +27,7 @@
     .job-inner { display: grid; grid-template-columns: 200px 1fr 1fr 140px; align-items: center; padding: 20px 24px; gap: 24px; }
 
     .load-col { display: flex; align-items: center; gap: 12px; }
-    .load-icon { width: 48px; height: 48px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+    .load-icon { width: 48px; height: 48px; border-radius: 50%; background: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
     .load-id { font-size: 11px; color: #bbb; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 3px; }
     .load-name { font-size: 16px; font-weight: 800; color: #1a1a1a; margin-bottom: 5px; }
     .in-transit { display: inline-flex; align-items: center; gap: 4px; background: #dcfce7; color: #166534; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 20px; }
@@ -77,8 +77,24 @@
     document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
 
     function initials(name) { return name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(); }
-    function loadIcon() {
-      return `<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>`;
+    const LOAD_ICONS = {
+      cattle: `<svg viewBox="0 0 48 48" width="26" height="26" xmlns="http://www.w3.org/2000/svg"><path fill="black" d="M8 14c0-1 .5-2 1.5-2.5L11 11V9l2-1h2l1 1.5c1-.3 2-.5 3-.5h4c1 0 2 .2 3 .5L27 9h2l2 1v2l1.5.5C33.5 12 34 13 34 14v3c0 1-.4 2-1 2.5V22l1 1v5l-1 1h-2l-1-1v-2h-8v2l-1 1h-2l-1-1v-5l1-1v-2.5C18.4 19 18 18 18 17v-1h-2v1c0 1-.4 2-1 2.5V22l1 1v5l-1 1h-2l-1-1v-5l1-1v-2.5C12.4 19 12 18 12 17v-1H9c-.6 0-1-.4-1-1v-1z"/></svg>`,
+      sheep: `<svg viewBox="0 0 48 48" width="26" height="26" xmlns="http://www.w3.org/2000/svg"><path fill="black" d="M24 8c-7 0-12 4-12 9 0 2 .8 3.8 2 5l-1 1.5V26l1 1v4l-1 1H11l-1-1v-4l1-1v-1.5C9.8 23 9 21 9 19c0-.5.1-1 .2-1.5A4 4 0 0 1 7 14a4 4 0 0 1 4-4c.4 0 .8 0 1.2.2C14 8.8 18.7 8 24 8s10 .8 11.8 2.2c.4-.2.8-.2 1.2-.2a4 4 0 0 1 4 4 4 4 0 0 1-2.2 3.5c.1.5.2 1 .2 1.5 0 2-.8 4-2 5.5V26l1 1v4l-1 1h-2l-1-1v-4l1-1v-1.5c-1.2-1.2-2-3-2-5 0-5-4-9-12-9z"/></svg>`,
+      horse: `<svg viewBox="0 0 48 48" width="26" height="26" xmlns="http://www.w3.org/2000/svg"><path fill="black" d="M32 7l-2 1-1 2h-2c-2 0-4 .5-5.5 1.5C19 13 17 16 17 20v2l-3 1v3l-1 1v5l1 1h2l1-1v-5h2v5l1 1h2l1-1v-5l-1-2v-1c1 .3 2 .5 3 .5 4 0 7-2 8.5-5l.5-1.5 2-.5 1-2-1-1-1 .5V14l1-3-1-2-1-2z"/></svg>`,
+      pig: `<svg viewBox="0 0 48 48" width="26" height="26" xmlns="http://www.w3.org/2000/svg"><path fill="black" d="M36 18c0-6-5.4-10-12-10S12 12 12 18c0 3 1.3 5.7 3.5 7.5L14 27v5l1 1h3l1-1v-3h2v3l1 1h3l1-1v-5l-1.5-1.5C26.7 23.7 28 21 28 18h2c1 0 2-.4 2.5-1l.5-1h2l1-1v-2l-1-1h-1.5C32.9 11.3 33 10.2 33 10l-1-1-2 1c-.7-.7-1.5-1.3-2.5-1.7C29.3 9.8 30 11.3 30 13c0 .3 0 .7-.1 1H18c-.1-.3-.1-.7-.1-1 0-1.5.7-3 1.8-3.7-1 .4-1.8 1-2.5 1.7l-2-1-1 1c0 .2.1 1.3.5 2.3H13l-1 1v2l1 1h2l.5 1c.5.6 1.5 1 2.5 1h2c0 3 1.3 5.7 3.5 7.5z"/></svg>`,
+      hay: `<svg viewBox="0 0 48 48" width="26" height="26" xmlns="http://www.w3.org/2000/svg"><path fill="black" d="M24 8l-2 4-4-1 2 4-4 1 4 2-1 4 3-2 2 4 2-4 3 2-1-4 4-2-4-1 2-4-4 1zM12 26h24v3H12zM14 31h20v3H14zM16 36h16v4H16z"/></svg>`,
+      freight: `<svg viewBox="0 0 48 48" width="26" height="26" xmlns="http://www.w3.org/2000/svg"><path fill="black" d="M8 16l16-8 16 8v18l-16 6-16-6V16zm16-4L10 18l14 6 14-6-14-6zm-15 8v14l14 5V26L9 20zm30 0l-15 6v13l15-5V20z"/></svg>`,
+    };
+
+    function loadIcon(load) {
+      const l = load.toLowerCase();
+      let key = 'freight';
+      if (l.includes('cattle') || l.includes('cow') || l.includes('bull') || l.includes('beef') || l.includes('hd')) key = 'cattle';
+      else if (l.includes('sheep') || l.includes('lamb') || l.includes('ewe')) key = 'sheep';
+      else if (l.includes('horse') || l.includes('mare') || l.includes('stallion') || l.includes('foal')) key = 'horse';
+      else if (l.includes('pig') || l.includes('pork') || l.includes('sow')) key = 'pig';
+      else if (l.includes('hay') || l.includes('grain') || l.includes('wheat') || l.includes('straw')) key = 'hay';
+      return LOAD_ICONS[key];
     }
     function timeAgo(str) {
       const diff = Math.floor((Date.now() - new Date(str + 'Z')) / 60000);

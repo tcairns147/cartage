@@ -161,7 +161,7 @@
           <div class="eta-value" id="etaDisplay">--</div>
           <div class="eta-sub" id="etaSub">Calculating route...</div>
         </div>
-        <div class="eta-truck">🚛</div>
+        <div class="eta-truck"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
       </div>
 
       <div class="divider"></div>
@@ -177,7 +177,7 @@
       </div>
 
       <div class="detail-row">
-        <div class="detail-icon">📍</div>
+        <div class="detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
         <div>
           <div class="detail-label">Pickup</div>
           <div class="detail-value" id="pickupAddress">—</div>
@@ -185,7 +185,7 @@
       </div>
 
       <div class="detail-row">
-        <div class="detail-icon">🏁</div>
+        <div class="detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
         <div>
           <div class="detail-label">Delivering to</div>
           <div class="detail-value" id="deliveryAddress">—</div>
@@ -195,7 +195,7 @@
   </div>
 
   <div class="delivered-screen" id="deliveredScreen">
-    <div class="tick">✅</div>
+    <div class="tick"><svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg></div>
     <h2>Delivered!</h2>
     <p>Your load has been delivered successfully.<br>Thank you for using Drova.</p>
   </div>
@@ -204,7 +204,7 @@
   <script>
     const jobId = window.location.pathname.split('/').pop();
 
-    const truckIcon = L.divIcon({ html: '🚛', className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
+    const truckIcon = L.divIcon({ html: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#f59e0b" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
 
     const map = L.map('map', { zoomControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);

@@ -64,7 +64,7 @@
       const card = document.getElementById('clientsCard');
 
       if (!clients.length) {
-        card.innerHTML = `<div class="empty"><div class="empty-icon">🤝</div><h3>No clients yet</h3><p>Clients appear here automatically once you create jobs.</p></div>`;
+        card.innerHTML = `<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.85"/></svg></div><h3>No clients yet</h3><p>Clients appear here automatically once you create jobs.</p></div>`;
         return;
       }
 
@@ -76,7 +76,7 @@
               <tr>
                 <td>
                   <div class="client-cell">
-                    <div class="avatar">🤝</div>
+                    <div class="avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a6fa8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
                     <div>
                       <div class="client-name">${c.customerName || 'Unknown'}</div>
                       <div class="client-mobile">${c.customerMobile}</div>

@@ -64,7 +64,7 @@
         <h1>Drivers</h1>
         <p>Manage your driver roster</p>
       </div>
-      <button class="add-btn" onclick="openModal()">＋ Add Driver</button>
+      <button class="add-btn" onclick="openModal()">+ Add Driver</button>
     </div>
     <div class="content">
       <div class="card" id="driversCard"><div style="padding:40px;text-align:center;color:#aaa;">Loading...</div></div>
@@ -75,7 +75,7 @@
     <div class="modal">
       <div class="modal-header">
         <h3>Add Driver</h3>
-        <button class="modal-close" onclick="closeModal()">✕</button>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
       </div>
       <div class="modal-body">
         <div class="field"><label>Full Name</label><input type="text" id="dName" placeholder="e.g. Mick Thompson"></div>
@@ -111,7 +111,7 @@
       const card = document.getElementById('driversCard');
 
       if (!drivers.length) {
-        card.innerHTML = `<div class="empty"><div class="empty-icon">👤</div><h3>No drivers yet</h3><p>Add your first driver to get started.</p></div>`;
+        card.innerHTML = `<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div><h3>No drivers yet</h3><p>Add your first driver to get started.</p></div>`;
         return;
       }
 
@@ -132,7 +132,7 @@
                 </td>
                 <td>${d.licenceClass || '—'}</td>
                 <td>${d.status === 'on-job' ? '<span class="badge-onjob">On Job</span>' : '<span class="badge-available">Available</span>'}</td>
-                <td><button class="delete-btn" onclick="deleteDriver(${d.id})">✕</button></td>
+                <td><button class="delete-btn" onclick="deleteDriver(${d.id})">&#x2715;</button></td>
               </tr>`).join('')}
           </tbody>
         </table>`;

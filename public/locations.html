@@ -83,7 +83,7 @@
         <div class="section-label">Or drop a pin</div>
         <div class="map-tip">Tap the map to pin the exact location</div>
         <div id="addMap"></div>
-        <div class="pinned-note" id="pinnedNote">📍 Location pinned</div>
+        <div class="pinned-note" id="pinnedNote">Location pinned</div>
         <button class="save-btn" onclick="saveLocation()">Save Location</button>
       </div>
     </div>
@@ -130,7 +130,7 @@
       const locs = await res.json();
       const card = document.getElementById('locsCard');
       if (!locs.length) {
-        card.innerHTML = `<div class="empty"><div class="empty-icon">📍</div><h3>No saved locations</h3><p>Save farms, saleyards and depots for quick access when creating jobs.</p></div>`;
+        card.innerHTML = `<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div><h3>No saved locations</h3><p>Save farms, saleyards and depots for quick access when creating jobs.</p></div>`;
         return;
       }
       card.innerHTML = `
@@ -144,7 +144,7 @@
                   <div class="loc-address">${l.address}</div>
                 </td>
                 <td><span class="type-badge type-${l.type}">${l.type.charAt(0).toUpperCase() + l.type.slice(1)}</span></td>
-                <td><button class="delete-btn" onclick="deleteLoc(${l.id})">✕</button></td>
+                <td><button class="delete-btn" onclick="deleteLoc(${l.id})">&#x2715;</button></td>
               </tr>`).join('')}
           </tbody>
         </table>`;

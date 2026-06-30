@@ -119,10 +119,10 @@
               <label>Pickup Address</label>
               <div class="address-wrap">
                 <input type="text" id="pickupAddress" name="pickupAddress" placeholder="Start typing address..." required autocomplete="off">
-                <button type="button" class="pin-btn" onclick="openPin('pickup')" title="Drop a pin">📍</button>
+                <button type="button" class="pin-btn" onclick="openPin('pickup')" title="Drop a pin"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
                 <div class="autocomplete-list" id="pickupList"></div>
               </div>
-              <div class="pinned-badge" id="pickupBadge">📍 Location pinned on map</div>
+              <div class="pinned-badge" id="pickupBadge">Location pinned on map</div>
               <input type="hidden" name="pickupLat" id="pickupLat">
               <input type="hidden" name="pickupLng" id="pickupLng">
             </div>
@@ -130,10 +130,10 @@
               <label>Delivery Address</label>
               <div class="address-wrap">
                 <input type="text" id="deliveryAddress" name="deliveryAddress" placeholder="Start typing address..." required autocomplete="off">
-                <button type="button" class="pin-btn" onclick="openPin('delivery')" title="Drop a pin">📍</button>
+                <button type="button" class="pin-btn" onclick="openPin('delivery')" title="Drop a pin"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></button>
                 <div class="autocomplete-list" id="deliveryList"></div>
               </div>
-              <div class="pinned-badge" id="deliveryBadge">📍 Location pinned on map</div>
+              <div class="pinned-badge" id="deliveryBadge">Location pinned on map</div>
               <input type="hidden" name="deliveryLat" id="deliveryLat">
               <input type="hidden" name="deliveryLng" id="deliveryLng">
             </div>
@@ -145,14 +145,14 @@
         </form>
 
         <div class="success-box" id="successBox">
-          <div class="success-tick">✅</div>
+          <div class="success-tick"><svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg></div>
           <h3>Job Dispatched!</h3>
           <p>SMS sent to customer. Send the driver link to <strong id="driverDisplay"></strong>.</p>
           <div class="success-actions">
-            <a class="btn-outline" id="trackBtn" href="#" target="_blank">📍 Customer Tracker</a>
-            <a class="btn-solid" id="driverBtn" href="#" target="_blank">🚛 Driver Link</a>
+            <a class="btn-outline" id="trackBtn" href="#" target="_blank">Customer Tracker</a>
+            <a class="btn-solid" id="driverBtn" href="#" target="_blank">Driver Link</a>
           </div>
-          <button class="reset-btn" onclick="resetForm()">＋ Create Another Job</button>
+          <button class="reset-btn" onclick="resetForm()">+ Create Another Job</button>
         </div>
       </div>
     </div>

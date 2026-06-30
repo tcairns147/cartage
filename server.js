@@ -32,8 +32,12 @@ app.use(express.static('public'));
 
 // Create a new job and send SMS
 app.post('/jobs', async (req, res) => {
-  const { customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails } = req.body;
+  let { customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
+
+  // Convert Australian local numbers (04xx) to international format (+61)
+  customerMobile = customerMobile.replace(/\s/g, '');
+  if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
 
   const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
 

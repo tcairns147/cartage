@@ -8,67 +8,63 @@
   <script src="/sidebar.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a1a; min-height: 100vh; display: flex; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
     .main { margin-left: 220px; flex: 1; }
-    .topbar { background: #111; padding: 20px 32px; border-bottom: 1px solid #2a2a2a; }
-    .topbar h1 { font-size: 22px; font-weight: 800; color: #fff; }
-    .topbar p { font-size: 13px; color: #555; margin-top: 2px; }
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
     .content { padding: 32px; max-width: 680px; }
-    .card { background: #222; border-radius: 16px; border: 1px solid #2e2e2e; overflow: hidden; }
-    .card-section { padding: 24px 28px; border-bottom: 1px solid #2a2a2a; }
+    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
+    .card-section { padding: 24px 28px; border-bottom: 1px solid #f5f5f5; }
     .card-section:last-child { border-bottom: none; }
     .section-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #f59e0b; margin-bottom: 18px; }
     .field { margin-bottom: 16px; }
     .field:last-child { margin-bottom: 0; }
-    label { display: block; font-size: 13px; font-weight: 600; color: #888; margin-bottom: 6px; }
-    input, textarea, select { width: 100%; padding: 12px 14px; border: 1.5px solid #333; border-radius: 10px; font-size: 15px; color: #eee; background: #2a2a2a; font-family: inherit; transition: border-color 0.2s, background 0.2s; }
-    input:focus, textarea:focus, select:focus { outline: none; border-color: #f59e0b; background: #2f2f2f; }
-    input::placeholder, textarea::placeholder { color: #555; }
-    select option { background: #2a2a2a; color: #eee; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    input, textarea, select { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e5e5; border-radius: 10px; font-size: 15px; color: #1a1a1a; background: #fafafa; font-family: inherit; transition: border-color 0.2s, background 0.2s; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: #f59e0b; background: white; }
     textarea { resize: vertical; min-height: 80px; }
     .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
     .address-wrap { position: relative; }
     .address-wrap input { padding-right: 48px; }
-    .pin-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #f59e0b; border: none; border-radius: 7px; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .pin-btn { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: #f59e0b; border: none; border-radius: 7px; width: 34px; height: 34px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
     .pin-btn:hover { background: #d97706; }
-    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: #2a2a2a; border: 1.5px solid #f59e0b; border-top: none; border-radius: 0 0 10px 10px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-    .autocomplete-item { padding: 11px 14px; font-size: 13px; color: #ccc; cursor: pointer; border-bottom: 1px solid #333; }
+    .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid #f59e0b; border-top: none; border-radius: 0 0 10px 10px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .autocomplete-item { padding: 11px 14px; font-size: 13px; color: #333; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
     .autocomplete-item:last-child { border-bottom: none; }
-    .autocomplete-item:hover { background: #333; color: #fff; }
-    .pinned-badge { display: none; margin-top: 5px; font-size: 12px; color: #4ade80; font-weight: 600; }
+    .autocomplete-item:hover { background: #fff8eb; }
+    .pinned-badge { display: none; margin-top: 5px; font-size: 12px; color: #16a34a; font-weight: 600; }
     .pinned-badge.visible { display: block; }
-    .no-drivers-tip { font-size: 13px; color: #555; padding: 10px 0; }
+    .no-drivers-tip { font-size: 13px; color: #aaa; padding: 10px 0; }
     .no-drivers-tip a { color: #f59e0b; font-weight: 600; text-decoration: none; }
     .submit-btn { width: 100%; padding: 16px; background: #f59e0b; color: white; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
     .submit-btn:hover { background: #d97706; }
-    .submit-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
+    .submit-btn:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; }
 
     .success-box { display: none; padding: 32px 28px; text-align: center; }
-    .success-tick { margin-bottom: 12px; }
-    .success-box h3 { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 6px; }
-    .success-box p { font-size: 14px; color: #666; margin-bottom: 20px; }
+    .success-tick { font-size: 52px; margin-bottom: 12px; }
+    .success-box h3 { font-size: 20px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
+    .success-box p { font-size: 14px; color: #888; margin-bottom: 20px; }
     .success-actions { display: flex; gap: 10px; margin-bottom: 14px; }
-    .btn-outline { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid #f59e0b; color: #f59e0b; background: transparent; font-size: 14px; font-weight: 600; text-decoration: none; text-align: center; }
+    .btn-outline { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid #f59e0b; color: #d97706; background: white; font-size: 14px; font-weight: 600; text-decoration: none; text-align: center; }
     .btn-solid { flex: 1; padding: 13px; border-radius: 10px; background: #f59e0b; color: white; border: none; font-size: 14px; font-weight: 600; text-align: center; cursor: pointer; font-family: inherit; text-decoration: none; }
     .btn-solid:hover { background: #d97706; }
-    .reset-btn { width: 100%; padding: 13px; border-radius: 10px; border: 1.5px solid #333; background: transparent; color: #888; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px; }
-    .reset-btn:hover { border-color: #555; color: #ccc; }
+    .reset-btn { width: 100%; padding: 13px; border-radius: 10px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 10px; }
 
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    .modal { background: #222; border-radius: 16px; width: 92%; max-width: 520px; overflow: hidden; border: 1px solid #333; }
-    .modal-header { padding: 16px 20px; background: #111; display: flex; align-items: center; justify-content: space-between; }
+    .modal { background: white; border-radius: 16px; width: 92%; max-width: 520px; overflow: hidden; }
+    .modal-header { padding: 16px 20px; background: #1a1a1a; display: flex; align-items: center; justify-content: space-between; }
     .modal-header h3 { color: white; font-size: 15px; font-weight: 700; }
-    .modal-close { background: none; border: none; color: #555; font-size: 20px; cursor: pointer; }
+    .modal-close { background: none; border: none; color: #888; font-size: 20px; cursor: pointer; }
     .modal-close:hover { color: white; }
-    .modal-tip { padding: 10px 20px; background: #2a2000; font-size: 13px; color: #f59e0b; text-align: center; }
+    .modal-tip { padding: 10px 20px; background: #fff8eb; font-size: 13px; color: #92400e; text-align: center; }
     #pinMap { height: 340px; }
-    .modal-footer { padding: 14px 20px; display: flex; gap: 10px; background: #1e1e1e; }
+    .modal-footer { padding: 14px 20px; display: flex; gap: 10px; }
     .modal-footer button { flex: 1; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
-    .modal-cancel { background: #2a2a2a; border: 1px solid #333; color: #888; }
-    .modal-cancel:hover { color: #ccc; }
+    .modal-cancel { background: #f5f5f5; border: none; color: #555; }
     .modal-confirm { background: #f59e0b; border: none; color: white; }
-    .modal-confirm:disabled { background: #333; color: #555; cursor: not-allowed; }
+    .modal-confirm:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; }
 
     @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px; } .two-col { grid-template-columns: 1fr; } .topbar { padding: 16px 20px; } }
   </style>

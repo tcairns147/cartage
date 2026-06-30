@@ -190,7 +190,7 @@
     let intervalId = null;
 
     async function geocode(address) {
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=au&limit=1`;
       const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
       const data = await res.json();
       if (!data.length) return null;

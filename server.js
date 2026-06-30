@@ -75,6 +75,11 @@ app.get('/dispatcher', (req, res) => {
   res.sendFile(__dirname + '/public/dispatcher.html');
 });
 
+// Serve the customer tracking page
+app.get('/track/:id', (req, res) => {
+  res.sendFile(__dirname + '/public/track.html');
+});
+
 // Serve the driver GPS page
 app.get('/drive/:id', (req, res) => {
   res.sendFile(__dirname + '/public/drive.html');

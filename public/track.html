@@ -189,6 +189,22 @@
     let etaSeconds = 0;
     let intervalId = null;
 
+    async function geocode(address) {
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+      const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+      const data = await res.json();
+      if (!data.length) return null;
+      return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+    }
+
+    async function getRoadRoute(pickup, delivery) {
+      const url = `https://router.project-osrm.org/route/v1/driving/${pickup[1]},${pickup[0]};${delivery[1]},${delivery[0]}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.code !== 'Ok') return null;
+      return data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
+    }
+
     async function loadJob() {
       const res = await fetch(`/jobs/${jobId}`);
       if (!res.ok) {
@@ -202,44 +218,49 @@
         return;
       }
 
-      // Fill in job details
       document.getElementById('driverName').textContent = job.driverName;
       document.getElementById('loadDetails').textContent = job.loadDetails;
       document.getElementById('pickupAddress').textContent = job.pickupAddress;
       document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
+      document.getElementById('etaSub').textContent = 'Loading route...';
 
-      // Use simulated coordinates (central Australia region for demo)
-      // Pickup: slightly west, Delivery: slightly east
-      const pickup = [-32.2569, 148.6011];   // near Dubbo NSW
-      const delivery = [-33.2832, 149.1000]; // near Orange NSW
+      // Geocode addresses, fall back to fixed NSW coords if it fails
+      let pickup = await geocode(job.pickupAddress);
+      let delivery = await geocode(job.deliveryAddress);
+      if (!pickup) pickup = [-32.2569, 148.6011];
+      if (!delivery) delivery = [-33.2832, 149.1000];
 
-      routeCoords = interpolate(pickup, delivery, totalSteps);
+      // Get road route, fall back to straight line if it fails
+      let coords = await getRoadRoute(pickup, delivery);
+      if (!coords || coords.length < 2) {
+        coords = [pickup, delivery];
+      }
+
+      // Spread route across totalSteps for smooth animation
+      routeCoords = resample(coords, totalSteps);
       etaSeconds = totalSteps;
 
-      // Place markers
       L.marker(pickup).addTo(map).bindPopup('Pickup').openPopup();
       L.marker(delivery).addTo(map).bindPopup('Delivery');
+      L.polyline(routeCoords, { color: '#d97706', weight: 4, opacity: 0.6 }).addTo(map);
 
-      // Draw the route line
-      L.polyline(routeCoords, { color: '#d97706', weight: 4, opacity: 0.5 }).addTo(map);
-
-      // Place truck at start
       truckMarker = L.marker(routeCoords[0], { icon: truckIcon }).addTo(map);
-      map.setView(routeCoords[0], 9);
+      map.fitBounds(L.polyline(routeCoords).getBounds(), { padding: [40, 40] });
 
       startAnimation();
     }
 
-    function interpolate(start, end, steps) {
-      const coords = [];
+    function resample(coords, steps) {
+      const result = [];
       for (let i = 0; i <= steps; i++) {
-        const t = i / steps;
-        coords.push([
-          start[0] + (end[0] - start[0]) * t,
-          start[1] + (end[1] - start[1]) * t
-        ]);
+        const t = i / steps * (coords.length - 1);
+        const idx = Math.floor(t);
+        const frac = t - idx;
+        const a = coords[Math.min(idx, coords.length - 1)];
+        const b = coords[Math.min(idx + 1, coords.length - 1)];
+        result.push([a[0] + (b[0] - a[0]) * frac, a[1] + (b[1] - a[1]) * frac]);
       }
-      return coords;
+      return result;
     }
 
     function startAnimation() {

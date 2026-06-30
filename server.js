@@ -50,7 +50,7 @@ app.post('/jobs', async (req, res) => {
 
   try {
     await twilioClient.messages.create({
-      body: `Your Cartage delivery is on its way!\nDriver: ${driverName}\nLoad: ${loadDetails}\nTrack here: ${trackingUrl}`,
+      body: `Your Drova delivery is on its way!\nDriver: ${driverName}\nLoad: ${loadDetails}\nTrack here: ${trackingUrl}`,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: customerMobile
     });
@@ -93,5 +93,5 @@ app.post('/jobs/:id/complete', (req, res) => {
 
 const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Cartage server running at http://localhost:${PORT}`);
+  console.log(`Drova server running at http://localhost:${PORT}`);
 });

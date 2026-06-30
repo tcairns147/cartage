@@ -20,7 +20,7 @@ function renderSidebar(active) {
 
   return `
     <aside class="sidebar">
-      <div class="sidebar-logo">DROVA</div>
+      <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>
       <nav class="sidebar-nav">
         ${nav.map(n => `
           <a class="nav-item${active === n.id ? ' active' : ''}" href="${n.href}">
@@ -44,8 +44,10 @@ const SIDEBAR_CSS = `
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
   }
   .sidebar-logo {
-    padding: 28px 24px 24px; font-size: 26px; font-weight: 900;
-    color: white; letter-spacing: -1px; border-bottom: 1px solid #2a2a2a;
+    padding: 24px 20px; border-bottom: 1px solid #2a2a2a;
+  }
+  .sidebar-logo img {
+    height: 30px; display: block; filter: brightness(0) invert(1);
   }
   .sidebar-nav { padding: 16px 0; flex: 1; }
   .nav-item {

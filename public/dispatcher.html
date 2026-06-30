@@ -8,174 +8,286 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: sans-serif;
-      background: #f4f4f4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0ebe3;
       min-height: 100vh;
-      padding: 20px;
     }
 
-    .header {
+    .topbar {
+      background: #1a1a1a;
+      padding: 16px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 24px;
     }
 
-    .logo {
-      font-size: 22px;
-      font-weight: 700;
-      color: #d97706;
+    .topbar-logo { font-size: 22px; font-weight: 800; color: #f59e0b; letter-spacing: -0.5px; }
+    .topbar-nav a { color: #aaa; text-decoration: none; font-size: 14px; margin-left: 20px; }
+    .topbar-nav a:hover { color: white; }
+
+    .hero {
+      background: #1a1a1a;
+      padding: 32px 24px 48px;
+      text-align: center;
     }
+
+    .hero h1 { font-size: 28px; font-weight: 800; color: white; margin-bottom: 8px; }
+    .hero p { color: #aaa; font-size: 16px; }
+
+    .page-wrap {
+      max-width: 640px;
+      margin: -24px auto 40px;
+      padding: 0 16px;
+    }
+
+    .empty-card {
+      background: white;
+      border-radius: 16px;
+      padding: 60px 20px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 16px; }
+    .empty-card h3 { font-size: 18px; color: #333; margin-bottom: 8px; }
+    .empty-card p { color: #aaa; font-size: 15px; margin-bottom: 24px; }
 
     .new-job-btn {
-      background: #d97706;
+      display: inline-block;
+      background: #f59e0b;
       color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
       text-decoration: none;
-    }
-
-    .new-job-btn:hover { background: #b45309; }
-
-    h2 {
+      padding: 14px 28px;
+      border-radius: 10px;
       font-size: 16px;
-      color: #444;
-      margin-bottom: 16px;
+      font-weight: 700;
     }
+
+    .new-job-btn:hover { background: #d97706; }
 
     .job-card {
       background: white;
-      border-radius: 12px;
-      padding: 20px;
+      border-radius: 16px;
       margin-bottom: 16px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      overflow: hidden;
     }
 
-    .job-header {
+    .job-card-top {
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .job-meta {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
+      align-items: center;
       margin-bottom: 12px;
     }
 
     .job-id {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #bbb;
+      text-transform: uppercase;
+    }
+
+    .job-time {
       font-size: 12px;
-      color: #aaa;
+      color: #bbb;
     }
 
     .job-load {
-      font-size: 17px;
-      font-weight: 700;
+      font-size: 20px;
+      font-weight: 800;
       color: #1a1a1a;
       margin-bottom: 4px;
     }
 
     .job-driver {
       font-size: 14px;
+      color: #888;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .job-card-route {
+      padding: 14px 20px;
+      background: #fafafa;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .route-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 14px;
       color: #555;
-      margin-bottom: 12px;
+      margin-bottom: 8px;
     }
 
-    .job-route {
-      font-size: 13px;
-      color: #777;
-      margin-bottom: 16px;
-      line-height: 1.6;
-    }
+    .route-row:last-child { margin-bottom: 0; }
 
-    .job-actions {
+    .route-icon { font-size: 16px; width: 20px; flex-shrink: 0; margin-top: 1px; }
+
+    .job-card-actions {
+      padding: 14px 16px;
       display: flex;
       gap: 10px;
     }
 
-    .track-btn {
+    .btn-track {
       flex: 1;
-      padding: 10px;
-      border: 1px solid #d97706;
+      padding: 13px;
+      border: 2px solid #f59e0b;
       background: white;
       color: #d97706;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 14px;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
-      text-align: center;
       text-decoration: none;
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
     }
 
-    .complete-btn {
+    .btn-track:hover { background: #fff8eb; }
+
+    .btn-complete {
       flex: 1;
-      padding: 10px;
+      padding: 13px;
       border: none;
       background: #16a34a;
       color: white;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-complete:hover { background: #15803d; }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .jobs-count {
+      font-size: 13px;
+      color: #888;
+      font-weight: 600;
+    }
+
+    .new-job-small {
+      background: #f59e0b;
+      color: white;
+      text-decoration: none;
+      padding: 10px 18px;
       border-radius: 8px;
       font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
+      font-weight: 700;
     }
 
-    .complete-btn:hover { background: #15803d; }
-
-    .empty {
-      text-align: center;
-      color: #aaa;
-      padding: 60px 20px;
-      font-size: 15px;
-    }
+    .new-job-small:hover { background: #d97706; }
   </style>
 </head>
 <body>
-  <div class="header">
-    <div class="logo">Cartage</div>
-    <a href="/" class="new-job-btn">+ New Job</a>
+
+  <div class="topbar">
+    <div class="topbar-logo">CARTAGE</div>
+    <nav class="topbar-nav">
+      <a href="/">+ New Job</a>
+    </nav>
   </div>
 
-  <h2>Active Jobs</h2>
-  <div id="jobList"><p class="empty">Loading...</p></div>
+  <div class="hero">
+    <h1>Active Jobs</h1>
+    <p>Jobs currently in transit</p>
+  </div>
+
+  <div class="page-wrap">
+    <div id="jobList"></div>
+  </div>
 
   <script>
+    function timeAgo(dateStr) {
+      const diff = Math.floor((Date.now() - new Date(dateStr + 'Z')) / 60000);
+      if (diff < 1) return 'Just now';
+      if (diff < 60) return `${diff}m ago`;
+      return `${Math.floor(diff / 60)}h ${diff % 60}m ago`;
+    }
+
     async function loadJobs() {
       const res = await fetch('/jobs');
       const jobs = await res.json();
       const list = document.getElementById('jobList');
 
       if (!jobs.length) {
-        list.innerHTML = '<p class="empty">No active jobs.</p>';
+        list.innerHTML = `
+          <div class="empty-card">
+            <div class="empty-icon">🚛</div>
+            <h3>No active jobs</h3>
+            <p>Create a new job to get started</p>
+            <a href="/" class="new-job-btn">+ Create New Job</a>
+          </div>`;
         return;
       }
 
-      list.innerHTML = jobs.map(job => `
-        <div class="job-card" id="job-${job.id}">
-          <div class="job-header">
-            <div>
-              <div class="job-load">${job.loadDetails}</div>
-              <div class="job-driver">Driver: ${job.driverName}</div>
-            </div>
-            <div class="job-id">#${job.id}</div>
-          </div>
-          <div class="job-route">
-            📍 ${job.pickupAddress}<br>
-            🏁 ${job.deliveryAddress}
-          </div>
-          <div class="job-actions">
-            <a class="track-btn" href="/track/${job.id}" target="_blank">View Tracker</a>
-            <button class="complete-btn" onclick="completeJob('${job.id}')">Mark Delivered</button>
-          </div>
+      list.innerHTML = `
+        <div class="header-row">
+          <span class="jobs-count">${jobs.length} job${jobs.length > 1 ? 's' : ''} in transit</span>
+          <a href="/" class="new-job-small">+ New Job</a>
         </div>
-      `).join('');
+        ${jobs.map(job => `
+          <div class="job-card" id="job-${job.id}">
+            <div class="job-card-top">
+              <div class="job-meta">
+                <span class="job-id">Job #${job.id}</span>
+                <span class="job-time">${timeAgo(job.createdAt)}</span>
+              </div>
+              <div class="job-load">${job.loadDetails}</div>
+              <div class="job-driver">🧑‍✈️ ${job.driverName}</div>
+            </div>
+            <div class="job-card-route">
+              <div class="route-row">
+                <span class="route-icon">📍</span>
+                <span>${job.pickupAddress}</span>
+              </div>
+              <div class="route-row">
+                <span class="route-icon">🏁</span>
+                <span>${job.deliveryAddress}</span>
+              </div>
+            </div>
+            <div class="job-card-actions">
+              <a class="btn-track" href="/track/${job.id}" target="_blank">🗺 View Tracker</a>
+              <button class="btn-complete" onclick="completeJob('${job.id}')">✓ Mark Delivered</button>
+            </div>
+          </div>
+        `).join('')}`;
     }
 
     async function completeJob(id) {
       if (!confirm('Mark this job as delivered?')) return;
       await fetch(`/jobs/${id}/complete`, { method: 'POST' });
-      document.getElementById(`job-${id}`).remove();
-      if (!document.querySelector('.job-card')) {
-        document.getElementById('jobList').innerHTML = '<p class="empty">No active jobs.</p>';
-      }
+      const card = document.getElementById(`job-${id}`);
+      card.style.opacity = '0.4';
+      card.style.pointerEvents = 'none';
+      setTimeout(() => {
+        card.remove();
+        const remaining = document.querySelectorAll('.job-card').length;
+        if (!remaining) loadJobs();
+      }, 600);
     }
 
     loadJobs();

@@ -52,6 +52,17 @@ app.post('/jobs', async (req, res) => {
   res.json({ id });
 });
 
+// Serve the dispatcher dashboard
+app.get('/dispatcher', (req, res) => {
+  res.sendFile(__dirname + '/public/dispatcher.html');
+});
+
+// List all active jobs
+app.get('/jobs', (req, res) => {
+  const jobs = db.prepare("SELECT * FROM jobs WHERE status = 'active' ORDER BY createdAt DESC").all();
+  res.json(jobs);
+});
+
 // Serve the tracking page
 app.get('/track/:id', (req, res) => {
   res.sendFile(__dirname + '/public/track.html');

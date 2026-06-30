@@ -224,9 +224,9 @@
       document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
       document.getElementById('etaSub').textContent = 'Loading route...';
 
-      // Geocode addresses, fall back to fixed NSW coords if it fails
-      let pickup = await geocode(job.pickupAddress);
-      let delivery = await geocode(job.deliveryAddress);
+      // Use stored coords if available, otherwise geocode
+      let pickup = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
+      let delivery = (job.deliveryLat && job.deliveryLng) ? [job.deliveryLat, job.deliveryLng] : await geocode(job.deliveryAddress);
       if (!pickup) pickup = [-32.2569, 148.6011];
       if (!delivery) delivery = [-33.2832, 149.1000];
 

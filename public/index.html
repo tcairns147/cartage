@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cartage — New Job</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,20 +22,8 @@
       justify-content: space-between;
     }
 
-    .topbar-logo {
-      font-size: 22px;
-      font-weight: 800;
-      color: #f59e0b;
-      letter-spacing: -0.5px;
-    }
-
-    .topbar-nav a {
-      color: #aaa;
-      text-decoration: none;
-      font-size: 14px;
-      margin-left: 20px;
-    }
-
+    .topbar-logo { font-size: 22px; font-weight: 800; color: #f59e0b; letter-spacing: -0.5px; }
+    .topbar-nav a { color: #aaa; text-decoration: none; font-size: 14px; margin-left: 20px; }
     .topbar-nav a:hover { color: white; }
 
     .hero {
@@ -43,17 +32,8 @@
       text-align: center;
     }
 
-    .hero h1 {
-      font-size: 28px;
-      font-weight: 800;
-      color: white;
-      margin-bottom: 8px;
-    }
-
-    .hero p {
-      color: #aaa;
-      font-size: 16px;
-    }
+    .hero h1 { font-size: 28px; font-weight: 800; color: white; margin-bottom: 8px; }
+    .hero p { color: #aaa; font-size: 16px; }
 
     .form-wrapper {
       max-width: 560px;
@@ -89,8 +69,6 @@
       margin-top: 20px;
     }
 
-    label:first-of-type { margin-top: 0; }
-
     input, textarea {
       width: 100%;
       padding: 14px 16px;
@@ -108,16 +86,69 @@
       background: white;
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 80px;
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* Address field with pin button */
+    .address-wrap { position: relative; }
+
+    .address-wrap input { padding-right: 52px; }
+
+    .pin-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: #f59e0b;
+      border: none;
+      border-radius: 7px;
+      width: 36px;
+      height: 36px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    .divider {
-      height: 1px;
-      background: #f0f0f0;
-      margin: 28px 0 0;
+    .pin-btn:hover { background: #d97706; }
+
+    /* Autocomplete dropdown */
+    .autocomplete-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 2px solid #f59e0b;
+      border-top: none;
+      border-radius: 0 0 10px 10px;
+      z-index: 100;
+      max-height: 200px;
+      overflow-y: auto;
     }
+
+    .autocomplete-item {
+      padding: 12px 16px;
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .autocomplete-item:last-child { border-bottom: none; }
+    .autocomplete-item:hover { background: #fff8eb; }
+
+    .pinned-badge {
+      display: none;
+      margin-top: 6px;
+      font-size: 12px;
+      color: #15803d;
+      font-weight: 600;
+    }
+
+    .pinned-badge.visible { display: block; }
+
+    .divider { height: 1px; background: #f0f0f0; margin: 28px 0 0; }
 
     .submit-btn {
       margin-top: 28px;
@@ -131,7 +162,6 @@
       font-weight: 700;
       cursor: pointer;
       transition: background 0.2s, transform 0.1s;
-      letter-spacing: 0.3px;
     }
 
     .submit-btn:hover { background: #d97706; }
@@ -147,35 +177,12 @@
       text-align: center;
     }
 
-    .success-box .tick {
-      font-size: 36px;
-      margin-bottom: 8px;
-    }
+    .success-box .tick { font-size: 36px; margin-bottom: 8px; }
+    .success-box h3 { font-size: 18px; color: #166534; margin-bottom: 6px; }
+    .success-box p { font-size: 14px; color: #555; margin-bottom: 12px; }
+    .success-box a { color: #15803d; font-weight: 600; word-break: break-all; font-size: 14px; }
 
-    .success-box h3 {
-      font-size: 18px;
-      color: #166534;
-      margin-bottom: 6px;
-    }
-
-    .success-box p {
-      font-size: 14px;
-      color: #555;
-      margin-bottom: 12px;
-    }
-
-    .success-box a {
-      color: #15803d;
-      font-weight: 600;
-      word-break: break-all;
-      font-size: 14px;
-    }
-
-    .success-actions {
-      display: flex;
-      gap: 10px;
-      margin-top: 16px;
-    }
+    .success-actions { display: flex; gap: 10px; margin-top: 16px; }
 
     .success-actions a, .success-actions button {
       flex: 1;
@@ -188,17 +195,80 @@
       text-align: center;
     }
 
-    .btn-outline {
-      border: 2px solid #d97706;
-      color: #d97706;
-      background: white;
+    .btn-outline { border: 2px solid #d97706; color: #d97706; background: white; }
+    .btn-solid { background: #f59e0b; color: white; border: none; }
+
+    /* Pin drop modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
     }
 
-    .btn-solid {
-      background: #f59e0b;
-      color: white;
-      border: none;
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 92%;
+      max-width: 520px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
+
+    .modal-header {
+      padding: 16px 20px;
+      background: #1a1a1a;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header h3 { color: white; font-size: 16px; }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #aaa;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .modal-close:hover { color: white; }
+
+    #pinMap { height: 360px; }
+
+    .modal-tip {
+      padding: 12px 20px;
+      background: #fff8eb;
+      font-size: 13px;
+      color: #92400e;
+      text-align: center;
+    }
+
+    .modal-footer {
+      padding: 16px 20px;
+      display: flex;
+      gap: 10px;
+    }
+
+    .modal-footer button {
+      flex: 1;
+      padding: 13px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal-cancel { background: #f5f5f5; border: none; color: #555; }
+    .modal-confirm { background: #f59e0b; border: none; color: white; }
+    .modal-confirm:disabled { background: #e5e5e5; color: #aaa; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -220,7 +290,6 @@
       <form id="jobForm">
 
         <div class="section-title">Customer Details</div>
-
         <label>Customer Mobile Number</label>
         <input type="tel" name="customerMobile" placeholder="+61 400 000 000" required>
 
@@ -237,10 +306,24 @@
         <div class="section-title">Route</div>
 
         <label>Pickup Address</label>
-        <input type="text" name="pickupAddress" placeholder="e.g. 123 Farm Rd, Dubbo NSW" required>
+        <div class="address-wrap" id="pickupWrap">
+          <input type="text" id="pickupAddress" name="pickupAddress" placeholder="Start typing address..." required autocomplete="off">
+          <button type="button" class="pin-btn" onclick="openPinMap('pickup')" title="Drop a pin">📍</button>
+          <div class="autocomplete-list" id="pickupList"></div>
+        </div>
+        <div class="pinned-badge" id="pickupBadge">📍 Location pinned on map</div>
+        <input type="hidden" name="pickupLat" id="pickupLat">
+        <input type="hidden" name="pickupLng" id="pickupLng">
 
         <label>Delivery Address</label>
-        <input type="text" name="deliveryAddress" placeholder="e.g. 456 Sale Yard Rd, Orange NSW" required>
+        <div class="address-wrap" id="deliveryWrap">
+          <input type="text" id="deliveryAddress" name="deliveryAddress" placeholder="Start typing address..." required autocomplete="off">
+          <button type="button" class="pin-btn" onclick="openPinMap('delivery')" title="Drop a pin">📍</button>
+          <div class="autocomplete-list" id="deliveryList"></div>
+        </div>
+        <div class="pinned-badge" id="deliveryBadge">📍 Location pinned on map</div>
+        <input type="hidden" name="deliveryLat" id="deliveryLat">
+        <input type="hidden" name="deliveryLng" id="deliveryLng">
 
         <button type="submit" class="submit-btn">Dispatch Job & Send SMS</button>
       </form>
@@ -258,7 +341,133 @@
     </div>
   </div>
 
+  <!-- Pin drop modal -->
+  <div class="modal-overlay" id="pinModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="pinModalTitle">Drop a Pin</h3>
+        <button class="modal-close" onclick="closePinMap()">✕</button>
+      </div>
+      <div class="modal-tip">Tap the map to place a pin on the exact location</div>
+      <div id="pinMap"></div>
+      <div class="modal-footer">
+        <button class="modal-cancel" onclick="closePinMap()">Cancel</button>
+        <button class="modal-confirm" id="pinConfirmBtn" onclick="confirmPin()" disabled>Confirm Location</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
+    // --- Autocomplete ---
+    let debounceTimer;
+
+    function setupAutocomplete(inputId, listId, latId, lngId, badgeId) {
+      const input = document.getElementById(inputId);
+      const list = document.getElementById(listId);
+
+      input.addEventListener('input', () => {
+        // Clear pinned coords when user types manually
+        document.getElementById(latId).value = '';
+        document.getElementById(lngId).value = '';
+        document.getElementById(badgeId).classList.remove('visible');
+
+        clearTimeout(debounceTimer);
+        const q = input.value.trim();
+        if (q.length < 3) { list.innerHTML = ''; return; }
+
+        debounceTimer = setTimeout(async () => {
+          const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=au&limit=5&addressdetails=1`;
+          const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+          const results = await res.json();
+
+          list.innerHTML = results.map(r => `
+            <div class="autocomplete-item"
+              data-lat="${r.lat}" data-lng="${r.lon}" data-name="${r.display_name}">
+              ${r.display_name}
+            </div>
+          `).join('');
+
+          list.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', () => {
+              input.value = item.dataset.name;
+              document.getElementById(latId).value = item.dataset.lat;
+              document.getElementById(lngId).value = item.dataset.lng;
+              list.innerHTML = '';
+            });
+          });
+        }, 350);
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !list.contains(e.target)) {
+          list.innerHTML = '';
+        }
+      });
+    }
+
+    setupAutocomplete('pickupAddress', 'pickupList', 'pickupLat', 'pickupLng', 'pickupBadge');
+    setupAutocomplete('deliveryAddress', 'deliveryList', 'deliveryLat', 'deliveryLng', 'deliveryBadge');
+
+    // --- Pin drop map ---
+    let pinMap = null;
+    let pinMarker = null;
+    let activePinField = null;
+
+    function openPinMap(field) {
+      activePinField = field;
+      document.getElementById('pinModalTitle').textContent =
+        field === 'pickup' ? 'Pin Pickup Location' : 'Pin Delivery Location';
+      document.getElementById('pinModal').classList.add('open');
+      document.getElementById('pinConfirmBtn').disabled = true;
+
+      setTimeout(() => {
+        if (!pinMap) {
+          pinMap = L.map('pinMap').setView([-25.2744, 133.7751], 5); // centre of Australia
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(pinMap);
+
+          pinMap.on('click', (e) => {
+            if (pinMarker) pinMap.removeLayer(pinMarker);
+            pinMarker = L.marker(e.latlng).addTo(pinMap);
+            document.getElementById('pinConfirmBtn').disabled = false;
+          });
+        }
+        pinMap.invalidateSize();
+
+        // If there are existing coords for this field, zoom to them
+        const lat = document.getElementById(`${field}Lat`).value;
+        const lng = document.getElementById(`${field}Lng`).value;
+        if (lat && lng) {
+          pinMap.setView([lat, lng], 12);
+          if (pinMarker) pinMap.removeLayer(pinMarker);
+          pinMarker = L.marker([lat, lng]).addTo(pinMap);
+          document.getElementById('pinConfirmBtn').disabled = false;
+        }
+      }, 50);
+    }
+
+    function closePinMap() {
+      document.getElementById('pinModal').classList.remove('open');
+    }
+
+    function confirmPin() {
+      if (!pinMarker) return;
+      const { lat, lng } = pinMarker.getLatLng();
+      const field = activePinField;
+
+      document.getElementById(`${field}Lat`).value = lat;
+      document.getElementById(`${field}Lng`).value = lng;
+      document.getElementById(`${field}Address`).value = `Pin: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      document.getElementById(`${field}Badge`).classList.add('visible');
+      document.getElementById(`${field}List`).innerHTML = '';
+
+      closePinMap();
+    }
+
+    // --- Form submit ---
     document.getElementById('jobForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       const btn = e.target.querySelector('button[type=submit]');
@@ -286,8 +495,11 @@
       document.getElementById('jobForm').reset();
       document.getElementById('jobForm').style.display = 'block';
       document.getElementById('successBox').style.display = 'none';
-      document.querySelector('button[type=submit]').textContent = 'Dispatch Job & Send SMS';
-      document.querySelector('button[type=submit]').disabled = false;
+      document.getElementById('pickupBadge').classList.remove('visible');
+      document.getElementById('deliveryBadge').classList.remove('visible');
+      const btn = document.querySelector('button[type=submit]');
+      btn.textContent = 'Dispatch Job & Send SMS';
+      btn.disabled = false;
     }
   </script>
 </body>

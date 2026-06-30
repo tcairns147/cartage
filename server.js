@@ -15,6 +15,10 @@ db.exec(`
     customerMobile TEXT,
     pickupAddress TEXT,
     deliveryAddress TEXT,
+    pickupLat REAL,
+    pickupLng REAL,
+    deliveryLat REAL,
+    deliveryLng REAL,
     driverName TEXT,
     loadDetails TEXT,
     status TEXT DEFAULT 'active',
@@ -31,10 +35,12 @@ app.post('/jobs', async (req, res) => {
   const { customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
 
+  const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
+
   db.prepare(`
-    INSERT INTO jobs (id, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `).run(id, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails);
+    INSERT INTO jobs (id, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails);
 
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
 

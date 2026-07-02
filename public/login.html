@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Drova">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Drova — Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #1a1a1a;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .logo { margin-bottom: 32px; }
+    .logo img { height: 52px; filter: brightness(0) invert(1); display: block; }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    h2 { font-size: 20px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: #aaa; margin-bottom: 28px; }
+
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 7px; }
+    input {
+      width: 100%; padding: 13px 14px;
+      border: 1.5px solid #e8e8e8; border-radius: 12px;
+      font-size: 15px; color: #1a1a1a; background: #f8f8f8;
+      font-family: inherit; transition: border-color 0.2s, background 0.2s;
+    }
+    input:focus { outline: none; border-color: #f59e0b; background: white; }
+
+    .error {
+      background: #fef2f2; border: 1px solid #fecaca;
+      color: #dc2626; font-size: 13px; font-weight: 600;
+      padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;
+      display: none;
+    }
+    .error.visible { display: block; }
+
+    .btn {
+      width: 100%; padding: 16px;
+      background: #f59e0b; color: white; border: none;
+      border-radius: 12px; font-size: 16px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    .btn:hover { background: #d97706; }
+
+    .footer { margin-top: 28px; font-size: 12px; color: #555; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <img src="/logo.svg" alt="Drova">
+  </div>
+
+  <div class="card">
+    <h2>Sign in</h2>
+    <p class="subtitle">Enter your company code and passcode to continue.</p>
+
+    <div class="error" id="errorMsg">Incorrect company code or passcode.</div>
+
+    <form method="POST" action="/login">
+      <div class="field">
+        <label>Company Code</label>
+        <input type="text" name="slug" placeholder="e.g. sturgiss" autocomplete="off" autocapitalize="none" required>
+      </div>
+      <div class="field">
+        <label>Passcode</label>
+        <input type="password" name="passcode" placeholder="••••••••" required>
+      </div>
+      <button type="submit" class="btn">Sign In</button>
+    </form>
+  </div>
+
+  <div class="footer">Drova — Livestock Transport Dispatch</div>
+
+  <script>
+    if (window.location.search.includes('error=1')) {
+      document.getElementById('errorMsg').classList.add('visible');
+    }
+  </script>
+</body>
+</html>

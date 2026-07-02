@@ -8,6 +8,20 @@ const ICONS = {
   package: `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.29 7 12 12 20.71 7"/><line x1="12" y1="22" x2="12" y2="12"/></svg>`,
 };
 
+async function loadCompanyName() {
+  try {
+    const res = await fetch('/api/me');
+    if (!res.ok) return;
+    const { name } = await res.json();
+    const nameEl = document.getElementById('sidebar-company-name');
+    const roleEl = document.getElementById('sidebar-company-role');
+    const avatarEl = document.getElementById('sidebar-avatar');
+    if (nameEl) nameEl.textContent = name;
+    if (roleEl) roleEl.textContent = 'Dispatcher';
+    if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+  } catch {}
+}
+
 function renderSidebar(active) {
   const nav = [
     { id: 'dispatcher', icon: ICONS.truck,     label: 'Active Jobs',  href: '/dispatcher' },
@@ -22,6 +36,7 @@ function renderSidebar(active) {
     { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
   ];
 
+  setTimeout(loadCompanyName, 0);
   return `
     <aside class="sidebar">
       <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>
@@ -32,11 +47,16 @@ function renderSidebar(active) {
           </a>`).join('')}
       </nav>
       <div class="sidebar-user">
-        <div class="user-avatar">D</div>
-        <div>
-          <div class="user-name">Dispatcher</div>
-          <div class="user-role">Drova Demo</div>
+        <div class="user-avatar" id="sidebar-avatar">D</div>
+        <div style="flex:1;min-width:0;">
+          <div class="user-name" id="sidebar-company-name">Loading...</div>
+          <div class="user-role" id="sidebar-company-role">Dispatcher</div>
         </div>
+        <form method="POST" action="/logout" style="margin:0;">
+          <button type="submit" title="Sign out" style="background:none;border:none;cursor:pointer;color:#555;display:flex;align-items:center;padding:4px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        </form>
       </div>
     </aside>
     <nav class="bottom-nav">

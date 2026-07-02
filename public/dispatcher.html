@@ -138,7 +138,7 @@
                 <div>
                   <div class="load-id">JOB #${j.id.toUpperCase()}</div>
                   <div class="load-name">${j.loadDetails}</div>
-                  <span class="in-transit"><span class="status-dot"></span> IN TRANSIT</span>
+                  <span class="in-transit"><span class="status-dot"></span> ${j.jobType === 'empty' ? 'EMPTY RUN' : 'IN TRANSIT'}</span>
                 </div>
               </div>
               <div class="driver-col">
@@ -160,7 +160,8 @@
               </div>
               <div class="actions-col">
                 <a class="btn-track" href="/track/${j.id}" target="_blank">View Tracker</a>
-                <button class="btn-done" onclick="complete('${j.id}')">Mark Delivered</button>
+                <a class="btn-track" href="/drive/${j.id}" target="_blank">Driver Link</a>
+                <button class="btn-done" onclick="complete('${j.id}')">Mark ${j.jobType === 'empty' ? 'Arrived' : 'Delivered'}</button>
               </div>
             </div>
           </div>`).join('')}`;

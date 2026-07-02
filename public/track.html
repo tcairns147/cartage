@@ -272,20 +272,33 @@
       if (!res.ok) { document.body.innerHTML = '<p style="padding:40px;color:#888;">Job not found.</p>'; return; }
       const job = await res.json();
 
-      if (job.status === 'complete') { showDelivered(); return; }
+      if (job.status === 'complete') { showDelivered(job.jobType); return; }
+
+      const isEmptyRun = job.jobType === 'empty';
 
       document.getElementById('trackingView').style.display = 'block';
       document.getElementById('jobIdDisplay').textContent = `JOB #${job.id.toUpperCase()}`;
-      document.getElementById('loadDetails').textContent = job.loadDetails;
+      document.getElementById('loadDetails').textContent = isEmptyRun ? 'Empty Run — Collecting Livestock' : job.loadDetails;
       document.getElementById('driverName').textContent = job.driverName;
       document.getElementById('driverInitials').textContent = getInitials(job.driverName);
-      document.getElementById('pickupAddress').textContent = job.pickupAddress;
-      document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
+      document.getElementById('pickupAddress').textContent = isEmptyRun ? 'En route' : job.pickupAddress;
+      document.getElementById('deliveryAddress').textContent = job.pickupAddress;
 
-      let pickup = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
-      let delivery = (job.deliveryLat && job.deliveryLng) ? [job.deliveryLat, job.deliveryLng] : await geocode(job.deliveryAddress);
-      if (!pickup) pickup = [-32.2569, 148.6011];
-      if (!delivery) delivery = [-33.2832, 149.1000];
+      // Labels
+      document.querySelector('.detail-row:last-child .detail-label').textContent = isEmptyRun ? 'Heading to' : 'Delivering to';
+      document.querySelector('.status-pill').textContent = isEmptyRun ? 'On the Way' : 'In Transit';
+
+      // For empty run, truck routes TO the pickup address
+      let pickup = (job.currentLat && job.currentLng) ? [job.currentLat, job.currentLng] : [-32.2569, 148.6011];
+      let delivery = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
+      if (!isEmptyRun) {
+        pickup = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
+        delivery = (job.deliveryLat && job.deliveryLng) ? [job.deliveryLat, job.deliveryLng] : await geocode(job.deliveryAddress);
+        if (!pickup) pickup = [-32.2569, 148.6011];
+        if (!delivery) delivery = [-33.2832, 149.1000];
+      } else {
+        if (!delivery) delivery = [-33.2832, 149.1000];
+      }
 
       const route = await getRoadRoute(pickup, delivery);
       const rawCoords = (route && route.coords.length >= 2) ? route.coords : [pickup, delivery];
@@ -321,7 +334,7 @@
       async function poll() {
         const res = await fetch(`/jobs/${jobId}`);
         const j = await res.json();
-        if (j.status === 'complete') { showDelivered(); return; }
+        if (j.status === 'complete') { showDelivered(j.jobType); return; }
         if (j.currentLat && j.currentLng) {
           moveTruck([j.currentLat, j.currentLng]);
           const dlat = delivery[0] - j.currentLat, dlng = delivery[1] - j.currentLng;
@@ -336,9 +349,14 @@
       setTimeout(poll, 5000);
     }
 
-    function showDelivered() {
+    function showDelivered(jobType) {
       document.getElementById('trackingView').style.display = 'none';
-      document.getElementById('deliveredScreen').style.display = 'block';
+      const screen = document.getElementById('deliveredScreen');
+      if (jobType === 'empty') {
+        screen.querySelector('h2').textContent = 'Truck Arrived!';
+        screen.querySelector('p').textContent = 'Your driver has arrived at the pickup location.';
+      }
+      screen.style.display = 'block';
     }
 
     loadJob();

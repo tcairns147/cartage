@@ -71,6 +71,10 @@
     .no-drivers-tip { font-size: 13px; color: #aaa; padding: 8px 0 0; }
     .no-drivers-tip a { color: #f59e0b; font-weight: 600; text-decoration: none; }
 
+    .job-type-toggle { display: flex; gap: 8px; }
+    .type-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 7px; padding: 12px; border: 1.5px solid #e8e8e8; border-radius: 12px; background: #f8f8f8; font-size: 14px; font-weight: 600; color: #888; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .type-btn.active { border-color: #f59e0b; background: #fff8eb; color: #d97706; }
+
     .submit-wrap { position: fixed; bottom: 0; left: 220px; right: 0; padding: 16px 20px; background: transparent; z-index: 50; }
     .submit-btn { width: 100%; max-width: 540px; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 18px; background: #f59e0b; color: white; border: none; border-radius: 16px; font-size: 17px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; box-shadow: 0 4px 16px rgba(245,158,11,0.4); }
     .submit-btn:hover { background: #d97706; }
@@ -154,6 +158,20 @@
             <div class="card-title">Job Details</div>
           </div>
           <div class="field">
+            <label>Job Type</label>
+            <div class="job-type-toggle">
+              <button type="button" class="type-btn active" id="typeLoaded" onclick="setJobType('loaded')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                Loaded Run
+              </button>
+              <button type="button" class="type-btn" id="typeEmpty" onclick="setJobType('empty')">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+                Empty Run
+              </button>
+            </div>
+            <input type="hidden" name="jobType" id="jobTypeInput" value="loaded">
+          </div>
+          <div class="field">
             <label>Driver</label>
             <div class="input-wrap select-wrap">
               <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
@@ -166,11 +184,11 @@
               No drivers yet. <a href="/drivers">Add drivers →</a>
             </div>
           </div>
-          <div class="field">
+          <div class="field" id="loadDetailsField">
             <label>Load Details</label>
             <div class="input-wrap">
               <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>
-              <input type="text" name="loadDetails" placeholder="e.g. 40 hd cattle" required>
+              <input type="text" name="loadDetails" id="loadDetailsInput" placeholder="e.g. 40 hd cattle">
             </div>
           </div>
         </div>
@@ -184,7 +202,7 @@
             <div class="card-title">Route</div>
           </div>
           <div class="field">
-            <label>Pickup Address</label>
+            <label id="pickupLabel">Pickup Address</label>
             <div class="address-wrap">
               <span class="input-icon" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#bbb;pointer-events:none;display:flex;">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
@@ -200,29 +218,31 @@
             <input type="hidden" name="pickupLng" id="pickupLng">
           </div>
 
-          <div class="route-connector">
-            <div class="route-connector-line"></div>
-            <div class="route-truck">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+          <div id="deliverySection">
+            <div class="route-connector">
+              <div class="route-connector-line"></div>
+              <div class="route-truck">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+              </div>
+              <div class="route-connector-line"></div>
             </div>
-            <div class="route-connector-line"></div>
-          </div>
 
-          <div class="field">
-            <label>Delivery Address</label>
-            <div class="address-wrap">
-              <span class="input-icon" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#bbb;pointer-events:none;display:flex;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-              </span>
-              <input type="text" id="deliveryAddress" name="deliveryAddress" placeholder="Start typing address..." required autocomplete="off">
-              <button type="button" class="pin-btn" onclick="openPin('delivery')" title="Drop a pin">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-              </button>
-              <div class="autocomplete-list" id="deliveryList"></div>
+            <div class="field">
+              <label>Delivery Address</label>
+              <div class="address-wrap">
+                <span class="input-icon" style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#bbb;pointer-events:none;display:flex;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                </span>
+                <input type="text" id="deliveryAddress" name="deliveryAddress" placeholder="Start typing address..." autocomplete="off">
+                <button type="button" class="pin-btn" onclick="openPin('delivery')" title="Drop a pin">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                </button>
+                <div class="autocomplete-list" id="deliveryList"></div>
+              </div>
+              <div class="pinned-badge" id="deliveryBadge">Location pinned on map</div>
+              <input type="hidden" name="deliveryLat" id="deliveryLat">
+              <input type="hidden" name="deliveryLng" id="deliveryLng">
             </div>
-            <div class="pinned-badge" id="deliveryBadge">Location pinned on map</div>
-            <input type="hidden" name="deliveryLat" id="deliveryLat">
-            <input type="hidden" name="deliveryLng" id="deliveryLng">
           </div>
         </div>
 
@@ -354,6 +374,17 @@
       document.getElementById(`${activePin}Badge`).classList.add('visible');
       document.getElementById(`${activePin}List`).innerHTML = '';
       closePin();
+    }
+
+    function setJobType(type) {
+      document.getElementById('jobTypeInput').value = type;
+      document.getElementById('typeLoaded').classList.toggle('active', type === 'loaded');
+      document.getElementById('typeEmpty').classList.toggle('active', type === 'empty');
+      const isEmpty = type === 'empty';
+      document.getElementById('deliverySection').style.display = isEmpty ? 'none' : 'block';
+      document.getElementById('loadDetailsField').style.display = isEmpty ? 'none' : 'block';
+      document.getElementById('loadDetailsInput').required = !isEmpty;
+      document.getElementById('pickupLabel').textContent = isEmpty ? 'Pickup Address (where the truck is heading)' : 'Pickup Address';
     }
 
     document.getElementById('jobForm').addEventListener('submit', async e => {

@@ -57,6 +57,7 @@ for (const col of ['pickupLat','pickupLng','deliveryLat','deliveryLng','currentL
 }
 try { db.exec(`ALTER TABLE jobs ADD COLUMN notified15min INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE jobs ADD COLUMN customerName TEXT`); } catch {}
+try { db.exec(`ALTER TABLE jobs ADD COLUMN jobType TEXT DEFAULT 'loaded'`); } catch {}
 
 function distanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
@@ -95,17 +96,18 @@ app.get('/jobs/:id', (req, res) => {
 });
 
 app.post('/jobs', async (req, res) => {
-  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails } = req.body;
+  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType } = req.body;
   const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
+  jobType = jobType || 'loaded';
 
   customerMobile = customerMobile.replace(/\s/g, '');
   if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
 
   db.prepare(`
-    INSERT INTO jobs (id, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails);
+    INSERT INTO jobs (id, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType);
 
   // Update driver status to on-job
   db.prepare("UPDATE drivers SET status = 'on-job' WHERE name = ?").run(driverName);
@@ -113,9 +115,13 @@ app.post('/jobs', async (req, res) => {
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
 
+  const smsBody = jobType === 'empty'
+    ? `Your Drova driver is on the way to collect!\nDriver: ${driverName}\nPickup: ${pickupAddress}\nTrack here: ${trackingUrl}`
+    : `Your Drova delivery is on its way!\nDriver: ${driverName}\nLoad: ${loadDetails}\nTrack here: ${trackingUrl}`;
+
   try {
     await twilioClient.messages.create({
-      body: `Your Drova delivery is on its way!\nDriver: ${driverName}\nLoad: ${loadDetails}\nTrack here: ${trackingUrl}`,
+      body: smsBody,
       from: process.env.TWILIO_PHONE_NUMBER,
       to: customerMobile
     });

@@ -138,7 +138,9 @@
                 <div>
                   <div class="load-id">JOB #${j.id.toUpperCase()}</div>
                   <div class="load-name">${j.loadDetails}</div>
-                  <span class="in-transit"><span class="status-dot"></span> ${j.jobType === 'empty' ? 'EMPTY RUN' : 'IN TRANSIT'}</span>
+                  ${j.status === 'planned'
+                    ? `<span class="in-transit" style="background:#f0ebe2;color:#92400e;"><span class="status-dot" style="background:#f59e0b;"></span> PLANNED</span>`
+                    : `<span class="in-transit"><span class="status-dot"></span> ${j.jobType === 'empty' ? 'EMPTY RUN' : 'IN TRANSIT'}</span>`}
                 </div>
               </div>
               <div class="driver-col">
@@ -155,11 +157,11 @@
                 </div>
                 <div class="route-row">
                   <div class="route-dot to"></div>
-                  <div><div class="r-label">To</div><div class="r-addr">${j.deliveryAddress}</div></div>
+                  <div><div class="r-label">To</div><div class="r-addr">${j.deliveryAddress || '—'}</div></div>
                 </div>
               </div>
               <div class="actions-col">
-                <a class="btn-track" href="/track/${j.id}" target="_blank">View Tracker</a>
+                ${j.status !== 'planned' ? `<a class="btn-track" href="/track/${j.id}" target="_blank">View Tracker</a>` : ''}
                 <a class="btn-track" href="/drive/${j.id}" target="_blank">Driver Link</a>
                 <button class="btn-done" onclick="complete('${j.id}')">Mark ${j.jobType === 'empty' ? 'Arrived' : 'Delivered'}</button>
               </div>

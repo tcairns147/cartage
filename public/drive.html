@@ -256,7 +256,18 @@
         document.getElementById('notesText').textContent = job.notes;
         document.getElementById('notesBox').style.display = 'block';
       }
-      document.getElementById('startBtn').disabled = false;
+      const btn = document.getElementById('startBtn');
+      if (job.status === 'planned') {
+        btn.textContent = 'Start Trip & Share Location';
+        btn.onclick = () => startTrip(job.id);
+      }
+      btn.disabled = false;
+    }
+
+    async function startTrip(jobId) {
+      document.getElementById('startBtn').disabled = true;
+      await fetch(`/jobs/${jobId}/start`, { method: 'POST' });
+      startTracking();
     }
 
     function startTracking() {

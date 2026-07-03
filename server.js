@@ -148,7 +148,7 @@ app.get('/api/me', requireAuth, (req, res) => {
 
 // Jobs
 app.get('/jobs', requireAuth, (req, res) => {
-  res.json(db.prepare("SELECT * FROM jobs WHERE companyId = ? AND status = 'active' ORDER BY createdAt DESC").all(req.company.id));
+  res.json(db.prepare("SELECT * FROM jobs WHERE companyId = ? AND status IN ('active','planned') ORDER BY createdAt DESC").all(req.company.id));
 });
 
 app.get('/jobs/history', requireAuth, (req, res) => {
@@ -162,38 +162,59 @@ app.get('/jobs/:id', (req, res) => {
 });
 
 app.post('/jobs', requireAuth, async (req, res) => {
-  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes } = req.body;
+  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode } = req.body;
   const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
   jobType = jobType || 'loaded';
+  const status = dispatchMode === 'plan' ? 'planned' : 'active';
 
   customerMobile = customerMobile.replace(/\s/g, '');
   if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
 
   db.prepare(`
-    INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null);
+    INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null, status);
 
   db.prepare("UPDATE drivers SET status = 'on-job' WHERE name = ? AND companyId = ?").run(driverName, req.company.id);
 
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
 
-  const greeting = customerName ? `Hi ${customerName.split(' ')[0]}, ` : '';
-  const smsBody = jobType === 'empty'
-    ? `${greeting}${driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
-    : `${greeting}your delivery of ${loadDetails} is on the way with ${driverName}. Track here: ${trackingUrl}`;
-
-  try {
-    await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile });
-    console.log(`SMS sent to customer ${customerMobile}`);
-  } catch (err) {
-    console.error('Customer SMS failed:', err.message);
+  // Only SMS customer immediately if dispatching now, not for planned jobs
+  if (status === 'active') {
+    const greeting = customerName ? `Hi ${customerName.split(' ')[0]}, ` : '';
+    const smsBody = jobType === 'empty'
+      ? `${greeting}${driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
+      : `${greeting}your delivery of ${loadDetails} is on the way with ${driverName}. Track here: ${trackingUrl}`;
+    try {
+      await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile });
+      console.log(`SMS sent to customer ${customerMobile}`);
+    } catch (err) {
+      console.error('Customer SMS failed:', err.message);
+    }
   }
 
-
   res.json({ id, driverUrl });
+});
+
+app.post('/jobs/:id/start', async (req, res) => {
+  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
+  if (!job) return res.status(404).json({ error: 'Not found' });
+  db.prepare("UPDATE jobs SET status = 'active' WHERE id = ?").run(req.params.id);
+
+  const trackingUrl = `${req.protocol}://${req.get('host')}/track/${job.id}`;
+  const greeting = job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : '';
+  const smsBody = job.jobType === 'empty'
+    ? `${greeting}${job.driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
+    : `${greeting}your delivery of ${job.loadDetails} is on the way with ${job.driverName}. Track here: ${trackingUrl}`;
+  try {
+    await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: job.customerMobile });
+    console.log(`Start SMS sent to customer ${job.customerMobile}`);
+  } catch (err) {
+    console.error('Start SMS failed:', err.message);
+  }
+  res.json({ success: true });
 });
 
 app.post('/jobs/:id/location', async (req, res) => {

@@ -107,12 +107,16 @@ const SIDEBAR_CSS = `
     .bottom-nav {
       display: flex; position: fixed; bottom: 0; left: 0; right: 0;
       background: #1a1a1a; border-top: 1px solid #2a2a2a;
-      z-index: 100; padding-bottom: env(safe-area-inset-bottom);
+      z-index: 100;
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
     }
     .bottom-nav-item {
       flex: 1; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 10px 4px 8px; gap: 4px;
+      justify-content: center; padding: 10px 8px 8px; gap: 4px;
       text-decoration: none; color: #555; transition: color 0.15s;
+      min-width: 0;
     }
     .bottom-nav-item.active { color: #f59e0b; }
     .bottom-nav-item:hover { color: #ccc; }

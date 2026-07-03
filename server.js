@@ -183,7 +183,7 @@ app.post('/jobs', requireAuth, async (req, res) => {
   const greeting = customerName ? `Hi ${customerName.split(' ')[0]}, ` : '';
   const smsBody = jobType === 'empty'
     ? `${greeting}${driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
-    : `${greeting}your ${loadDetails} is on the way with ${driverName}. Track here: ${trackingUrl}`;
+    : `${greeting}your delivery of ${loadDetails} is on the way with ${driverName}. Track here: ${trackingUrl}`;
 
   try {
     await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile });

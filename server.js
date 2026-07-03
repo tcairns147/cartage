@@ -197,8 +197,8 @@ app.post('/jobs', requireAuth, async (req, res) => {
   if (driver && driver.mobile) {
     const driverGreeting = `Hi ${driverName.split(' ')[0]}, `;
     const driverSms = jobType === 'empty'
-      ? `${driverGreeting}you have a new job. Pickup from: ${pickupAddress}${notes ? `\nNotes: ${notes}` : ''}\nOpen your tracking link here: ${driverUrl}`
-      : `${driverGreeting}you have a new job. Delivering ${loadDetails} to: ${deliveryAddress}${notes ? `\nNotes: ${notes}` : ''}\nOpen your tracking link here: ${driverUrl}`;
+      ? `${driverGreeting}you have a new job. Pickup from: ${pickupAddress}${notes ? `\nNotes: ${notes}` : ''}\nTap this link when you're ready to share your location: ${driverUrl}`
+      : `${driverGreeting}you have a new job. Delivering ${loadDetails} to: ${deliveryAddress}${notes ? `\nNotes: ${notes}` : ''}\nTap this link when you're ready to share your location: ${driverUrl}`;
     try {
       await twilioClient.messages.create({ body: driverSms, from: process.env.TWILIO_PHONE_NUMBER, to: driver.mobile });
       console.log(`SMS sent to driver ${driver.mobile}`);

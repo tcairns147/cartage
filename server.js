@@ -74,6 +74,7 @@ for (const col of ['pickupLat','pickupLng','deliveryLat','deliveryLng','currentL
 try { db.exec(`ALTER TABLE jobs ADD COLUMN notified15min INTEGER DEFAULT 0`); } catch {}
 try { db.exec(`ALTER TABLE jobs ADD COLUMN customerName TEXT`); } catch {}
 try { db.exec(`ALTER TABLE jobs ADD COLUMN jobType TEXT DEFAULT 'loaded'`); } catch {}
+try { db.exec(`ALTER TABLE jobs ADD COLUMN notes TEXT`); } catch {}
 try { db.exec(`ALTER TABLE jobs ADD COLUMN companyId INTEGER`); } catch {}
 try { db.exec(`ALTER TABLE drivers ADD COLUMN companyId INTEGER`); } catch {}
 try { db.exec(`ALTER TABLE locations ADD COLUMN companyId INTEGER`); } catch {}
@@ -161,7 +162,7 @@ app.get('/jobs/:id', (req, res) => {
 });
 
 app.post('/jobs', requireAuth, async (req, res) => {
-  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType } = req.body;
+  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes } = req.body;
   const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
   jobType = jobType || 'loaded';
@@ -170,18 +171,19 @@ app.post('/jobs', requireAuth, async (req, res) => {
   if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
 
   db.prepare(`
-    INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType);
+    INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null);
 
   db.prepare("UPDATE drivers SET status = 'on-job' WHERE name = ? AND companyId = ?").run(driverName, req.company.id);
 
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
 
+  const greeting = customerName ? `Hi ${customerName.split(' ')[0]}, ` : '';
   const smsBody = jobType === 'empty'
-    ? `Your ${req.company.name} driver is on the way to collect!\nDriver: ${driverName}\nPickup: ${pickupAddress}\nTrack here: ${trackingUrl}`
-    : `Your ${req.company.name} delivery is on its way!\nDriver: ${driverName}\nLoad: ${loadDetails}\nTrack here: ${trackingUrl}`;
+    ? `${greeting}${driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
+    : `${greeting}your ${loadDetails} is on the way with ${driverName}. Track here: ${trackingUrl}`;
 
   try {
     await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile });
@@ -204,7 +206,7 @@ app.post('/jobs/:id/location', async (req, res) => {
       db.prepare('UPDATE jobs SET notified15min = 1 WHERE id = ?').run(job.id);
       try {
         await twilioClient.messages.create({
-          body: `Your delivery is almost there!\n${job.driverName} is about 15 minutes away with your ${job.loadDetails}.`,
+          body: `${job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : ''}${job.driverName} is about 15 minutes away with your ${job.loadDetails}.`,
           from: process.env.TWILIO_PHONE_NUMBER,
           to: job.customerMobile
         });

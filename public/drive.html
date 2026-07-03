@@ -100,6 +100,22 @@
 
     .start-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
 
+    .arrived-btn {
+      display: none;
+      width: 100%;
+      max-width: 360px;
+      padding: 18px;
+      background: #f59e0b;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    .arrived-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+
     .coords {
       margin-top: 16px;
       font-size: 12px;
@@ -189,9 +205,16 @@
     </div>
   </div>
 
+  <div class="job-info" id="notesBox" style="display:none; border-left: 3px solid #f59e0b; background:#1e1a10;">
+    <div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:6px;letter-spacing:0.5px;">NOTES FROM DISPATCHER</div>
+    <div id="notesText" style="font-size:14px;color:#ddd;line-height:1.5;"></div>
+  </div>
+
   <button class="start-btn" id="startBtn" onclick="startTracking()" disabled>
     Start Sharing Location
   </button>
+
+  <button class="arrived-btn" id="arrivedBtn" onclick="markArrived()">I've Arrived</button>
 
   <div class="coords" id="coords"></div>
   <div class="wake-badge" id="wakeBadge">Screen will stay on while tracking</div>
@@ -227,8 +250,12 @@
       }
       const job = await res.json();
       document.getElementById('driverName').textContent = job.driverName;
-      document.getElementById('loadDetails').textContent = job.loadDetails;
-      document.getElementById('deliveryAddress').textContent = job.deliveryAddress;
+      document.getElementById('loadDetails').textContent = job.jobType === 'empty' ? 'Empty Run — Collecting Livestock' : job.loadDetails;
+      document.getElementById('deliveryAddress').textContent = job.jobType === 'empty' ? job.pickupAddress : job.deliveryAddress;
+      if (job.notes) {
+        document.getElementById('notesText').textContent = job.notes;
+        document.getElementById('notesBox').style.display = 'block';
+      }
       document.getElementById('startBtn').disabled = false;
     }
 
@@ -259,6 +286,7 @@
           document.getElementById('statusText').textContent = 'Live';
           document.getElementById('coords').textContent =
             `${lat.toFixed(5)}, ${lng.toFixed(5)} · ±${Math.round(accuracy)}m`;
+          document.getElementById('arrivedBtn').style.display = 'block';
         },
         (err) => {
           document.getElementById('statusCircle').classList.add('error');
@@ -267,6 +295,18 @@
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
       );
+    }
+
+    async function markArrived() {
+      const btn = document.getElementById('arrivedBtn');
+      btn.disabled = true;
+      btn.textContent = 'Marking arrived...';
+      await fetch(`/jobs/${jobId}/complete`, { method: 'POST' });
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+      document.getElementById('statusCircle').classList.remove('active');
+      document.getElementById('statusText').textContent = 'Arrived';
+      btn.textContent = 'Job Complete ✓';
+      document.getElementById('startBtn').style.display = 'none';
     }
 
     loadJob();

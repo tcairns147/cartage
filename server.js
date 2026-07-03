@@ -187,9 +187,24 @@ app.post('/jobs', requireAuth, async (req, res) => {
 
   try {
     await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile });
-    console.log(`SMS sent to ${customerMobile}`);
+    console.log(`SMS sent to customer ${customerMobile}`);
   } catch (err) {
-    console.error('SMS failed:', err.message);
+    console.error('Customer SMS failed:', err.message);
+  }
+
+  // Text the driver their link
+  const driver = db.prepare('SELECT * FROM drivers WHERE name = ? AND companyId = ?').get(driverName, req.company.id);
+  if (driver && driver.mobile) {
+    const driverGreeting = `Hi ${driverName.split(' ')[0]}, `;
+    const driverSms = jobType === 'empty'
+      ? `${driverGreeting}you have a new job. Pickup from: ${pickupAddress}${notes ? `\nNotes: ${notes}` : ''}\nOpen your tracking link here: ${driverUrl}`
+      : `${driverGreeting}you have a new job. Delivering ${loadDetails} to: ${deliveryAddress}${notes ? `\nNotes: ${notes}` : ''}\nOpen your tracking link here: ${driverUrl}`;
+    try {
+      await twilioClient.messages.create({ body: driverSms, from: process.env.TWILIO_PHONE_NUMBER, to: driver.mobile });
+      console.log(`SMS sent to driver ${driver.mobile}`);
+    } catch (err) {
+      console.error('Driver SMS failed:', err.message);
+    }
   }
 
   res.json({ id, driverUrl });

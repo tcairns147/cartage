@@ -428,15 +428,22 @@
     document.getElementById('jobForm').addEventListener('submit', async e => {
       e.preventDefault();
       const btn = document.querySelector('.submit-btn');
+      const origLabel = btn.innerHTML;
       btn.innerHTML = 'Dispatching...'; btn.disabled = true;
-      const data = Object.fromEntries(new FormData(e.target));
-      const res = await fetch('/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-      const job = await res.json();
-      document.getElementById('trackBtn').href = `${location.origin}/track/${job.id}`;
-      document.getElementById('driverBtn').href = `${location.origin}/drive/${job.id}`;
-      document.getElementById('driverDisplay').textContent = data.driverName;
-      document.getElementById('jobForm').style.display = 'none';
-      document.getElementById('successBox').style.display = 'block';
+      try {
+        const data = Object.fromEntries(new FormData(e.target));
+        const res = await fetch('/jobs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (!res.ok) throw new Error(`Server error ${res.status}`);
+        const job = await res.json();
+        document.getElementById('trackBtn').href = `${location.origin}/track/${job.id}`;
+        document.getElementById('driverBtn').href = `${location.origin}/drive/${job.id}`;
+        document.getElementById('driverDisplay').textContent = data.driverName;
+        document.getElementById('jobForm').style.display = 'none';
+        document.getElementById('successBox').style.display = 'block';
+      } catch (err) {
+        alert('Something went wrong creating the job. Please try again.');
+        btn.innerHTML = origLabel; btn.disabled = false;
+      }
     });
 
     function resetForm() {

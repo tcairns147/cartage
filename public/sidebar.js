@@ -109,8 +109,8 @@ const SIDEBAR_CSS = `
       background: #1a1a1a; border-top: 1px solid #2a2a2a;
       z-index: 100;
       padding-bottom: env(safe-area-inset-bottom);
-      padding-left: env(safe-area-inset-left);
-      padding-right: env(safe-area-inset-right);
+      padding-left: max(env(safe-area-inset-left), 12px);
+      padding-right: max(env(safe-area-inset-right), 12px);
     }
     .bottom-nav-item {
       flex: 1; display: flex; flex-direction: column; align-items: center;

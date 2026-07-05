@@ -168,7 +168,7 @@ app.post('/jobs', requireAuth, async (req, res) => {
   jobType = jobType || 'loaded';
   const status = dispatchMode === 'plan' ? 'planned' : 'active';
 
-  customerMobile = customerMobile.replace(/\s/g, '');
+  customerMobile = (customerMobile || '').replace(/\s/g, '');
   if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
 
   db.prepare(`
@@ -240,11 +240,13 @@ app.post('/jobs/:id/location', async (req, res) => {
   res.json({ success: true });
 });
 
-app.post('/jobs/:id/complete', requireAuth, (req, res) => {
-  const job = db.prepare('SELECT * FROM jobs WHERE id = ? AND companyId = ?').get(req.params.id, req.company.id);
+app.post('/jobs/:id/complete', (req, res) => {
+  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
   if (!job) return res.status(404).json({ error: 'Not found' });
   db.prepare("UPDATE jobs SET status = 'complete' WHERE id = ?").run(req.params.id);
-  db.prepare("UPDATE drivers SET status = 'available' WHERE name = ? AND companyId = ?").run(job.driverName, req.company.id);
+  if (job.companyId) {
+    db.prepare("UPDATE drivers SET status = 'available' WHERE name = ? AND companyId = ?").run(job.driverName, job.companyId);
+  }
   res.json({ success: true });
 });
 

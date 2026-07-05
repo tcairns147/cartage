@@ -161,7 +161,7 @@ app.get('/jobs/:id', (req, res) => {
   res.json(job);
 });
 
-app.post('/jobs', requireAuth, async (req, res) => {
+app.post('/jobs', requireAuth, (req, res) => {
   let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode } = req.body;
   const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
@@ -181,40 +181,35 @@ app.post('/jobs', requireAuth, async (req, res) => {
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
 
-  // Only SMS customer immediately if dispatching now, not for planned jobs
+  // Respond immediately, fire SMS in background
+  res.json({ id, driverUrl });
+
   if (status === 'active') {
     const greeting = customerName ? `Hi ${customerName.split(' ')[0]}, ` : '';
     const smsBody = jobType === 'empty'
       ? `${greeting}${driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
       : `${greeting}your delivery of ${loadDetails} is on the way with ${driverName}. Track here: ${trackingUrl}`;
-    try {
-      await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile });
-      console.log(`SMS sent to customer ${customerMobile}`);
-    } catch (err) {
-      console.error('Customer SMS failed:', err.message);
-    }
+    twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile })
+      .then(() => console.log(`SMS sent to ${customerMobile}`))
+      .catch(err => console.error('Customer SMS failed:', err.message));
   }
-
-  res.json({ id, driverUrl });
 });
 
-app.post('/jobs/:id/start', async (req, res) => {
+app.post('/jobs/:id/start', (req, res) => {
   const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
   if (!job) return res.status(404).json({ error: 'Not found' });
   db.prepare("UPDATE jobs SET status = 'active' WHERE id = ?").run(req.params.id);
+
+  res.json({ success: true });
 
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${job.id}`;
   const greeting = job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : '';
   const smsBody = job.jobType === 'empty'
     ? `${greeting}${job.driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
     : `${greeting}your delivery of ${job.loadDetails} is on the way with ${job.driverName}. Track here: ${trackingUrl}`;
-  try {
-    await twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: job.customerMobile });
-    console.log(`Start SMS sent to customer ${job.customerMobile}`);
-  } catch (err) {
-    console.error('Start SMS failed:', err.message);
-  }
-  res.json({ success: true });
+  twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: job.customerMobile })
+    .then(() => console.log(`Start SMS sent to ${job.customerMobile}`))
+    .catch(err => console.error('Start SMS failed:', err.message));
 });
 
 app.post('/jobs/:id/location', async (req, res) => {

@@ -438,10 +438,7 @@
         document.getElementById('trackBtn').href = `${location.origin}/track/${job.id}`;
         document.getElementById('driverBtn').href = `${location.origin}/drive/${job.id}`;
         document.getElementById('driverDisplay').textContent = data.driverName;
-        document.getElementById('jobForm').style.display = 'none';
-        document.querySelector('.submit-wrap').style.display = 'none';
-        document.getElementById('successBox').style.display = 'block';
-        window.scrollTo(0, 0);
+        window.location.href = '/dispatcher?created=' + job.id;
       } catch (err) {
         alert('Could not create job: ' + err.message);
         btn.innerHTML = origLabel; btn.disabled = false;

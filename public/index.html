@@ -439,9 +439,11 @@
         document.getElementById('driverBtn').href = `${location.origin}/drive/${job.id}`;
         document.getElementById('driverDisplay').textContent = data.driverName;
         document.getElementById('jobForm').style.display = 'none';
+        document.querySelector('.submit-wrap').style.display = 'none';
         document.getElementById('successBox').style.display = 'block';
+        window.scrollTo(0, 0);
       } catch (err) {
-        alert('Something went wrong creating the job. Please try again.');
+        alert('Could not create job: ' + err.message);
         btn.innerHTML = origLabel; btn.disabled = false;
       }
     });

@@ -303,9 +303,9 @@
 
     <!-- Fixed bottom button -->
     <div class="submit-wrap">
-      <button type="submit" form="jobForm" class="submit-btn">
+      <button type="submit" form="jobForm" class="submit-btn" id="submitBtn" disabled>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        Dispatch Job &amp; Send SMS
+        Dispatch Job
       </button>
     </div>
   </div>
@@ -416,6 +416,16 @@
       closePin();
     }
 
+    function checkForm() {
+      const mobile = document.querySelector('[name="customerMobile"]').value.trim();
+      const driver = document.getElementById('driverSelect').value;
+      const pickup = document.getElementById('pickupAddress').value.trim();
+      const jobType = document.getElementById('jobTypeInput').value;
+      const load = jobType === 'empty' ? true : document.getElementById('loadDetailsInput').value.trim();
+      const ready = mobile && driver && pickup && load;
+      document.getElementById('submitBtn').disabled = !ready;
+    }
+
     function setDispatchMode(mode) {
       document.getElementById('dispatchModeInput').value = mode;
       document.getElementById('modeNow').classList.toggle('active', mode === 'now');
@@ -424,7 +434,7 @@
       const btn = document.querySelector('.submit-btn');
       btn.innerHTML = mode === 'plan'
         ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Save Planned Job`
-        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Dispatch Job &amp; Send SMS`;
+        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Dispatch Job`;
     }
 
     function setJobType(type) {
@@ -458,6 +468,11 @@
       }
     });
 
+    ['customerMobile', 'driverSelect', 'pickupAddress', 'loadDetailsInput'].forEach(id => {
+      const el = document.getElementById(id) || document.querySelector(`[name="${id}"]`);
+      if (el) el.addEventListener('input', checkForm), el.addEventListener('change', checkForm);
+    });
+
     if ('contacts' in navigator && 'ContactsManager' in window) {
       document.body.classList.add('contacts-api-supported');
     }
@@ -478,8 +493,9 @@
       document.getElementById('pickupBadge').classList.remove('visible');
       document.getElementById('deliveryBadge').classList.remove('visible');
       const btn = document.querySelector('.submit-btn');
-      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Dispatch Job &amp; Send SMS`;
-      btn.disabled = false;
+      btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Dispatch Job`;
+      btn.disabled = true;
+      checkForm();
       loadDrivers();
     }
   </script>

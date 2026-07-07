@@ -107,7 +107,7 @@ const SIDEBAR_CSS = `
     .bottom-nav {
       display: flex; position: fixed; bottom: 0; left: 0; right: 0;
       background: #1a1a1a; border-top: 1px solid #2a2a2a;
-      z-index: 100;
+      z-index: 1000;
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: max(env(safe-area-inset-left), 12px);
       padding-right: max(env(safe-area-inset-right), 12px);

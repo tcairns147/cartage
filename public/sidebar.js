@@ -33,7 +33,6 @@ function renderSidebar(active) {
     { id: 'history',    icon: ICONS.clipboard,  label: 'History',      href: '/history' },
     { id: 'new',        icon: ICONS.plus,       label: 'New Job',      href: '/' },
     { id: 'drivers',    icon: ICONS.user,       label: 'Drivers',      href: '/drivers' },
-    { id: 'trucks',     icon: ICONS.trucklist,  label: 'Trucks',       href: '/trucks' },
     { id: 'locations',  icon: ICONS.mappin,     label: 'Locations',    href: '/locations' },
   ];
 

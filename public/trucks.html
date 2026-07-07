@@ -108,6 +108,12 @@
             <option value="Other">Other</option>
           </select>
         </div>
+        <div class="field" id="modelField" style="display:none;">
+          <label>Model</label>
+          <select id="tModel">
+            <option value="">Select model</option>
+          </select>
+        </div>
         <div class="field">
           <label>Truck Type</label>
           <select id="tType">
@@ -131,6 +137,41 @@
   <script>
     document.getElementById('sidebar-root').innerHTML = renderSidebar('trucks');
     document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    const MODELS = {
+      'Kenworth':      ['T610', 'T610SAR', 'T660', 'T680', 'T909', 'T410', 'C509', 'C510', 'K200', 'K220'],
+      'Mack':          ['Anthem', 'Granite', 'Pinnacle', 'Super-Liner', 'Titan', 'Metro-Liner'],
+      'Western Star':  ['4900', '4964', '5700', '6900', '6964'],
+      'Volvo':         ['FH', 'FH16', 'FM', 'FMX', 'FE', 'FL'],
+      'Freightliner':  ['Cascadia', 'Columbia', 'Coronado', 'Argosy'],
+      'Scania':        ['R-Series', 'S-Series', 'P-Series', 'G-Series', 'L-Series'],
+      'Mercedes-Benz': ['Actros', 'Arocs', 'Atego', 'Axor', 'Zetros'],
+      'DAF':           ['XF', 'CF', 'LF'],
+      'MAN':           ['TGX', 'TGS', 'TGM', 'TGL', 'TGE'],
+      'Iveco':         ['Stralis', 'Eurocargo', 'Daily', 'PowerStar', 'Trakker'],
+      'Isuzu':         ['FVZ', 'FXZ', 'FVD', 'NPS', 'NPR', 'NQR', 'NLR', 'FSR', 'FRR'],
+      'Hino':          ['700 Series', '500 Series', '300 Series', '258'],
+      'Fuso':          ['Shogun', 'Fighter', 'Canter', 'Rosa'],
+      'UD Trucks':     ['Quon', 'Condor', 'Croner', 'Kuzer'],
+      'Other':         ['Other'],
+    };
+
+    document.getElementById('tMake').addEventListener('change', function () {
+      const models = MODELS[this.value] || [];
+      const modelField = document.getElementById('modelField');
+      const modelSel = document.getElementById('tModel');
+      modelSel.innerHTML = '<option value="">Select model</option>';
+      if (models.length) {
+        models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m; opt.textContent = m;
+          modelSel.appendChild(opt);
+        });
+        modelField.style.display = 'block';
+      } else {
+        modelField.style.display = 'none';
+      }
+    });
 
     const truckIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
 
@@ -173,13 +214,17 @@
     async function saveTruck() {
       const rego = document.getElementById('tRego').value.trim().toUpperCase();
       if (!rego) return alert('Please enter a registration number.');
-      const make = document.getElementById('tMake').value.trim();
+      const make = document.getElementById('tMake').value;
+      const model = document.getElementById('tModel').value;
       const type = document.getElementById('tType').value;
-      await fetch('/api/trucks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rego, make, type }) });
+      const makeModel = make && model ? `${make} ${model}` : make || null;
+      await fetch('/api/trucks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rego, make: makeModel, type }) });
       closeModal();
       document.getElementById('tRego').value = '';
       document.getElementById('tMake').value = '';
+      document.getElementById('tModel').value = '';
       document.getElementById('tType').value = '';
+      document.getElementById('modelField').style.display = 'none';
       load();
     }
 

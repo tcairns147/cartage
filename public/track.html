@@ -297,9 +297,9 @@
       document.getElementById('loadDetails').textContent = isEmptyRun ? 'Empty Run — Collecting Livestock' : job.loadDetails;
       if (job.companySlug) {
         const logo = document.getElementById('clientLogo');
-        logo.src = `/logo-${job.companySlug}.png`;
-        logo.style.display = 'block';
+        logo.onload = () => { logo.style.display = 'block'; };
         logo.onerror = () => { logo.style.display = 'none'; };
+        logo.src = `/logo-${job.companySlug}.png`;
       }
       document.getElementById('driverName').textContent = job.driverName;
       document.getElementById('driverInitials').textContent = getInitials(job.driverName);

@@ -81,14 +81,17 @@ try { db.exec(`ALTER TABLE locations ADD COLUMN companyId INTEGER`); } catch {}
 
 // Seed companies
 const companies = [
-  { name: 'PJKL Sturgiss', slug: 'sturgiss', passcode: 'hay2025' },
+  { name: 'Sturgiss Pastoral Company Pty Ltd', slug: 'sturgiss', passcode: 'hay2025' },
   { name: 'Charlotte Horan', slug: 'horan', passcode: 'horan2025' },
   { name: 'Muddle Transport', slug: 'muddle', passcode: 'muddle2025' },
 ];
 for (const c of companies) {
-  try {
+  const existing = db.prepare('SELECT id FROM companies WHERE slug = ?').get(c.slug);
+  if (existing) {
+    db.prepare('UPDATE companies SET name = ?, passcode = ? WHERE slug = ?').run(c.name, c.passcode, c.slug);
+  } else {
     db.prepare('INSERT INTO companies (name, slug, passcode) VALUES (?, ?, ?)').run(c.name, c.slug, c.passcode);
-  } catch {}
+  }
 }
 
 function distanceKm(lat1, lng1, lat2, lng2) {

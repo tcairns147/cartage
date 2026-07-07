@@ -55,6 +55,18 @@ db.exec(`
 `);
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS trucks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    companyId INTEGER,
+    rego TEXT NOT NULL,
+    make TEXT,
+    type TEXT,
+    status TEXT DEFAULT 'available',
+    createdAt TEXT DEFAULT (datetime('now'))
+  )
+`);
+
+db.exec(`
   CREATE TABLE IF NOT EXISTS locations (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     companyId INTEGER,
@@ -76,6 +88,7 @@ try { db.exec(`ALTER TABLE jobs ADD COLUMN customerName TEXT`); } catch {}
 try { db.exec(`ALTER TABLE jobs ADD COLUMN jobType TEXT DEFAULT 'loaded'`); } catch {}
 try { db.exec(`ALTER TABLE jobs ADD COLUMN notes TEXT`); } catch {}
 try { db.exec(`ALTER TABLE jobs ADD COLUMN companyId INTEGER`); } catch {}
+try { db.exec(`ALTER TABLE jobs ADD COLUMN truckRego TEXT`); } catch {}
 try { db.exec(`ALTER TABLE drivers ADD COLUMN companyId INTEGER`); } catch {}
 try { db.exec(`ALTER TABLE locations ADD COLUMN companyId INTEGER`); } catch {}
 
@@ -139,6 +152,7 @@ app.get('/dispatcher', requireAuth, (req, res) => res.sendFile(__dirname + '/pub
 app.get('/history',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/history.html'));
 app.get('/drivers',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/drivers.html'));
 app.get('/clients',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/clients.html'));
+app.get('/trucks',     requireAuth, (req, res) => res.sendFile(__dirname + '/public/trucks.html'));
 app.get('/locations',  requireAuth, (req, res) => res.sendFile(__dirname + '/public/locations.html'));
 
 // Public pages (no auth — customers and drivers use these)
@@ -169,7 +183,7 @@ app.get('/jobs/:id', (req, res) => {
 });
 
 app.post('/jobs', requireAuth, (req, res) => {
-  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode } = req.body;
+  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode, truckRego } = req.body;
   const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
   jobType = jobType || 'loaded';
@@ -179,11 +193,12 @@ app.post('/jobs', requireAuth, (req, res) => {
   if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
 
   db.prepare(`
-    INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null, status);
+    INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes, status, truckRego)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null, status, truckRego || null);
 
   db.prepare("UPDATE drivers SET status = 'on-job' WHERE name = ? AND companyId = ?").run(driverName, req.company.id);
+  if (truckRego) db.prepare("UPDATE trucks SET status = 'on-job' WHERE rego = ? AND companyId = ?").run(truckRego, req.company.id);
 
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
@@ -237,6 +252,7 @@ app.post('/jobs/:id/complete', (req, res) => {
   db.prepare("UPDATE jobs SET status = 'complete' WHERE id = ?").run(req.params.id);
   if (job.companyId) {
     db.prepare("UPDATE drivers SET status = 'available' WHERE name = ? AND companyId = ?").run(job.driverName, job.companyId);
+    if (job.truckRego) db.prepare("UPDATE trucks SET status = 'available' WHERE rego = ? AND companyId = ?").run(job.truckRego, job.companyId);
   }
   res.json({ success: true });
 });
@@ -254,6 +270,22 @@ app.post('/api/drivers', requireAuth, (req, res) => {
 
 app.delete('/api/drivers/:id', requireAuth, (req, res) => {
   db.prepare('DELETE FROM drivers WHERE id = ? AND companyId = ?').run(req.params.id, req.company.id);
+  res.json({ success: true });
+});
+
+// Trucks
+app.get('/api/trucks', requireAuth, (req, res) => {
+  res.json(db.prepare('SELECT * FROM trucks WHERE companyId = ? ORDER BY rego ASC').all(req.company.id));
+});
+
+app.post('/api/trucks', requireAuth, (req, res) => {
+  const { rego, make, type } = req.body;
+  const result = db.prepare('INSERT INTO trucks (companyId, rego, make, type) VALUES (?, ?, ?, ?)').run(req.company.id, rego, make || null, type || null);
+  res.json({ id: result.lastInsertRowid, rego, make, type, status: 'available' });
+});
+
+app.delete('/api/trucks/:id', requireAuth, (req, res) => {
+  db.prepare('DELETE FROM trucks WHERE id = ? AND companyId = ?').run(req.params.id, req.company.id);
   res.json({ success: true });
 });
 

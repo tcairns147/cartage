@@ -194,6 +194,16 @@
               No drivers yet. <a href="/drivers">Add drivers →</a>
             </div>
           </div>
+          <div class="field">
+            <label>Truck <span style="font-weight:400;color:#aaa;">(optional)</span></label>
+            <div class="input-wrap select-wrap">
+              <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+              <select name="truckRego" id="truckSelect">
+                <option value="">No truck assigned</option>
+              </select>
+              <span class="select-caret"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+            </div>
+          </div>
           <div class="field" id="loadDetailsField">
             <label>Load Details</label>
             <div class="input-wrap">
@@ -346,7 +356,21 @@
         });
       }
     }
+    async function loadTrucks() {
+      const res = await fetch('/api/trucks');
+      const trucks = await res.json();
+      const sel = document.getElementById('truckSelect');
+      trucks.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.rego;
+        opt.textContent = `${t.rego}${t.make ? ' — ' + t.make : ''}${t.status === 'on-job' ? ' (On Job)' : ''}`;
+        if (t.status === 'on-job') opt.style.color = '#aaa';
+        sel.appendChild(opt);
+      });
+    }
+
     loadDrivers();
+    loadTrucks();
 
     let debounce;
     function setupAutocomplete(inputId, listId, latId, lngId, badgeId) {
@@ -497,6 +521,7 @@
       btn.disabled = true;
       checkForm();
       loadDrivers();
+      loadTrucks();
     }
   </script>
 </body>

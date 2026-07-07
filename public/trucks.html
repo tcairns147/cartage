@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Drova">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Drova — Trucks</title>
+  <script src="/sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
+    .main { margin-left: 220px; flex: 1; }
+    .topbar { background: white; padding: 16px 32px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .topbar-left { display: flex; flex-direction: column; }
+    .topbar-logo { height: 52px; margin-bottom: 8px; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .content { padding: 24px 32px; }
+    .add-btn { background: #f59e0b; color: white; border: none; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .add-btn:hover { background: #d97706; }
+    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
+    .empty { padding: 80px 20px; text-align: center; }
+    .empty-icon { margin-bottom: 12px; }
+    .empty h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .empty p { font-size: 14px; color: #aaa; }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #fafafa; }
+    th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #eee; }
+    td { padding: 14px 20px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+    .truck-cell { display: flex; align-items: center; gap: 12px; }
+    .truck-icon { width: 38px; height: 38px; border-radius: 10px; background: #fef3c7; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .truck-rego { font-size: 14px; font-weight: 700; color: #1a1a1a; letter-spacing: 0.5px; }
+    .truck-make { font-size: 12px; color: #aaa; }
+    .badge-available { display: inline-block; background: #dcfce7; color: #166534; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .badge-onjob { display: inline-block; background: #fef3c7; color: #92400e; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+    .delete-btn { background: none; border: none; color: #ddd; cursor: pointer; font-size: 18px; padding: 4px 8px; border-radius: 6px; }
+    .delete-btn:hover { background: #fff0f0; color: #dc2626; }
+
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 16px; width: 92%; max-width: 440px; overflow: hidden; }
+    .modal-header { background: #1a1a1a; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
+    .modal-header h3 { color: white; font-size: 16px; font-weight: 700; }
+    .modal-close { background: none; border: none; color: #888; font-size: 20px; cursor: pointer; }
+    .modal-close:hover { color: white; }
+    .modal-body { padding: 24px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
+    .field input, .field select { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e5e5; border-radius: 10px; font-size: 15px; font-family: inherit; background: #fafafa; }
+    .field input:focus, .field select:focus { outline: none; border-color: #f59e0b; background: white; }
+    .modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; }
+    .btn-cancel { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-save { flex: 1; padding: 13px; border-radius: 10px; background: #f59e0b; border: none; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-save:hover { background: #d97706; }
+    @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px 16px 80px; } }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <img src="/logo.svg" alt="Drova" class="topbar-logo">
+        <h1>Trucks</h1>
+        <p>Manage your fleet</p>
+      </div>
+      <button class="add-btn" onclick="openModal()">+ Add Truck</button>
+    </div>
+    <div class="content">
+      <div class="card" id="trucksCard"><div style="padding:40px;text-align:center;color:#aaa;">Loading...</div></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add Truck</h3>
+        <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+      </div>
+      <div class="modal-body">
+        <div class="field"><label>Registration</label><input type="text" id="tRego" placeholder="e.g. ABC123" autocapitalize="characters"></div>
+        <div class="field"><label>Make / Model</label><input type="text" id="tMake" placeholder="e.g. Kenworth T610"></div>
+        <div class="field">
+          <label>Truck Type</label>
+          <select id="tType">
+            <option value="">Select type</option>
+            <option value="Road Train">Road Train</option>
+            <option value="B-Double">B-Double</option>
+            <option value="Semi Trailer">Semi Trailer</option>
+            <option value="Heavy Rigid">Heavy Rigid</option>
+            <option value="Medium Rigid">Medium Rigid</option>
+            <option value="Ute / Light">Ute / Light</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" onclick="saveTruck()">Add Truck</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('trucks');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    const truckIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`;
+
+    async function load() {
+      const res = await fetch('/api/trucks');
+      const trucks = await res.json();
+      const card = document.getElementById('trucksCard');
+
+      if (!trucks.length) {
+        card.innerHTML = `<div class="empty"><div class="empty-icon">${truckIcon.replace('20','48').replace('20','48').replace('#92400e','#ddd').replace('1.8','1.2')}</div><h3>No trucks yet</h3><p>Add your first truck to get started.</p></div>`;
+        return;
+      }
+
+      card.innerHTML = `
+        <table>
+          <thead><tr><th>Truck</th><th>Type</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            ${trucks.map(t => `
+              <tr>
+                <td>
+                  <div class="truck-cell">
+                    <div class="truck-icon">${truckIcon}</div>
+                    <div>
+                      <div class="truck-rego">${t.rego}</div>
+                      <div class="truck-make">${t.make || '—'}</div>
+                    </div>
+                  </div>
+                </td>
+                <td>${t.type || '—'}</td>
+                <td>${t.status === 'on-job' ? '<span class="badge-onjob">On Job</span>' : '<span class="badge-available">Available</span>'}</td>
+                <td><button class="delete-btn" onclick="deleteTruck(${t.id})">&#x2715;</button></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+    }
+
+    function openModal() { document.getElementById('modal').classList.add('open'); }
+    function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+    async function saveTruck() {
+      const rego = document.getElementById('tRego').value.trim().toUpperCase();
+      if (!rego) return alert('Please enter a registration number.');
+      const make = document.getElementById('tMake').value.trim();
+      const type = document.getElementById('tType').value;
+      await fetch('/api/trucks', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rego, make, type }) });
+      closeModal();
+      document.getElementById('tRego').value = '';
+      document.getElementById('tMake').value = '';
+      document.getElementById('tType').value = '';
+      load();
+    }
+
+    async function deleteTruck(id) {
+      if (!confirm('Remove this truck?')) return;
+      await fetch(`/api/trucks/${id}`, { method: 'DELETE' });
+      load();
+    }
+
+    load();
+  </script>
+</body>
+</html>

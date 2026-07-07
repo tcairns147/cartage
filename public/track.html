@@ -338,15 +338,22 @@
         startLive(job, delivery);
       } else {
         moveTruck(routeCoords[0]);
-        updateEta(etaSeconds);
-        simInterval = setInterval(() => {
-          simStep++;
-          etaSeconds = Math.max(0, etaSeconds - 1);
-          if (simStep >= totalSteps) { clearInterval(simInterval); moveTruck(routeCoords[routeCoords.length - 1]); updateEta(0); return; }
-          moveTruck(routeCoords[simStep]);
-          updateEta(etaSeconds);
-        }, 1000);
+        document.getElementById('etaText').textContent = 'Waiting for driver to start trip';
+        waitForStart(job, delivery);
       }
+    }
+
+    function waitForStart(job, delivery) {
+      async function poll() {
+        const res = await fetch(`/jobs/${jobId}`);
+        const j = await res.json();
+        if (j.currentLat && j.currentLng) {
+          startLive(j, delivery);
+        } else {
+          setTimeout(poll, 5000);
+        }
+      }
+      setTimeout(poll, 5000);
     }
 
     function startLive(job, delivery) {

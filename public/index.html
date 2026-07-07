@@ -22,7 +22,9 @@
     .page-title { font-size: 22px; font-weight: 800; color: #1a1a1a; }
     .page-subtitle { font-size: 13px; color: #aaa; margin-top: 2px; }
 
-    .content { padding: 24px 32px 120px; max-width: 580px; }
+    .content { padding: 24px 32px 120px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; align-items: start; }
+    .form-col { min-width: 0; }
 
     .card { background: white; border-radius: 18px; padding: 22px 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
 
@@ -109,6 +111,7 @@
       .topbar { padding: 16px 20px; }
       .content { padding: 16px 16px 180px; }
       .submit-wrap { left: 0; bottom: 62px; }
+      .form-grid { grid-template-columns: 1fr; gap: 0; }
     }
   </style>
 </head>
@@ -124,7 +127,8 @@
 
     <div class="content">
       <form id="jobForm">
-
+      <div class="form-grid">
+      <div class="form-col">
         <!-- Customer Details -->
         <div class="card">
           <div class="card-header">
@@ -199,7 +203,8 @@
             </div>
           </div>
         </div>
-
+      </div>
+      <div class="form-col">
         <!-- Route -->
         <div class="card">
           <div class="card-header">
@@ -272,6 +277,8 @@
           <div id="dispatchNote" style="font-size:13px;color:#aaa;margin-top:12px;display:none;">Customer SMS will be sent when the driver starts the trip.</div>
           <input type="hidden" name="dispatchMode" id="dispatchModeInput" value="now">
         </div>
+      </div>
+      </div>
 
       </form>
 

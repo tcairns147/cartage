@@ -44,8 +44,8 @@ function renderSidebar(active) {
   return `
     <aside class="sidebar">
       <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>
-      <div id="sidebar-client-logo-wrap" style="padding: 0 16px 14px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center;">
-        <img id="sidebar-client-logo" src="" alt="" style="display:none; max-height:36px; max-width:160px; object-fit:contain;">
+      <div id="sidebar-client-logo-wrap" style="padding: 14px 16px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center;">
+        <img id="sidebar-client-logo" src="" alt="" style="display:none; width:100%; max-height:80px; object-fit:contain;">
       </div>
       <nav class="sidebar-nav">
         ${allNav.map(n => `

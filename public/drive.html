@@ -262,10 +262,8 @@
         document.getElementById('notesBox').style.display = 'block';
       }
       const btn = document.getElementById('startBtn');
-      if (job.status === 'planned') {
-        btn.textContent = 'Start Trip & Share Location';
-        btn.onclick = () => startTrip(job.id);
-      }
+      btn.textContent = 'Start Trip & Share Location';
+      btn.onclick = () => startTrip(job.id);
       btn.disabled = false;
     }
 

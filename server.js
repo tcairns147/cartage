@@ -181,18 +181,7 @@ app.post('/jobs', requireAuth, (req, res) => {
   const trackingUrl = `${req.protocol}://${req.get('host')}/track/${id}`;
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
 
-  // Respond immediately, fire SMS in background
   res.json({ id, driverUrl });
-
-  if (status === 'active') {
-    const greeting = customerName ? `Hi ${customerName.split(' ')[0]}, ` : '';
-    const smsBody = jobType === 'empty'
-      ? `${greeting}${driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
-      : `${greeting}your delivery of ${loadDetails} is on the way with ${driverName}. Track here: ${trackingUrl}`;
-    twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: customerMobile })
-      .then(() => console.log(`SMS sent to ${customerMobile}`))
-      .catch(err => console.error('Customer SMS failed:', err.message));
-  }
 });
 
 app.post('/jobs/:id/start', (req, res) => {

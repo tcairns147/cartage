@@ -23,6 +23,8 @@ async function loadCompanyName() {
     if (logoUrl) {
       const logoEl = document.getElementById('sidebar-client-logo');
       if (logoEl) { logoEl.src = logoUrl; logoEl.style.display = 'block'; }
+      const mobileEl = document.getElementById('mobile-client-logo');
+      if (mobileEl) { mobileEl.src = logoUrl; mobileEl.style.display = 'block'; mobileEl.onerror = () => { mobileEl.style.display = 'none'; }; }
     }
   } catch {}
 }
@@ -43,6 +45,10 @@ function renderSidebar(active) {
 
   setTimeout(loadCompanyName, 0);
   return `
+    <div class="mobile-topbar">
+      <img src="/logo.svg" alt="Drova" class="mobile-topbar-logo">
+      <img id="mobile-client-logo" src="" alt="" style="display:none; max-height:28px; max-width:100px; object-fit:contain;">
+    </div>
     <aside class="sidebar">
       <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>
       <div id="sidebar-client-logo-wrap" style="padding: 14px 16px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center;">
@@ -110,9 +116,17 @@ const SIDEBAR_CSS = `
   }
   .user-name { font-size: 13px; font-weight: 600; color: white; }
   .user-role { font-size: 11px; color: #555; }
+  .mobile-topbar { display: none; }
   .bottom-nav { display: none; }
   @media (max-width: 768px) {
     .sidebar { display: none; }
+    .mobile-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #1a1a1a; padding: 10px 16px;
+      border-bottom: 1px solid #2a2a2a;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .mobile-topbar-logo { height: 28px; filter: brightness(0) invert(1); }
     .bottom-nav {
       display: flex; position: fixed; bottom: 0; left: 0; right: 0;
       background: #1a1a1a; border-top: 1px solid #2a2a2a;

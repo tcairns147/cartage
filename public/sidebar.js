@@ -124,9 +124,12 @@ const SIDEBAR_CSS = `
       display: flex; align-items: center; justify-content: space-between;
       background: #1a1a1a; padding: 10px 16px;
       border-bottom: 1px solid #2a2a2a;
-      position: sticky; top: 0; z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 500;
+      padding-left: max(env(safe-area-inset-left), 16px);
+      padding-right: max(env(safe-area-inset-right), 16px);
     }
     .mobile-topbar-logo { height: 28px; filter: brightness(0) invert(1); }
+    .main { padding-top: 50px; }
     .bottom-nav {
       display: flex; position: fixed; bottom: 0; left: 0; right: 0;
       background: #1a1a1a; border-top: 1px solid #2a2a2a;

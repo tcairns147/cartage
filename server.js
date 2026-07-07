@@ -83,6 +83,7 @@ try { db.exec(`ALTER TABLE locations ADD COLUMN companyId INTEGER`); } catch {}
 const companies = [
   { name: 'PJKL Sturgiss', slug: 'sturgiss', passcode: 'hay2025' },
   { name: 'Charlotte Horan', slug: 'horan', passcode: 'horan2025' },
+  { name: 'Muddle Transport', slug: 'muddle', passcode: 'muddle2025' },
 ];
 for (const c of companies) {
   try {

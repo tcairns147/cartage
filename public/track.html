@@ -262,16 +262,24 @@
       return result;
     }
 
+    function formatTime(date) {
+      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
     function updateEta(secs) {
       if (secs <= 0) {
         document.getElementById('etaDisplay').textContent = 'Arrived';
         document.getElementById('etaSub').textContent = 'Awaiting confirmation';
         return;
       }
+      const now = Date.now();
+      const early = new Date(now + (secs - 15 * 60) * 1000);
+      const late  = new Date(now + (secs + 15 * 60) * 1000);
       const h = Math.floor(secs / 3600);
       const m = Math.floor((secs % 3600) / 60);
-      document.getElementById('etaDisplay').textContent = h > 0 ? `${h}h ${m}m` : `${m} min`;
-      document.getElementById('etaSub').textContent = 'estimated arrival';
+      const duration = h > 0 ? `${h}h ${m}m` : `${m} min`;
+      document.getElementById('etaDisplay').textContent = `${formatTime(early)} – ${formatTime(late)}`;
+      document.getElementById('etaSub').textContent = `approx. ${duration} away`;
     }
 
     function moveTruck(latlng) {

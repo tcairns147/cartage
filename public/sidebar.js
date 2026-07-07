@@ -81,6 +81,7 @@ const SIDEBAR_CSS = `
     width: 220px; background: #1a1a1a; min-height: 100vh;
     display: flex; flex-direction: column; flex-shrink: 0;
     position: fixed; top: 0; left: 0; bottom: 0; z-index: 100;
+    overflow-y: auto;
   }
   .sidebar-logo {
     padding: 22px 16px; border-bottom: 1px solid #2a2a2a;

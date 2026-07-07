@@ -138,6 +138,12 @@
     .delivered-screen .tick { font-size: 72px; margin-bottom: 20px; }
     .delivered-screen h2 { font-size: 28px; font-weight: 800; color: #166534; margin-bottom: 10px; }
     .delivered-screen p { font-size: 16px; color: #888; }
+    @keyframes drova-ripple { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(3.4);opacity:0} }
+    .drova-marker { position:relative; width:36px; height:36px; }
+    .drova-marker .ring { position:absolute; inset:0; border-radius:50%; background:#f59e0b; animation:drova-ripple 2s ease-out infinite; }
+    .drova-marker .ring2 { animation-delay:0.65s; }
+    .drova-marker .ring3 { animation-delay:1.3s; }
+    .drova-marker .disc { position:absolute; inset:4px; border-radius:50%; background:#f59e0b; border:2px solid white; display:flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body>
@@ -210,7 +216,20 @@
   <script>
     const jobId = window.location.pathname.split('/').pop();
 
-    const truckIcon = L.divIcon({ html: '<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="#f59e0b" stroke="#1a1a1a" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>', className: '', iconSize: [32, 32], iconAnchor: [16, 16] });
+    const truckIcon = L.divIcon({
+      html: `<div class="drova-marker">
+        <div class="ring"></div><div class="ring ring2"></div><div class="ring ring3"></div>
+        <div class="disc">
+          <svg width="16" height="16" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="50,5 93,27.5 93,72.5 50,95 7,72.5 7,27.5" fill="none" stroke="white" stroke-width="9" stroke-linejoin="round"/>
+            <polyline points="22,65 38,50 50,58 62,42 78,35" fill="none" stroke="white" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+      </div>`,
+      className: '',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18]
+    });
 
     const map = L.map('map', { zoomControl: false });
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);

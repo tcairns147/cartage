@@ -12,13 +12,17 @@ async function loadCompanyName() {
   try {
     const res = await fetch('/api/me');
     if (!res.ok) return;
-    const { name } = await res.json();
+    const { name, logoUrl } = await res.json();
     const nameEl = document.getElementById('sidebar-company-name');
     const roleEl = document.getElementById('sidebar-company-role');
     const avatarEl = document.getElementById('sidebar-avatar');
     if (nameEl) nameEl.textContent = name;
     if (roleEl) roleEl.textContent = 'Dispatcher';
     if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
+    if (logoUrl) {
+      const logoEl = document.getElementById('sidebar-client-logo');
+      if (logoEl) { logoEl.src = logoUrl; logoEl.style.display = 'block'; }
+    }
   } catch {}
 }
 
@@ -40,6 +44,9 @@ function renderSidebar(active) {
   return `
     <aside class="sidebar">
       <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>
+      <div id="sidebar-client-logo-wrap" style="padding: 0 16px 14px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center;">
+        <img id="sidebar-client-logo" src="" alt="" style="display:none; max-height:36px; max-width:160px; object-fit:contain;">
+      </div>
       <nav class="sidebar-nav">
         ${allNav.map(n => `
           <a class="nav-item${active === n.id ? ' active' : ''}" href="${n.href}">

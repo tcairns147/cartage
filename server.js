@@ -144,7 +144,10 @@ app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.htm
 
 // Company info endpoint (for sidebar)
 app.get('/api/me', requireAuth, (req, res) => {
-  res.json({ name: req.company.name, slug: req.company.slug });
+  const fs = require('fs');
+  const logoPath = `${__dirname}/public/logo-${req.company.slug}.png`;
+  const logoUrl = fs.existsSync(logoPath) ? `/logo-${req.company.slug}.png` : null;
+  res.json({ name: req.company.name, slug: req.company.slug, logoUrl });
 });
 
 // Jobs
@@ -157,7 +160,7 @@ app.get('/jobs/history', requireAuth, (req, res) => {
 });
 
 app.get('/jobs/:id', (req, res) => {
-  const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(req.params.id);
+  const job = db.prepare('SELECT jobs.*, companies.slug as companySlug FROM jobs LEFT JOIN companies ON jobs.companyId = companies.id WHERE jobs.id = ?').get(req.params.id);
   if (!job) return res.status(404).json({ error: 'Job not found' });
   res.json(job);
 });

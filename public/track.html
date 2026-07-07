@@ -150,7 +150,7 @@
 
   <div id="trackingView" style="display:none">
     <div class="header">
-      <div class="logo"><img src="/logo.svg" alt="Drova"></div>
+      <div class="logo"><img src="/logo.svg" alt="Drova"><img id="clientLogo" src="" alt="" style="display:none;max-height:32px;max-width:140px;object-fit:contain;margin-top:4px;"></div>
       <div class="live-pill" id="livePill"><div class="live-dot"></div> LIVE GPS</div>
     </div>
 
@@ -295,6 +295,12 @@
       document.getElementById('trackingView').style.display = 'block';
       document.getElementById('jobIdDisplay').textContent = `JOB #${job.id.toUpperCase()}`;
       document.getElementById('loadDetails').textContent = isEmptyRun ? 'Empty Run — Collecting Livestock' : job.loadDetails;
+      if (job.companySlug) {
+        const logo = document.getElementById('clientLogo');
+        logo.src = `/logo-${job.companySlug}.png`;
+        logo.style.display = 'block';
+        logo.onerror = () => { logo.style.display = 'none'; };
+      }
       document.getElementById('driverName').textContent = job.driverName;
       document.getElementById('driverInitials').textContent = getInitials(job.driverName);
       document.getElementById('pickupAddress').textContent = isEmptyRun ? 'En route' : job.pickupAddress;

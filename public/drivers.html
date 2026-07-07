@@ -56,6 +56,11 @@
     .field label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 6px; }
     .field input, .field select { width: 100%; padding: 12px 14px; border: 1.5px solid #e5e5e5; border-radius: 10px; font-size: 15px; font-family: inherit; background: #fafafa; }
     .field input:focus, .field select:focus { outline: none; border-color: #f59e0b; background: white; }
+    .tel-wrap { display: flex; gap: 8px; align-items: center; }
+    .tel-wrap input { flex: 1; }
+    .contacts-btn { flex-shrink: 0; width: 44px; height: 44px; border-radius: 10px; border: 1.5px solid #e5e5e5; background: #fafafa; cursor: pointer; display: none; align-items: center; justify-content: center; color: #555; }
+    .contacts-btn:hover { background: #f0f0f0; }
+    .contacts-api-supported .contacts-btn { display: flex; }
     .modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; }
     .btn-cancel { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
     .btn-save { flex: 1; padding: 13px; border-radius: 10px; background: #f59e0b; border: none; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -88,7 +93,15 @@
       </div>
       <div class="modal-body">
         <div class="field"><label>Full Name</label><input type="text" id="dName" placeholder="e.g. Mick Thompson"></div>
-        <div class="field"><label>Mobile Number</label><input type="tel" id="dMobile" placeholder="0400 000 000"></div>
+        <div class="field">
+          <label>Mobile Number</label>
+          <div class="tel-wrap">
+            <input type="tel" id="dMobile" placeholder="0400 000 000" autocomplete="tel">
+            <button type="button" class="contacts-btn" onclick="pickContact('dMobile')" title="Choose from contacts">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 11h6M19 8v6"/></svg>
+            </button>
+          </div>
+        </div>
         <div class="field">
           <label>Licence Class</label>
           <select id="dLicence">
@@ -170,6 +183,19 @@
     }
 
     load();
+
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+      document.body.classList.add('contacts-api-supported');
+    }
+
+    async function pickContact(fieldId) {
+      try {
+        const contacts = await navigator.contacts.select(['tel'], { multiple: false });
+        if (contacts.length && contacts[0].tel && contacts[0].tel.length) {
+          document.getElementById(fieldId).value = contacts[0].tel[0];
+        }
+      } catch (e) {}
+    }
   </script>
 </body>
 </html>

@@ -38,6 +38,9 @@
     label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 7px; }
 
     .input-wrap { position: relative; display: flex; align-items: center; }
+    .contacts-btn { flex-shrink: 0; width: 46px; height: 46px; border-radius: 12px; border: 1.5px solid #e8e8e8; background: #f8f8f8; cursor: pointer; display: none; align-items: center; justify-content: center; color: #555; margin-left: 8px; }
+    .contacts-btn:hover { background: #f0f0f0; }
+    .contacts-api-supported .contacts-btn { display: flex; }
     .input-icon { position: absolute; left: 13px; color: #bbb; pointer-events: none; display: flex; }
     .input-wrap input,
     .input-wrap select { padding-left: 40px; }
@@ -148,8 +151,11 @@
             <label>Mobile Number</label>
             <div class="input-wrap">
               <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>
-              <input type="tel" name="customerMobile" placeholder="0400 000 000" required>
+              <input type="tel" name="customerMobile" placeholder="0400 000 000" required autocomplete="tel">
             </div>
+            <button type="button" class="contacts-btn" onclick="pickContact()" title="Choose from contacts">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 11h6M19 8v6"/></svg>
+            </button>
           </div>
         </div>
 
@@ -451,6 +457,19 @@
         btn.innerHTML = origLabel; btn.disabled = false;
       }
     });
+
+    if ('contacts' in navigator && 'ContactsManager' in window) {
+      document.body.classList.add('contacts-api-supported');
+    }
+
+    async function pickContact() {
+      try {
+        const contacts = await navigator.contacts.select(['tel'], { multiple: false });
+        if (contacts.length && contacts[0].tel && contacts[0].tel.length) {
+          document.querySelector('[name="customerMobile"]').value = contacts[0].tel[0];
+        }
+      } catch (e) {}
+    }
 
     function resetForm() {
       document.getElementById('jobForm').reset();

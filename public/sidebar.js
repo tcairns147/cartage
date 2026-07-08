@@ -47,7 +47,7 @@ function renderSidebar(active) {
   return `
     <div class="mobile-topbar">
       <img src="/logo.svg" alt="Drova" class="mobile-topbar-logo">
-      <img id="mobile-client-logo" src="" alt="" style="display:none; max-height:28px; max-width:100px; object-fit:contain; mix-blend-mode:screen;">
+      <img id="mobile-client-logo" src="" alt="" style="display:none; max-height:28px; max-width:100px; object-fit:contain;">
     </div>
     <aside class="sidebar">
       <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>

@@ -171,8 +171,10 @@ app.get('/api/places', async (req, res) => {
     const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&components=country:au&key=${key}&language=en`;
     const r = await fetch(url);
     const data = await r.json();
+    console.log('Places API status:', data.status, 'predictions:', (data.predictions||[]).length);
     res.json(data);
   } catch (e) {
+    console.error('Places API error:', e.message);
     res.json({ predictions: [] });
   }
 });

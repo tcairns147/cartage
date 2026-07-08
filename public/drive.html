@@ -173,33 +173,23 @@
       font-weight: 600;
     }
 
-    #driveMap {
-      display: none;
-      width: 100%;
-      max-width: 360px;
-      height: 280px;
-      border-radius: 16px;
-      overflow: hidden;
-      margin-bottom: 16px;
-    }
-    #driveMap.visible { display: block; }
     .btn-gmaps {
       display: none;
       width: 100%;
       max-width: 360px;
-      padding: 13px;
-      border-radius: 12px;
+      padding: 16px;
+      border-radius: 14px;
       border: none;
       background: #4285F4;
       color: white;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
       text-decoration: none;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
       margin-bottom: 12px;
     }
     .btn-gmaps.visible { display: flex; }
@@ -253,7 +243,6 @@
     <div id="notesText" style="font-size:14px;color:#ddd;line-height:1.5;"></div>
   </div>
 
-  <div id="driveMap"></div>
   <a class="btn-gmaps" id="gmapsLink" href="#" target="_blank">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
     Open in Google Maps
@@ -264,8 +253,7 @@
 
   <script>
     const jobId = window.location.pathname.split('/').pop();
-    let watchId = null, wakeLock = null;
-    let gmap = null, driverMarker = null, directionsRenderer = null, currentJob = null;
+    let watchId = null, wakeLock = null, currentJob = null;
 
     async function requestWakeLock() {
       if ('wakeLock' in navigator) {
@@ -276,17 +264,6 @@
     document.addEventListener('visibilitychange', async () => {
       if (wakeLock !== null && document.visibilityState === 'visible') await requestWakeLock();
     });
-
-    async function initMap() {
-      const { googleMapsKey } = await (await fetch('/api/config')).json();
-      if (!googleMapsKey) return;
-      await new Promise(resolve => {
-        window.__gmInit = resolve;
-        const s = document.createElement('script');
-        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=__gmInit`;
-        document.head.appendChild(s);
-      });
-    }
 
     async function loadJob() {
       const res = await fetch(`/jobs/${jobId}`);
@@ -321,32 +298,11 @@
       startTracking();
     }
 
-    function showMap(lat, lng) {
+    function showMapsLink() {
       const dest = currentJob.jobType === 'empty' ? currentJob.pickupAddress : currentJob.deliveryAddress;
-      document.getElementById('driveMap').classList.add('visible');
-      document.getElementById('gmapsLink').classList.add('visible');
-      document.getElementById('gmapsLink').href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`;
-
-      gmap = new google.maps.Map(document.getElementById('driveMap'), {
-        center: { lat, lng }, zoom: 13,
-        mapTypeId: 'roadmap',
-        mapTypeControl: false, streetViewControl: false, fullscreenControl: false, zoomControl: false
-      });
-      driverMarker = new google.maps.Marker({
-        position: { lat, lng }, map: gmap,
-        icon: { url: '/apple-touch-icon.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18) }
-      });
-      directionsRenderer = new google.maps.DirectionsRenderer({
-        map: gmap, suppressMarkers: true,
-        polylineOptions: { strokeColor: '#f59e0b', strokeWeight: 5 }
-      });
-      new google.maps.DirectionsService().route({
-        origin: { lat, lng },
-        destination: dest,
-        travelMode: google.maps.TravelMode.DRIVING
-      }, (result, status) => {
-        if (status === 'OK') directionsRenderer.setDirections(result);
-      });
+      const link = document.getElementById('gmapsLink');
+      link.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`;
+      link.classList.add('visible');
     }
 
     function startTracking() {
@@ -370,13 +326,7 @@
           document.getElementById('statusText').textContent = 'Live';
           document.getElementById('coords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} · ±${Math.round(accuracy)}m`;
           document.getElementById('arrivedBtn').style.display = 'block';
-          if (!mapShown && typeof google !== 'undefined') {
-            mapShown = true;
-            showMap(lat, lng);
-          } else if (gmap) {
-            driverMarker.setPosition({ lat, lng });
-            gmap.panTo({ lat, lng });
-          }
+          if (!mapShown) { mapShown = true; showMapsLink(); }
         },
         (err) => {
           document.getElementById('statusCircle').classList.add('error');
@@ -398,7 +348,6 @@
       document.getElementById('startBtn').style.display = 'none';
     }
 
-    initMap();
     loadJob();
   </script>
 </body>

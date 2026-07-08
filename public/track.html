@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-title" content="Drova">
   <meta name="theme-color" content="#1a1a1a">
   <title>Drova — Track Your Delivery</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; }
@@ -214,53 +213,54 @@
     <p>Your load has been delivered successfully.<br>Thank you for using Drova.</p>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const jobId = window.location.pathname.split('/').pop();
+    let gmap = null, truckMarker = null, routeLine = null, etaSeconds = 0;
 
-    const truckIcon = L.divIcon({
-      html: `<div class="drova-marker">
-        <div class="ring"></div><div class="ring ring2"></div><div class="ring ring3"></div>
-        <div class="disc">
-          <img src="/apple-touch-icon.png" style="width:100%;height:100%;object-fit:cover;">
-        </div>
-      </div>`,
-      className: '',
-      iconSize: [36, 36],
-      iconAnchor: [18, 18]
-    });
-
-    const map = L.map('map', { zoomControl: false });
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-
-    let truckMarker = null;
-    let routeCoords = [];
-    let simStep = 0, simInterval = null, etaSeconds = 0;
+    async function initMap() {
+      const { googleMapsKey } = await (await fetch('/api/config')).json();
+      await new Promise(resolve => {
+        window.__gmInit = resolve;
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=__gmInit`;
+        document.head.appendChild(s);
+      });
+      gmap = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -25.2744, lng: 133.7751 }, zoom: 5,
+        mapTypeId: 'roadmap',
+        mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+        zoomControl: true
+      });
+      loadJob();
+    }
 
     async function geocode(address) {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=au&limit=1`, { headers: { 'Accept-Language': 'en' } });
-      const data = await res.json();
-      return data.length ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null;
+      const res = await fetch(`/api/places/detail?place_id=&address=${encodeURIComponent(address)}`);
+      const geocoder = new google.maps.Geocoder();
+      return new Promise(resolve => {
+        geocoder.geocode({ address, region: 'AU' }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            const loc = results[0].geometry.location;
+            resolve([loc.lat(), loc.lng()]);
+          } else resolve(null);
+        });
+      });
     }
 
     async function getRoadRoute(pickup, delivery) {
-      const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${pickup[1]},${pickup[0]};${delivery[1]},${delivery[0]}?overview=full&geometries=geojson`);
-      const data = await res.json();
-      if (data.code !== 'Ok') return null;
-      return { coords: data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]), duration: data.routes[0].duration };
-    }
-
-    function resample(coords, steps) {
-      const result = [];
-      for (let i = 0; i <= steps; i++) {
-        const t = i / steps * (coords.length - 1);
-        const idx = Math.floor(t);
-        const frac = t - idx;
-        const a = coords[Math.min(idx, coords.length - 1)];
-        const b = coords[Math.min(idx + 1, coords.length - 1)];
-        result.push([a[0] + (b[0] - a[0]) * frac, a[1] + (b[1] - a[1]) * frac]);
-      }
-      return result;
+      return new Promise(resolve => {
+        const ds = new google.maps.DirectionsService();
+        ds.route({
+          origin: { lat: pickup[0], lng: pickup[1] },
+          destination: { lat: delivery[0], lng: delivery[1] },
+          travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+          if (status !== 'OK') return resolve(null);
+          const leg = result.routes[0].legs[0];
+          const coords = result.routes[0].overview_path.map(p => [p.lat(), p.lng()]);
+          resolve({ coords, duration: leg.duration.value });
+        });
+      });
     }
 
     function formatTime(date) {
@@ -276,17 +276,20 @@
       const now = Date.now();
       const early = new Date(now + (secs - 15 * 60) * 1000);
       const late  = new Date(now + (secs + 15 * 60) * 1000);
-      const h = Math.floor(secs / 3600);
-      const m = Math.floor((secs % 3600) / 60);
-      const duration = h > 0 ? `${h}h ${m}m` : `${m} min`;
+      const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60);
       document.getElementById('etaDisplay').textContent = `${formatTime(early)} – ${formatTime(late)}`;
-      document.getElementById('etaSub').textContent = `approx. ${duration} away`;
+      document.getElementById('etaSub').textContent = `approx. ${h > 0 ? h + 'h ' : ''}${m}m away`;
     }
 
-    function moveTruck(latlng) {
-      if (!truckMarker) truckMarker = L.marker(latlng, { icon: truckIcon }).addTo(map);
-      else truckMarker.setLatLng(latlng);
-      map.panTo(latlng);
+    function moveTruck(lat, lng) {
+      const pos = { lat, lng };
+      if (!truckMarker) {
+        truckMarker = new google.maps.Marker({
+          position: pos, map: gmap,
+          icon: { url: '/apple-touch-icon.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18) }
+        });
+      } else truckMarker.setPosition(pos);
+      gmap.panTo(pos);
     }
 
     function getInitials(name) {
@@ -301,7 +304,6 @@
       if (job.status === 'complete') { showDelivered(job.jobType); return; }
 
       const isEmptyRun = job.jobType === 'empty';
-
       document.getElementById('trackingView').style.display = 'block';
       document.getElementById('jobIdDisplay').textContent = `JOB #${job.id.toUpperCase()}`;
       document.getElementById('loadDetails').textContent = isEmptyRun ? 'Empty Run — Collecting Livestock' : job.loadDetails;
@@ -315,75 +317,65 @@
       document.getElementById('driverInitials').textContent = getInitials(job.driverName);
       document.getElementById('pickupAddress').textContent = isEmptyRun ? 'En route' : job.pickupAddress;
       document.getElementById('deliveryAddress').textContent = job.pickupAddress;
-
-      // Labels
       document.querySelector('.detail-row:last-child .detail-label').textContent = isEmptyRun ? 'Heading to' : 'Delivering to';
       document.querySelector('.status-pill').textContent = isEmptyRun ? 'On the Way' : 'In Transit';
 
-      // For empty run, truck routes TO the pickup address
-      let pickup = (job.currentLat && job.currentLng) ? [job.currentLat, job.currentLng] : [-32.2569, 148.6011];
-      let delivery = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
-      if (!isEmptyRun) {
-        pickup = (job.pickupLat && job.pickupLng) ? [job.pickupLat, job.pickupLng] : await geocode(job.pickupAddress);
-        delivery = (job.deliveryLat && job.deliveryLng) ? [job.deliveryLat, job.deliveryLng] : await geocode(job.deliveryAddress);
-        if (!pickup) pickup = [-32.2569, 148.6011];
-        if (!delivery) delivery = [-33.2832, 149.1000];
+      let pickup = (job.currentLat && job.currentLng) ? [+job.currentLat, +job.currentLng] : null;
+      let delivery;
+      if (isEmptyRun) {
+        delivery = (job.pickupLat && job.pickupLng) ? [+job.pickupLat, +job.pickupLng] : await geocode(job.pickupAddress);
+        if (!pickup) pickup = delivery || [-32.2569, 148.6011];
       } else {
-        if (!delivery) delivery = [-33.2832, 149.1000];
+        pickup = (job.pickupLat && job.pickupLng) ? [+job.pickupLat, +job.pickupLng] : await geocode(job.pickupAddress) || [-32.2569, 148.6011];
+        delivery = (job.deliveryLat && job.deliveryLng) ? [+job.deliveryLat, +job.deliveryLng] : await geocode(job.deliveryAddress) || [-33.2832, 149.1000];
       }
 
       const route = await getRoadRoute(pickup, delivery);
-      const rawCoords = (route && route.coords.length >= 2) ? route.coords : [pickup, delivery];
-      etaSeconds = route ? Math.round(route.duration) : 7200;
+      etaSeconds = route ? route.duration : 7200;
 
-      const totalSteps = 240;
-      routeCoords = resample(rawCoords, totalSteps);
+      new google.maps.Marker({ position: { lat: pickup[0], lng: pickup[1] }, map: gmap, title: 'Pickup' });
+      new google.maps.Marker({ position: { lat: delivery[0], lng: delivery[1] }, map: gmap, title: 'Delivery' });
 
-      L.marker(pickup, { title: 'Pickup' }).addTo(map);
-      L.marker(delivery, { title: 'Delivery' }).addTo(map);
-      L.polyline(routeCoords, { color: '#f59e0b', weight: 5, opacity: 0.8 }).addTo(map);
-      map.fitBounds(L.polyline(routeCoords).getBounds(), { padding: [40, 40] });
+      if (route) {
+        routeLine = new google.maps.Polyline({
+          path: route.coords.map(([lat, lng]) => ({ lat, lng })),
+          strokeColor: '#f59e0b', strokeWeight: 5, strokeOpacity: 0.8, map: gmap
+        });
+        const bounds = new google.maps.LatLngBounds();
+        route.coords.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+        gmap.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+      }
 
       if (job.currentLat && job.currentLng) {
         startLive(job, delivery);
       } else {
-        moveTruck(routeCoords[0]);
-        document.getElementById('etaText').textContent = 'Waiting for driver to start trip';
+        moveTruck(pickup[0], pickup[1]);
         waitForStart(job, delivery);
       }
     }
 
     function waitForStart(job, delivery) {
       async function poll() {
-        const res = await fetch(`/jobs/${jobId}`);
-        const j = await res.json();
-        if (j.currentLat && j.currentLng) {
-          startLive(j, delivery);
-        } else {
-          setTimeout(poll, 5000);
-        }
+        const j = await (await fetch(`/jobs/${jobId}`)).json();
+        if (j.currentLat && j.currentLng) startLive(j, delivery);
+        else setTimeout(poll, 5000);
       }
       setTimeout(poll, 5000);
     }
 
     function startLive(job, delivery) {
       document.getElementById('livePill').classList.add('visible');
-      if (simInterval) { clearInterval(simInterval); simInterval = null; }
-
       async function poll() {
-        const res = await fetch(`/jobs/${jobId}`);
-        const j = await res.json();
+        const j = await (await fetch(`/jobs/${jobId}`)).json();
         if (j.status === 'complete') { showDelivered(j.jobType); return; }
         if (j.currentLat && j.currentLng) {
-          moveTruck([j.currentLat, j.currentLng]);
+          moveTruck(+j.currentLat, +j.currentLng);
           const dlat = delivery[0] - j.currentLat, dlng = delivery[1] - j.currentLng;
-          const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
-          updateEta(Math.round(distKm / 80 * 3600));
+          updateEta(Math.round(Math.sqrt(dlat*dlat + dlng*dlng) * 111 / 80 * 3600));
         }
         setTimeout(poll, 5000);
       }
-
-      moveTruck([job.currentLat, job.currentLng]);
+      moveTruck(+job.currentLat, +job.currentLng);
       updateEta(etaSeconds);
       setTimeout(poll, 5000);
     }
@@ -398,7 +390,7 @@
       screen.style.display = 'block';
     }
 
-    loadJob();
+    initMap();
   </script>
 </body>
 </html>

@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-title" content="Drova">
   <meta name="theme-color" content="#1a1a1a">
   <title>Drova — New Job</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="/sidebar.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -325,7 +324,19 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    async function loadGoogleMaps() {
+      const { googleMapsKey } = await (await fetch('/api/config')).json();
+      if (!googleMapsKey) return;
+      await new Promise(resolve => {
+        window.__gmInit = resolve;
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=__gmInit`;
+        document.head.appendChild(s);
+      });
+    }
+    loadGoogleMaps();
+  </script>
   <script>
     document.getElementById('sidebar-root').innerHTML = renderSidebar('new');
     document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
@@ -406,29 +417,35 @@
       document.getElementById('pinModal').classList.add('open');
       document.getElementById('pinConfirm').disabled = true;
       setTimeout(() => {
+        const lat = parseFloat(document.getElementById(`${field}Lat`).value) || -25.2744;
+        const lng = parseFloat(document.getElementById(`${field}Lng`).value) || 133.7751;
+        const zoom = document.getElementById(`${field}Lat`).value ? 14 : 5;
         if (!pinMap) {
-          pinMap = L.map('pinMap').setView([-25.2744, 133.7751], 5);
-          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(pinMap);
-          pinMap.on('click', e => {
-            if (pinMarker) pinMap.removeLayer(pinMarker);
-            pinMarker = L.marker(e.latlng).addTo(pinMap);
+          pinMap = new google.maps.Map(document.getElementById('pinMap'), {
+            center: { lat, lng }, zoom,
+            mapTypeId: 'hybrid',
+            mapTypeControl: false, streetViewControl: false, fullscreenControl: false
+          });
+          pinMap.addListener('click', e => {
+            if (pinMarker) pinMarker.setMap(null);
+            pinMarker = new google.maps.Marker({ position: e.latLng, map: pinMap });
             document.getElementById('pinConfirm').disabled = false;
           });
+        } else {
+          pinMap.setCenter({ lat, lng });
+          pinMap.setZoom(zoom);
         }
-        pinMap.invalidateSize();
-        const lat = document.getElementById(`${field}Lat`).value;
-        const lng = document.getElementById(`${field}Lng`).value;
-        if (lat && lng) {
-          pinMap.setView([lat, lng], 12);
-          if (pinMarker) pinMap.removeLayer(pinMarker);
-          pinMarker = L.marker([lat, lng]).addTo(pinMap);
+        if (document.getElementById(`${field}Lat`).value) {
+          if (pinMarker) pinMarker.setMap(null);
+          pinMarker = new google.maps.Marker({ position: { lat, lng }, map: pinMap });
           document.getElementById('pinConfirm').disabled = false;
         }
       }, 50);
     }
     function closePin() { document.getElementById('pinModal').classList.remove('open'); }
     function confirmPin() {
-      const { lat, lng } = pinMarker.getLatLng();
+      const pos = pinMarker.getPosition();
+      const lat = pos.lat(), lng = pos.lng();
       document.getElementById(`${activePin}Lat`).value = lat;
       document.getElementById(`${activePin}Lng`).value = lng;
       document.getElementById(`${activePin}Address`).value = `Pin: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;

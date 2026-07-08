@@ -162,6 +162,10 @@ app.get('/trucks',     requireAuth, (req, res) => res.sendFile(__dirname + '/pub
 app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.html'));
 app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
 
+app.get('/api/config', (req, res) => {
+  res.json({ googleMapsKey: process.env.GOOGLE_PLACES_KEY || '' });
+});
+
 app.get('/api/places', async (req, res) => {
   const key = process.env.GOOGLE_PLACES_KEY;
   if (!key) return res.json({ predictions: [] });

@@ -162,8 +162,33 @@ app.get('/trucks',     requireAuth, (req, res) => res.sendFile(__dirname + '/pub
 app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.html'));
 app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
 
-app.get('/api/config', (req, res) => {
-  res.json({ googlePlacesKey: process.env.GOOGLE_PLACES_KEY || '' });
+app.get('/api/places', async (req, res) => {
+  const key = process.env.GOOGLE_PLACES_KEY;
+  if (!key) return res.json({ predictions: [] });
+  const q = req.query.q || '';
+  if (!q) return res.json({ predictions: [] });
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/autocomplete/json?input=${encodeURIComponent(q)}&components=country:au&key=${key}&language=en`;
+    const r = await fetch(url);
+    const data = await r.json();
+    res.json(data);
+  } catch (e) {
+    res.json({ predictions: [] });
+  }
+});
+
+app.get('/api/places/detail', async (req, res) => {
+  const key = process.env.GOOGLE_PLACES_KEY;
+  if (!key) return res.json({});
+  try {
+    const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${req.query.place_id}&fields=geometry&key=${key}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    const loc = data.result?.geometry?.location;
+    res.json(loc ? { lat: loc.lat, lng: loc.lng } : {});
+  } catch (e) {
+    res.json({});
+  }
 });
 
 app.get('/api/me', requireAuth, async (req, res) => {

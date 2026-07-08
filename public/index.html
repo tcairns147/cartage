@@ -362,40 +362,42 @@
     loadDrivers();
     loadTrucks();
 
-    async function initGooglePlaces() {
-      const { googlePlacesKey } = await (await fetch('/api/config')).json();
-      if (!googlePlacesKey) return;
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${googlePlacesKey}&libraries=places`;
-      script.onload = () => {
-        setupPlacesAutocomplete('pickupAddress', 'pickupLat', 'pickupLng', 'pickupBadge');
-        setupPlacesAutocomplete('deliveryAddress', 'deliveryLat', 'deliveryLng', 'deliveryBadge');
-      };
-      document.head.appendChild(script);
-    }
-
-    function setupPlacesAutocomplete(inputId, latId, lngId, badgeId) {
+    let acDebounce;
+    function setupAutocomplete(inputId, listId, latId, lngId, badgeId) {
       const input = document.getElementById(inputId);
-      const ac = new google.maps.places.Autocomplete(input, {
-        componentRestrictions: { country: 'au' },
-        fields: ['formatted_address', 'geometry']
-      });
-      ac.addListener('place_changed', () => {
-        const place = ac.getPlace();
-        if (!place.geometry) return;
-        input.value = place.formatted_address;
-        document.getElementById(latId).value = place.geometry.location.lat();
-        document.getElementById(lngId).value = place.geometry.location.lng();
-        document.getElementById(badgeId).classList.remove('visible');
-        checkForm();
-      });
+      const list = document.getElementById(listId);
       input.addEventListener('input', () => {
         document.getElementById(latId).value = '';
         document.getElementById(lngId).value = '';
+        document.getElementById(badgeId).classList.remove('visible');
+        clearTimeout(acDebounce);
+        const q = input.value.trim();
+        if (q.length < 3) { list.innerHTML = ''; return; }
+        acDebounce = setTimeout(async () => {
+          const res = await fetch(`/api/places?q=${encodeURIComponent(q)}`);
+          const data = await res.json();
+          const predictions = data.predictions || [];
+          list.innerHTML = predictions.map(p => `<div class="autocomplete-item" data-place="${p.place_id}" data-name="${p.description}">${p.description}</div>`).join('');
+          list.querySelectorAll('.autocomplete-item').forEach(item => {
+            item.addEventListener('click', async () => {
+              input.value = item.dataset.name;
+              list.innerHTML = '';
+              const det = await fetch(`/api/places/detail?place_id=${item.dataset.place}`);
+              const d = await det.json();
+              if (d.lat) {
+                document.getElementById(latId).value = d.lat;
+                document.getElementById(lngId).value = d.lng;
+              }
+              checkForm();
+            });
+          });
+        }, 300);
       });
+      document.addEventListener('click', e => { if (!input.contains(e.target) && !list.contains(e.target)) list.innerHTML = ''; });
     }
 
-    initGooglePlaces();
+    setupAutocomplete('pickupAddress', 'pickupList', 'pickupLat', 'pickupLng', 'pickupBadge');
+    setupAutocomplete('deliveryAddress', 'deliveryList', 'deliveryLat', 'deliveryLng', 'deliveryBadge');
 
     let pinMap = null, pinMarker = null, activePin = null;
     function openPin(field) {

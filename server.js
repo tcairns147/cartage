@@ -162,6 +162,10 @@ app.get('/trucks',     requireAuth, (req, res) => res.sendFile(__dirname + '/pub
 app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.html'));
 app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
 
+app.get('/api/config', (req, res) => {
+  res.json({ googlePlacesKey: process.env.GOOGLE_PLACES_KEY || '' });
+});
+
 app.get('/api/me', requireAuth, async (req, res) => {
   const logoPath = `${__dirname}/public/logo-${req.company.slug}.png`;
   const logoUrl = fs.existsSync(logoPath) ? `/logo-${req.company.slug}.png` : null;

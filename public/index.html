@@ -362,35 +362,40 @@
     loadDrivers();
     loadTrucks();
 
-    let debounce;
-    function setupAutocomplete(inputId, listId, latId, lngId, badgeId) {
+    async function initGooglePlaces() {
+      const { googlePlacesKey } = await (await fetch('/api/config')).json();
+      if (!googlePlacesKey) return;
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${googlePlacesKey}&libraries=places`;
+      script.onload = () => {
+        setupPlacesAutocomplete('pickupAddress', 'pickupLat', 'pickupLng', 'pickupBadge');
+        setupPlacesAutocomplete('deliveryAddress', 'deliveryLat', 'deliveryLng', 'deliveryBadge');
+      };
+      document.head.appendChild(script);
+    }
+
+    function setupPlacesAutocomplete(inputId, latId, lngId, badgeId) {
       const input = document.getElementById(inputId);
-      const list = document.getElementById(listId);
+      const ac = new google.maps.places.Autocomplete(input, {
+        componentRestrictions: { country: 'au' },
+        fields: ['formatted_address', 'geometry']
+      });
+      ac.addListener('place_changed', () => {
+        const place = ac.getPlace();
+        if (!place.geometry) return;
+        input.value = place.formatted_address;
+        document.getElementById(latId).value = place.geometry.location.lat();
+        document.getElementById(lngId).value = place.geometry.location.lng();
+        document.getElementById(badgeId).classList.remove('visible');
+        checkForm();
+      });
       input.addEventListener('input', () => {
         document.getElementById(latId).value = '';
         document.getElementById(lngId).value = '';
-        document.getElementById(badgeId).classList.remove('visible');
-        clearTimeout(debounce);
-        const q = input.value.trim();
-        if (q.length < 3) { list.innerHTML = ''; return; }
-        debounce = setTimeout(async () => {
-          const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=au&limit=5`, { headers: { 'Accept-Language': 'en' } });
-          const results = await res.json();
-          list.innerHTML = results.map(r => `<div class="autocomplete-item" data-lat="${r.lat}" data-lng="${r.lon}" data-name="${r.display_name}">${r.display_name}</div>`).join('');
-          list.querySelectorAll('.autocomplete-item').forEach(item => {
-            item.addEventListener('click', () => {
-              input.value = item.dataset.name;
-              document.getElementById(latId).value = item.dataset.lat;
-              document.getElementById(lngId).value = item.dataset.lng;
-              list.innerHTML = '';
-            });
-          });
-        }, 350);
       });
-      document.addEventListener('click', e => { if (!input.contains(e.target) && !list.contains(e.target)) list.innerHTML = ''; });
     }
-    setupAutocomplete('pickupAddress', 'pickupList', 'pickupLat', 'pickupLng', 'pickupBadge');
-    setupAutocomplete('deliveryAddress', 'deliveryList', 'deliveryLat', 'deliveryLng', 'deliveryBadge');
+
+    initGooglePlaces();
 
     let pinMap = null, pinMarker = null, activePin = null;
     function openPin(field) {

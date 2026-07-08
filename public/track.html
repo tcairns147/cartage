@@ -14,54 +14,144 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; }
 
+    /* ── HEADER ──────────────────────────────────────────── */
     .header {
       background: #1a1a1a;
-      padding: 16px 20px;
+      padding: 12px 20px;
+      padding-left: max(env(safe-area-inset-left), 20px);
+      padding-right: max(env(safe-area-inset-right), 20px);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 12px;
+      min-height: 60px;
     }
 
-    .logo img:first-child { height: 44px; filter: brightness(0) invert(1); display: block; }
-    #clientLogo { filter: none; }
+    .header-drova img {
+      height: 40px;
+      filter: brightness(0) invert(1);
+      display: block;
+      flex-shrink: 0;
+    }
+
+    .header-client {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-width: 0;
+    }
+
+    #clientLogo {
+      max-height: 36px;
+      max-width: min(160px, 35vw);
+      object-fit: contain;
+      mix-blend-mode: lighten;
+      display: none;
+    }
+
     .live-pill {
       display: none;
-      align-items: center;
-      gap: 6px;
-      background: #dcfce7;
-      color: #166534;
-      font-size: 12px;
+      align-items: flex-start;
+      gap: 7px;
+      background: rgba(22,163,74,0.15);
+      border: 1px solid rgba(22,163,74,0.35);
+      color: #4ade80;
+      font-size: 11px;
       font-weight: 700;
-      padding: 5px 12px;
-      border-radius: 20px;
+      padding: 6px 10px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      min-width: 0;
+      max-width: 160px;
     }
     .live-pill.visible { display: flex; }
-    .live-dot { width: 7px; height: 7px; border-radius: 50%; background: #16a34a; animation: blink 1.4s infinite; }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .live-pill.stale-mild {
+      background: rgba(245,158,11,0.12);
+      border-color: rgba(245,158,11,0.3);
+      color: #fbbf24;
+    }
+    .live-pill.stale-bad {
+      background: rgba(156,163,175,0.1);
+      border-color: rgba(156,163,175,0.25);
+      color: #9ca3af;
+    }
 
-    #map { height: 52vh; width: 100%; }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+      margin-top: 3px;
+      animation: blink 1.4s infinite;
+    }
+    .live-pill.stale-mild .live-dot { background: #f59e0b; animation: none; }
+    .live-pill.stale-bad .live-dot { background: #9ca3af; animation: none; }
 
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.25} }
+
+    .live-pill-text {}
+    .live-pill-status { line-height: 1; margin-bottom: 2px; letter-spacing: 0.3px; }
+    .live-pill-ago { font-size: 9px; font-weight: 500; opacity: 0.8; line-height: 1; }
+
+    /* ── MAP ─────────────────────────────────────────────── */
+    #map { height: clamp(220px, 46vh, 400px); width: 100%; }
+
+    /* ── DROVA MAP MARKER ────────────────────────────────── */
+    .drova-map-marker {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      cursor: default;
+      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+    }
+    .drova-map-marker .pulse-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px solid #f59e0b;
+      animation: marker-pulse 2.5s ease-out infinite;
+      pointer-events: none;
+    }
+    .drova-map-marker .pulse-ring2 { animation-delay: 1.25s; }
+    .drova-map-marker.stale .pulse-ring { display: none; }
+    @keyframes marker-pulse {
+      0%   { transform: scale(1);    opacity: 0.65; }
+      100% { transform: scale(1.75); opacity: 0; }
+    }
+
+    /* ── BOTTOM SHEET ────────────────────────────────────── */
     .bottom-sheet {
       background: white;
       border-radius: 20px 20px 0 0;
-      margin-top: -16px;
+      margin-top: -18px;
       position: relative;
       z-index: 10;
-      padding: 20px 20px 32px;
-      min-height: 48vh;
+      padding: 20px 20px 40px;
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), 40px);
+      min-height: 50vh;
+      box-shadow: 0 -6px 24px rgba(0,0,0,0.07);
     }
 
     .sheet-handle {
-      width: 36px; height: 4px;
-      background: #e5e5e5;
+      width: 40px; height: 4px;
+      background: #e2e2e2;
       border-radius: 2px;
       margin: 0 auto 20px;
     }
 
-    .job-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 16px; }
+    /* ── JOB HEADER ──────────────────────────────────────── */
+    .job-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
 
-    .job-id { font-size: 11px; color: #bbb; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }
-    .job-load { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .job-id { font-size: 11px; color: #c0c0c0; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .job-load { font-size: 21px; font-weight: 800; color: #1a1a1a; line-height: 1.2; }
 
     .status-pill {
       display: inline-flex;
@@ -71,88 +161,169 @@
       color: #92400e;
       font-size: 11px;
       font-weight: 700;
-      padding: 4px 10px;
+      padding: 5px 11px;
       border-radius: 20px;
-      margin-top: 4px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .status-pill.delivered {
+      background: #dcfce7;
+      color: #166534;
     }
 
+    /* ── ETA CARD ────────────────────────────────────────── */
     .eta-card {
       background: #f5f0e8;
       border-radius: 14px;
       padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       margin-bottom: 20px;
     }
 
-    .eta-left {}
-    .eta-label { font-size: 12px; color: #888; margin-bottom: 4px; }
-    .eta-value { font-size: 36px; font-weight: 900; color: #f59e0b; line-height: 1; }
-    .eta-sub { font-size: 12px; color: #aaa; margin-top: 3px; }
+    .eta-label { font-size: 11px; color: #999; font-weight: 600; letter-spacing: 0.3px; margin-bottom: 6px; text-transform: uppercase; }
+    .eta-value {
+      font-size: clamp(22px, 5.5vw, 30px);
+      font-weight: 900;
+      color: #f59e0b;
+      line-height: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .eta-value.loading { color: #bbb; font-size: 16px; font-weight: 600; }
+    .eta-sub { font-size: 12px; color: #aaa; margin-top: 6px; }
 
-    .eta-truck { font-size: 40px; }
+    /* ── DIVIDER ─────────────────────────────────────────── */
+    .divider { height: 1px; background: #f0f0f0; margin: 4px 0 16px; }
 
-    .divider { height: 1px; background: #f5f5f5; margin: 0 0 16px; }
-
+    /* ── DETAIL ROWS ─────────────────────────────────────── */
     .detail-row {
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #f9f9f9;
+      padding: 11px 0;
+      border-bottom: 1px solid #f5f5f5;
     }
-
     .detail-row:last-child { border-bottom: none; }
 
-    .detail-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
-    .detail-label { font-size: 11px; color: #aaa; margin-bottom: 2px; }
-    .detail-value { font-size: 14px; font-weight: 500; color: #1a1a1a; }
+    .detail-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: flex-start; }
+    .detail-label { font-size: 11px; color: #bbb; font-weight: 600; margin-bottom: 3px; letter-spacing: 0.2px; text-transform: uppercase; }
+    .detail-value { font-size: 14px; font-weight: 500; color: #1a1a1a; line-height: 1.4; }
 
     .driver-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      padding: 12px 0;
-      border-bottom: 1px solid #f9f9f9;
+      padding: 11px 0;
+      border-bottom: 1px solid #f5f5f5;
+      gap: 12px;
     }
 
-    .driver-left { display: flex; align-items: center; gap: 10px; }
     .driver-avatar {
-      width: 40px; height: 40px; border-radius: 50%;
+      width: 38px; height: 38px; border-radius: 50%;
       background: #fef3c7;
       display: flex; align-items: center; justify-content: center;
-      font-size: 16px; font-weight: 700; color: #92400e;
+      font-size: 14px; font-weight: 700; color: #92400e;
+      flex-shrink: 0;
     }
-    .driver-label { font-size: 11px; color: #aaa; margin-bottom: 2px; }
+    .driver-label { font-size: 11px; color: #bbb; font-weight: 600; margin-bottom: 3px; letter-spacing: 0.2px; text-transform: uppercase; }
     .driver-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
 
+    /* ── DELIVERED SCREEN ────────────────────────────────── */
     .delivered-screen {
       display: none;
-      text-align: center;
-      padding: 80px 20px;
       background: white;
       min-height: 100vh;
     }
 
-    .delivered-screen .tick { font-size: 72px; margin-bottom: 20px; }
-    .delivered-screen h2 { font-size: 28px; font-weight: 800; color: #166534; margin-bottom: 10px; }
-    .delivered-screen p { font-size: 16px; color: #888; }
-    @keyframes drova-ripple { 0%{transform:scale(1);opacity:0.5} 100%{transform:scale(3.4);opacity:0} }
-    .drova-marker { position:relative; width:36px; height:36px; }
-    .drova-marker .ring { position:absolute; inset:0; border-radius:50%; background:#f59e0b; animation:drova-ripple 2s ease-out infinite; }
-    .drova-marker .ring2 { animation-delay:0.65s; }
-    .drova-marker .ring3 { animation-delay:1.3s; }
-    .drova-marker .disc { position:absolute; inset:3px; border-radius:50%; overflow:hidden; border:2.5px solid white; }
+    .delivered-header {
+      background: #1a1a1a;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .delivered-header img { height: 36px; filter: brightness(0) invert(1); }
+    #deliveredClientLogo {
+      filter: none;
+      mix-blend-mode: lighten;
+      max-height: 32px;
+      max-width: 140px;
+      object-fit: contain;
+      display: none;
+    }
+
+    .delivered-body {
+      padding: 48px 24px 48px;
+      text-align: center;
+    }
+
+    .delivered-check {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: #dcfce7;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .delivered-title { font-size: 26px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
+    .delivered-time { font-size: 14px; color: #888; margin-bottom: 28px; }
+
+    .delivered-route {
+      background: #f5f0e8;
+      border-radius: 14px;
+      padding: 16px 20px;
+      text-align: left;
+      max-width: 360px;
+      margin: 0 auto 20px;
+    }
+    .delivered-route-label { font-size: 11px; color: #aaa; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 10px; }
+    .delivered-load { font-size: 18px; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
+    .delivered-route-row { font-size: 13px; color: #666; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+
+    .delivered-poweredby {
+      font-size: 11px;
+      color: #ccc;
+      margin-top: 32px;
+    }
+
+    /* ── LOADING SKELETON ────────────────────────────────── */
+    #loadingState {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f5f0e8;
+      padding: 40px 20px;
+      text-align: center;
+    }
+    #loadingState img { height: 40px; filter: brightness(0); opacity: 0.15; margin-bottom: 24px; }
+    #loadingState p { font-size: 14px; color: #aaa; }
   </style>
 </head>
 <body>
 
+  <!-- Loading state while data fetches -->
+  <div id="loadingState">
+    <img src="/logo.svg" alt="Drova">
+    <p>Loading tracking information…</p>
+  </div>
+
+  <!-- Main tracking view -->
   <div id="trackingView" style="display:none">
     <div class="header">
-      <div class="logo"><img src="/logo.svg" alt="Drova"></div>
-      <img id="clientLogo" src="" alt="" style="display:none;max-height:32px;max-width:140px;object-fit:contain;mix-blend-mode:lighten;">
-      <div class="live-pill" id="livePill"><div class="live-dot"></div> LIVE GPS</div>
+      <div class="header-drova"><img src="/logo.svg" alt="Drova"></div>
+      <div class="header-client">
+        <img id="clientLogo" src="" alt="">
+      </div>
+      <div class="live-pill" id="livePill">
+        <div class="live-dot"></div>
+        <div class="live-pill-text">
+          <div class="live-pill-status" id="liveStatus">LIVE GPS</div>
+          <div class="live-pill-ago" id="liveAgo"></div>
+        </div>
+      </div>
     </div>
 
     <div id="map"></div>
@@ -161,81 +332,189 @@
       <div class="sheet-handle"></div>
 
       <div class="job-header">
-        <div>
+        <div style="min-width:0;">
           <div class="job-id" id="jobIdDisplay"></div>
           <div class="job-load" id="loadDetails">—</div>
         </div>
-        <div class="status-pill">In Transit</div>
+        <div class="status-pill" id="statusPill">In Transit</div>
       </div>
 
       <div class="eta-card">
-        <div class="eta-left">
-          <div class="eta-label">Estimated Arrival</div>
-          <div class="eta-value" id="etaDisplay">--</div>
-          <div class="eta-sub" id="etaSub">Calculating route...</div>
-        </div>
-        <div class="eta-truck"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#d1d5db" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 3h15v13H1z"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div>
+        <div class="eta-label">Estimated Arrival</div>
+        <div class="eta-value loading" id="etaDisplay">Calculating arrival time…</div>
+        <div class="eta-sub" id="etaSub"></div>
       </div>
 
       <div class="divider"></div>
 
       <div class="driver-row">
-        <div class="driver-left">
-          <div class="driver-avatar" id="driverInitials">?</div>
-          <div>
-            <div class="driver-label">Driver</div>
-            <div class="driver-name" id="driverName">—</div>
-          </div>
+        <div class="driver-avatar" id="driverInitials">?</div>
+        <div>
+          <div class="driver-label">Driver</div>
+          <div class="driver-name" id="driverName">—</div>
         </div>
       </div>
 
       <div class="detail-row">
-        <div class="detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
-        <div>
-          <div class="detail-label">Pickup</div>
+        <div class="detail-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+        </div>
+        <div style="min-width:0;">
+          <div class="detail-label" id="pickupLabel">Pickup</div>
           <div class="detail-value" id="pickupAddress">—</div>
         </div>
       </div>
 
       <div class="detail-row">
-        <div class="detail-icon"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
-        <div>
-          <div class="detail-label">Delivering to</div>
+        <div class="detail-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg>
+        </div>
+        <div style="min-width:0;">
+          <div class="detail-label" id="deliveryLabel">Delivering to</div>
           <div class="detail-value" id="deliveryAddress">—</div>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Delivered / completed view -->
   <div class="delivered-screen" id="deliveredScreen">
-    <div class="tick"><svg xmlns="http://www.w3.org/2000/svg" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg></div>
-    <h2>Delivered!</h2>
-    <p>Your load has been delivered successfully.<br>Thank you for using Drova.</p>
+    <div class="delivered-header">
+      <img src="/logo.svg" alt="Drova">
+      <img id="deliveredClientLogo" src="" alt="">
+    </div>
+    <div class="delivered-body">
+      <div class="delivered-check">
+        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="delivered-title" id="deliveredTitle">Delivered</div>
+      <div class="delivered-time" id="deliveredTime"></div>
+      <div class="delivered-route">
+        <div class="delivered-route-label">Delivery Summary</div>
+        <div class="delivered-load" id="deliveredLoad">—</div>
+        <div class="delivered-route-row">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          <span id="deliveredPickup">—</span>
+        </div>
+        <div style="border-left:2px dashed #ddd;height:12px;margin-left:7px;margin-top:2px;margin-bottom:2px;"></div>
+        <div class="delivered-route-row">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:2px"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h4"/></svg>
+          <span id="deliveredDest">—</span>
+        </div>
+      </div>
+      <div class="delivered-poweredby">Tracked by Drova</div>
+    </div>
   </div>
 
   <script>
     const jobId = window.location.pathname.split('/').pop();
-    let gmap = null, truckMarker = null, routeLine = null, etaSeconds = 0;
+    let gmap = null, truckOverlay = null, routeLine = null;
+    let etaSeconds = 0, lastLocationTime = null, userHasPanned = false;
+    let freshnessTimer = null, pollTimer = null;
 
+    // ── DROVA MAP MARKER (OverlayView) ──────────────────────
+    class DrovaMarkerOverlay extends google.maps.OverlayView {
+      constructor(latLng) {
+        super();
+        this._pos = latLng instanceof google.maps.LatLng ? latLng : new google.maps.LatLng(latLng.lat, latLng.lng);
+        this._div = null;
+        this._stale = false;
+      }
+
+      onAdd() {
+        const div = document.createElement('div');
+        div.className = 'drova-map-marker';
+        div.innerHTML = `
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring pulse-ring2"></div>
+          <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" style="display:block;">
+            <circle cx="22" cy="22" r="20" fill="#1f1f1f" stroke="#f59e0b" stroke-width="2.5"/>
+            <g transform="translate(22,22) scale(0.062) translate(-286,-330)">
+              <polyline points="145.6,195.6 208.6,153.6 347.2,153.6 414.4,178.8 448.0,246.0 460.6,355.2 414.4,439.2 338.8,498.0 229.6,506.4 145.6,464.4 128.8,363.6 128.8,246.0 145.6,195.6" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="116.2,304.8 163.2,293.8 211.6,304.4 250.6,317.9 293.6,332.4 340.6,344.4 392.1,350.3 448.0,346.8" fill="none" stroke="#f59e0b" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="112.0" cy="304.8" r="26" fill="#1f1f1f" stroke="#f59e0b" stroke-width="12"/>
+              <circle cx="452.2" cy="346.8" r="26" fill="#1f1f1f" stroke="#f59e0b" stroke-width="12"/>
+            </g>
+          </svg>`;
+        this._div = div;
+        this.getPanes().overlayLayer.appendChild(div);
+      }
+
+      draw() {
+        if (!this._div) return;
+        const proj = this.getProjection();
+        if (!proj) return;
+        const point = proj.fromLatLngToDivPixel(this._pos);
+        if (point) {
+          this._div.style.left = (point.x - 22) + 'px';
+          this._div.style.top  = (point.y - 22) + 'px';
+        }
+      }
+
+      updatePosition(lat, lng) {
+        this._pos = new google.maps.LatLng(lat, lng);
+        this.draw();
+      }
+
+      setStale(stale) {
+        if (!this._div) return;
+        this._stale = stale;
+        this._div.classList.toggle('stale', stale);
+      }
+
+      onRemove() {
+        if (this._div) { this._div.parentNode.removeChild(this._div); this._div = null; }
+      }
+    }
+
+    // ── SVG MARKER ICONS ──────────────────────────────────────
+    function pickupIcon() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+        <filter id="s"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.35)"/></filter>
+        <path d="M14 2C8.5 2 4 6.5 4 12c0 7.5 10 22 10 22s10-14.5 10-22c0-5.5-4.5-10-10-10z" fill="#f59e0b" filter="url(#s)"/>
+        <circle cx="14" cy="12" r="4" fill="white"/>
+      </svg>`;
+      return { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), scaledSize: new google.maps.Size(28, 36), anchor: new google.maps.Point(14, 36) };
+    }
+
+    function deliveryIcon() {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+        <filter id="s"><feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="rgba(0,0,0,0.35)"/></filter>
+        <path d="M14 2C8.5 2 4 6.5 4 12c0 7.5 10 22 10 22s10-14.5 10-22c0-5.5-4.5-10-10-10z" fill="#1a1a1a" stroke="#f59e0b" stroke-width="1.5" filter="url(#s)"/>
+        <circle cx="14" cy="12" r="3.5" fill="#f59e0b"/>
+      </svg>`;
+      return { url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg), scaledSize: new google.maps.Size(28, 36), anchor: new google.maps.Point(14, 36) };
+    }
+
+    // ── MAP INIT ──────────────────────────────────────────────
     async function initMap() {
-      const { googleMapsKey } = await (await fetch('/api/config')).json();
+      const cfg = await fetch('/api/config').then(r => r.json()).catch(() => ({}));
+      if (!cfg.googleMapsKey) {
+        document.getElementById('loadingState').querySelector('p').textContent = 'Unable to load map. Please try again.';
+        return;
+      }
       await new Promise(resolve => {
         window.__gmInit = resolve;
         const s = document.createElement('script');
-        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=__gmInit`;
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.googleMapsKey}&callback=__gmInit`;
+        s.onerror = () => {
+          document.getElementById('loadingState').querySelector('p').textContent = 'Map unavailable. Tracking continues.';
+        };
         document.head.appendChild(s);
       });
       gmap = new google.maps.Map(document.getElementById('map'), {
-        center: { lat: -25.2744, lng: 133.7751 }, zoom: 5,
+        center: { lat: -33.5, lng: 148.5 }, zoom: 8,
         mapTypeId: 'roadmap',
-        mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
-        zoomControl: true
+        mapTypeControl: false, streetViewControl: false,
+        fullscreenControl: false, zoomControl: true,
+        gestureHandling: 'cooperative',
       });
+      google.maps.event.addListenerOnce(gmap, 'dragstart', () => { userHasPanned = true; });
       loadJob();
     }
 
+    // ── GEOCODE ───────────────────────────────────────────────
     async function geocode(address) {
-      const res = await fetch(`/api/places/detail?place_id=&address=${encodeURIComponent(address)}`);
       const geocoder = new google.maps.Geocoder();
       return new Promise(resolve => {
         geocoder.geocode({ address, region: 'AU' }, (results, status) => {
@@ -247,147 +526,261 @@
       });
     }
 
+    // ── DIRECTIONS ────────────────────────────────────────────
     async function getRoadRoute(pickup, delivery) {
       return new Promise(resolve => {
-        const ds = new google.maps.DirectionsService();
-        ds.route({
-          origin: { lat: pickup[0], lng: pickup[1] },
+        new google.maps.DirectionsService().route({
+          origin:      { lat: pickup[0],   lng: pickup[1] },
           destination: { lat: delivery[0], lng: delivery[1] },
-          travelMode: google.maps.TravelMode.DRIVING
+          travelMode:  google.maps.TravelMode.DRIVING
         }, (result, status) => {
           if (status !== 'OK') return resolve(null);
-          const leg = result.routes[0].legs[0];
+          const leg    = result.routes[0].legs[0];
           const coords = result.routes[0].overview_path.map(p => [p.lat(), p.lng()]);
           resolve({ coords, duration: leg.duration.value });
         });
       });
     }
 
-    function formatTime(date) {
-      return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+    // ── ETA FORMATTING ────────────────────────────────────────
+    function formatEtaRange(secs) {
+      if (secs <= 0) return null;
+      const now   = Date.now();
+      const early = new Date(now + (secs - 15 * 60) * 1000);
+      const late  = new Date(now + (secs + 15 * 60) * 1000);
+      const fmt   = d => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+      const ef    = fmt(early);
+      const lf    = fmt(late);
+      const period = (lf.match(/[AP]M/i) || [''])[0].toUpperCase();
+      const eTime  = ef.replace(/\s*[AaPp][Mm]/, '').trim();
+      const lTime  = lf.replace(/\s*[AaPp][Mm]/, '').trim();
+      return period ? `${eTime} – ${lTime} ${period}` : `${eTime} – ${lTime}`;
     }
 
     function updateEta(secs) {
+      const el    = document.getElementById('etaDisplay');
+      const subEl = document.getElementById('etaSub');
       if (secs <= 0) {
-        document.getElementById('etaDisplay').textContent = 'Arrived';
-        document.getElementById('etaSub').textContent = 'Awaiting confirmation';
+        el.className = 'eta-value';
+        el.textContent = 'Arrived';
+        subEl.textContent = 'Awaiting confirmation';
         return;
       }
-      const now = Date.now();
-      const early = new Date(now + (secs - 15 * 60) * 1000);
-      const late  = new Date(now + (secs + 15 * 60) * 1000);
+      const range = formatEtaRange(secs);
+      el.className = 'eta-value';
+      el.textContent = range || '--';
       const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60);
-      document.getElementById('etaDisplay').textContent = `${formatTime(early)} – ${formatTime(late)}`;
-      document.getElementById('etaSub').textContent = `approx. ${h > 0 ? h + 'h ' : ''}${m}m away`;
+      subEl.textContent = `approx. ${h > 0 ? h + 'h ' : ''}${m}m away`;
     }
 
+    // ── TRUCK MARKER ──────────────────────────────────────────
     function moveTruck(lat, lng) {
-      const pos = { lat, lng };
-      if (!truckMarker) {
-        truckMarker = new google.maps.Marker({
-          position: pos, map: gmap,
-          icon: { url: '/apple-touch-icon.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18) }
-        });
-      } else truckMarker.setPosition(pos);
-      gmap.panTo(pos);
+      if (!truckOverlay) {
+        truckOverlay = new DrovaMarkerOverlay({ lat, lng });
+        truckOverlay.setMap(gmap);
+      } else {
+        truckOverlay.updatePosition(lat, lng);
+      }
+      if (!userHasPanned) gmap.panTo({ lat, lng });
+    }
+
+    // ── GPS FRESHNESS ─────────────────────────────────────────
+    function updateFreshnessUI() {
+      if (!lastLocationTime) return;
+      const ageSec = Math.floor((Date.now() - lastLocationTime) / 1000);
+      const ageMin = Math.floor(ageSec / 60);
+
+      const pill      = document.getElementById('livePill');
+      const statusEl  = document.getElementById('liveStatus');
+      const agoEl     = document.getElementById('liveAgo');
+
+      if (ageSec < 60) {
+        pill.className = 'live-pill visible';
+        statusEl.textContent = 'LIVE GPS';
+        agoEl.textContent = 'Updated just now';
+        truckOverlay?.setStale(false);
+      } else if (ageMin < 5) {
+        pill.className = 'live-pill visible';
+        statusEl.textContent = 'LIVE GPS';
+        agoEl.textContent = `Updated ${ageMin} min ago`;
+        truckOverlay?.setStale(false);
+      } else if (ageMin < 15) {
+        pill.className = 'live-pill visible stale-mild';
+        statusEl.textContent = 'LOCATION DELAYED';
+        agoEl.textContent = `Last update ${ageMin} min ago`;
+        truckOverlay?.setStale(true);
+      } else {
+        pill.className = 'live-pill visible stale-bad';
+        statusEl.textContent = 'LAST KNOWN';
+        agoEl.textContent = 'Resumes when coverage returns';
+        truckOverlay?.setStale(true);
+      }
     }
 
     function getInitials(name) {
-      return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+      return (name || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?';
     }
 
+    // ── LOAD JOB ──────────────────────────────────────────────
     async function loadJob() {
-      const res = await fetch(`/jobs/${jobId}`);
-      if (!res.ok) { document.body.innerHTML = '<p style="padding:40px;color:#888;">Job not found.</p>'; return; }
-      const job = await res.json();
+      let job;
+      try {
+        const res = await fetch(`/jobs/${jobId}`);
+        if (!res.ok) {
+          document.getElementById('loadingState').querySelector('p').textContent = 'Tracking link not found or has expired.';
+          return;
+        }
+        job = await res.json();
+      } catch {
+        document.getElementById('loadingState').querySelector('p').textContent = 'Unable to load. Please check your connection.';
+        return;
+      }
 
-      if (job.status === 'complete') { showDelivered(job.jobType); return; }
+      if (job.status === 'complete') { showDelivered(job); return; }
+
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('trackingView').style.display = 'block';
 
       const isEmptyRun = job.jobType === 'empty';
-      document.getElementById('trackingView').style.display = 'block';
-      document.getElementById('jobIdDisplay').textContent = `JOB #${job.id.toUpperCase()}`;
-      document.getElementById('loadDetails').textContent = isEmptyRun ? 'Empty Run — Collecting Livestock' : job.loadDetails;
+
+      document.getElementById('jobIdDisplay').textContent  = `JOB #${(job.id || '').toUpperCase()}`;
+      document.getElementById('loadDetails').textContent   = isEmptyRun ? 'Empty Run — Collecting Livestock' : (job.loadDetails || '—');
+      document.getElementById('driverName').textContent    = job.driverName || '—';
+      document.getElementById('driverInitials').textContent = getInitials(job.driverName);
+      document.getElementById('pickupAddress').textContent  = isEmptyRun ? 'En route to pickup' : (job.pickupAddress || '—');
+      document.getElementById('deliveryAddress').textContent = isEmptyRun ? (job.pickupAddress || '—') : (job.deliveryAddress || '—');
+      document.getElementById('deliveryLabel').textContent   = isEmptyRun ? 'Heading to' : 'Delivering to';
+      document.getElementById('statusPill').textContent      = isEmptyRun ? 'On the Way' : 'In Transit';
+
+      document.getElementById('etaDisplay').textContent = 'Calculating arrival time…';
+      document.getElementById('etaDisplay').className   = 'eta-value loading';
+
       if (job.companySlug) {
         const logo = document.getElementById('clientLogo');
-        logo.onload = () => { logo.style.display = 'block'; };
+        logo.onload  = () => { logo.style.display = 'block'; };
         logo.onerror = () => { logo.style.display = 'none'; };
         logo.src = `/logo-${job.companySlug}.png`;
       }
-      document.getElementById('driverName').textContent = job.driverName;
-      document.getElementById('driverInitials').textContent = getInitials(job.driverName);
-      document.getElementById('pickupAddress').textContent = isEmptyRun ? 'En route' : job.pickupAddress;
-      document.getElementById('deliveryAddress').textContent = job.pickupAddress;
-      document.querySelector('.detail-row:last-child .detail-label').textContent = isEmptyRun ? 'Heading to' : 'Delivering to';
-      document.querySelector('.status-pill').textContent = isEmptyRun ? 'On the Way' : 'In Transit';
 
-      let pickup = (job.currentLat && job.currentLng) ? [+job.currentLat, +job.currentLng] : null;
-      let delivery;
+      // Resolve coordinates
+      let pickupCoords, deliveryCoords;
       if (isEmptyRun) {
-        delivery = (job.pickupLat && job.pickupLng) ? [+job.pickupLat, +job.pickupLng] : await geocode(job.pickupAddress);
-        if (!pickup) pickup = delivery || [-32.2569, 148.6011];
+        deliveryCoords = (job.pickupLat && job.pickupLng) ? [+job.pickupLat, +job.pickupLng] : await geocode(job.pickupAddress);
+        pickupCoords   = deliveryCoords || [-32.2569, 148.6011];
       } else {
-        pickup = (job.pickupLat && job.pickupLng) ? [+job.pickupLat, +job.pickupLng] : await geocode(job.pickupAddress) || [-32.2569, 148.6011];
-        delivery = (job.deliveryLat && job.deliveryLng) ? [+job.deliveryLat, +job.deliveryLng] : await geocode(job.deliveryAddress) || [-33.2832, 149.1000];
+        pickupCoords   = (job.pickupLat   && job.pickupLng)   ? [+job.pickupLat,   +job.pickupLng]   : await geocode(job.pickupAddress)   || [-32.2569, 148.6011];
+        deliveryCoords = (job.deliveryLat && job.deliveryLng) ? [+job.deliveryLat, +job.deliveryLng] : await geocode(job.deliveryAddress) || [-33.2832, 149.1000];
       }
 
-      const route = await getRoadRoute(pickup, delivery);
-      etaSeconds = route ? route.duration : 7200;
+      // Place static markers
+      new google.maps.Marker({ position: { lat: pickupCoords[0],   lng: pickupCoords[1] },   map: gmap, icon: pickupIcon(),   title: 'Pickup',   zIndex: 1 });
+      new google.maps.Marker({ position: { lat: deliveryCoords[0], lng: deliveryCoords[1] }, map: gmap, icon: deliveryIcon(), title: 'Delivery', zIndex: 1 });
 
-      new google.maps.Marker({ position: { lat: pickup[0], lng: pickup[1] }, map: gmap, title: 'Pickup' });
-      new google.maps.Marker({ position: { lat: delivery[0], lng: delivery[1] }, map: gmap, title: 'Delivery' });
-
+      // Draw route and fit map
+      const route = await getRoadRoute(pickupCoords, deliveryCoords).catch(() => null);
       if (route) {
         routeLine = new google.maps.Polyline({
           path: route.coords.map(([lat, lng]) => ({ lat, lng })),
-          strokeColor: '#f59e0b', strokeWeight: 5, strokeOpacity: 0.8, map: gmap
+          strokeColor: '#f59e0b', strokeWeight: 4, strokeOpacity: 0.75, map: gmap
         });
+        etaSeconds = route.duration;
         const bounds = new google.maps.LatLngBounds();
+        // Include truck position in initial fit if available
+        if (job.currentLat && job.currentLng) bounds.extend({ lat: +job.currentLat, lng: +job.currentLng });
         route.coords.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
-        gmap.fitBounds(bounds, { top: 40, right: 40, bottom: 40, left: 40 });
+        gmap.fitBounds(bounds, { top: 50, right: 40, bottom: 20, left: 40 });
+      } else {
+        etaSeconds = 7200;
+        const bounds = new google.maps.LatLngBounds();
+        bounds.extend({ lat: pickupCoords[0],   lng: pickupCoords[1] });
+        bounds.extend({ lat: deliveryCoords[0], lng: deliveryCoords[1] });
+        gmap.fitBounds(bounds, { top: 50, right: 60, bottom: 20, left: 60 });
       }
 
       if (job.currentLat && job.currentLng) {
-        startLive(job, delivery);
+        startLive(job, deliveryCoords);
       } else {
-        moveTruck(pickup[0], pickup[1]);
-        waitForStart(job, delivery);
+        // Show truck at pickup position while waiting for driver to start
+        moveTruck(pickupCoords[0], pickupCoords[1]);
+        document.getElementById('etaDisplay').textContent = 'Waiting for driver to begin…';
+        waitForStart(job, deliveryCoords);
       }
     }
 
+    // ── WAIT FOR START ────────────────────────────────────────
     function waitForStart(job, delivery) {
       async function poll() {
-        const j = await (await fetch(`/jobs/${jobId}`)).json();
-        if (j.currentLat && j.currentLng) startLive(j, delivery);
-        else setTimeout(poll, 5000);
+        try {
+          const j = await fetch(`/jobs/${jobId}`).then(r => r.json());
+          if (j.status === 'complete') { showDelivered(j); return; }
+          if (j.currentLat && j.currentLng) { startLive(j, delivery); return; }
+        } catch {}
+        pollTimer = setTimeout(poll, 5000);
       }
-      setTimeout(poll, 5000);
+      pollTimer = setTimeout(poll, 5000);
     }
 
+    // ── LIVE TRACKING ─────────────────────────────────────────
     function startLive(job, delivery) {
-      document.getElementById('livePill').classList.add('visible');
-      async function poll() {
-        const j = await (await fetch(`/jobs/${jobId}`)).json();
-        if (j.status === 'complete') { showDelivered(j.jobType); return; }
-        if (j.currentLat && j.currentLng) {
-          moveTruck(+j.currentLat, +j.currentLng);
-          const dlat = delivery[0] - j.currentLat, dlng = delivery[1] - j.currentLng;
-          updateEta(Math.round(Math.sqrt(dlat*dlat + dlng*dlng) * 111 / 80 * 3600));
-        }
-        setTimeout(poll, 5000);
-      }
+      const pill = document.getElementById('livePill');
+      pill.classList.add('visible');
+      lastLocationTime = Date.now();
+      updateFreshnessUI();
+      freshnessTimer = setInterval(updateFreshnessUI, 20000);
+
       moveTruck(+job.currentLat, +job.currentLng);
       updateEta(etaSeconds);
-      setTimeout(poll, 5000);
+
+      async function poll() {
+        try {
+          const j = await fetch(`/jobs/${jobId}`).then(r => r.json());
+          if (j.status === 'complete') { showDelivered(j); return; }
+          if (j.currentLat && j.currentLng) {
+            lastLocationTime = Date.now();
+            moveTruck(+j.currentLat, +j.currentLng);
+            const dlat = delivery[0] - +j.currentLat;
+            const dlng = delivery[1] - +j.currentLng;
+            const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
+            updateEta(Math.round(distKm / 80 * 3600));
+            updateFreshnessUI();
+          }
+        } catch {}
+        pollTimer = setTimeout(poll, 5000);
+      }
+      pollTimer = setTimeout(poll, 5000);
     }
 
-    function showDelivered(jobType) {
-      document.getElementById('trackingView').style.display = 'none';
+    // ── DELIVERED SCREEN ──────────────────────────────────────
+    function showDelivered(job) {
+      clearTimeout(pollTimer);
+      clearInterval(freshnessTimer);
+
+      document.getElementById('loadingState').style.display  = 'none';
+      document.getElementById('trackingView').style.display  = 'none';
       const screen = document.getElementById('deliveredScreen');
-      if (jobType === 'empty') {
-        screen.querySelector('h2').textContent = 'Truck Arrived!';
-        screen.querySelector('p').textContent = 'Your driver has arrived at the pickup location.';
-      }
       screen.style.display = 'block';
+
+      const isEmptyRun = job.jobType === 'empty';
+      document.getElementById('deliveredTitle').textContent = isEmptyRun ? 'Driver Arrived' : 'Delivered';
+
+      if (job.companySlug) {
+        const cl = document.getElementById('deliveredClientLogo');
+        cl.src = `/logo-${job.companySlug}.png`;
+        cl.onload  = () => { cl.style.display = 'block'; };
+        cl.onerror = () => { cl.style.display = 'none'; };
+      }
+
+      document.getElementById('deliveredLoad').textContent    = isEmptyRun ? 'Empty Run — Collecting Livestock' : (job.loadDetails || '—');
+      document.getElementById('deliveredPickup').textContent  = isEmptyRun ? 'En route' : (job.pickupAddress   || '—');
+      document.getElementById('deliveredDest').textContent    = isEmptyRun ? (job.pickupAddress || '—') : (job.deliveryAddress || '—');
+
+      const timeEl = document.getElementById('deliveredTime');
+      if (job.completedAt) {
+        const t = new Date(job.completedAt);
+        timeEl.textContent = `Completed at ${t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+      } else {
+        timeEl.textContent = isEmptyRun ? 'Your driver has arrived at the pickup location.' : 'Your load has been delivered successfully.';
+      }
     }
 
     initMap();

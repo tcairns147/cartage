@@ -173,41 +173,36 @@
       font-weight: 600;
     }
 
-    #mapView {
+    #driveMap {
       display: none;
-      position: fixed;
-      inset: 0;
-      flex-direction: column;
+      width: 100%;
+      max-width: 360px;
+      height: 280px;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 16px;
     }
-    #mapView.active { display: flex; }
-    #driveMap { flex: 1; }
-    .map-bottom {
-      background: #1a1a1a;
-      padding: 12px 16px;
-      padding-bottom: max(env(safe-area-inset-bottom), 12px);
-    }
-    .map-dest {
-      font-size: 12px; color: #888; margin-bottom: 2px;
-    }
-    .map-address {
-      font-size: 14px; font-weight: 600; color: white;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      margin-bottom: 10px;
-    }
-    .map-actions { display: flex; gap: 10px; }
+    #driveMap.visible { display: block; }
     .btn-gmaps {
-      flex: 1; padding: 13px; border-radius: 12px; border: none;
-      background: #4285F4; color: white; font-size: 14px; font-weight: 700;
-      cursor: pointer; font-family: inherit; text-decoration: none;
-      display: flex; align-items: center; justify-content: center; gap: 6px;
+      display: none;
+      width: 100%;
+      max-width: 360px;
+      padding: 13px;
+      border-radius: 12px;
+      border: none;
+      background: #4285F4;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      text-decoration: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 12px;
     }
-    .btn-arrived {
-      flex: 1; padding: 13px; border-radius: 12px; border: none;
-      background: #f59e0b; color: white; font-size: 14px; font-weight: 700;
-      cursor: pointer; font-family: inherit;
-    }
-    .btn-arrived:disabled { background: #333; color: #666; }
-    .map-coords { font-size: 10px; color: #444; text-align: center; margin-top: 6px; }
+    .btn-gmaps.visible { display: flex; }
   </style>
 </head>
 <body>
@@ -258,31 +253,19 @@
     <div id="notesText" style="font-size:14px;color:#ddd;line-height:1.5;"></div>
   </div>
 
+  <div id="driveMap"></div>
+  <a class="btn-gmaps" id="gmapsLink" href="#" target="_blank">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    Open in Google Maps
+  </a>
   <div class="coords" id="coords"></div>
   <div class="wake-badge" id="wakeBadge">Screen will stay on while tracking</div>
   <div class="tip">Your location updates every few seconds. If GPS signal is lost, it will reconnect automatically.</div>
 
-  <!-- Live map view (shown after trip starts) -->
-  <div id="mapView">
-    <div id="driveMap"></div>
-    <div class="map-bottom">
-      <div class="map-dest">Delivering to</div>
-      <div class="map-address" id="mapAddress">—</div>
-      <div class="map-actions">
-        <a class="btn-gmaps" id="gmapsLink" href="#" target="_blank">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-          Open in Maps
-        </a>
-        <button class="btn-arrived" id="mapArrivedBtn" onclick="markArrived()">I've Arrived</button>
-      </div>
-      <div class="map-coords" id="mapCoords"></div>
-    </div>
-  </div>
-
   <script>
     const jobId = window.location.pathname.split('/').pop();
     let watchId = null, wakeLock = null;
-    let gmap = null, driverMarker = null, currentJob = null;
+    let gmap = null, driverMarker = null, directionsRenderer = null, currentJob = null;
 
     async function requestWakeLock() {
       if ('wakeLock' in navigator) {
@@ -300,7 +283,7 @@
       await new Promise(resolve => {
         window.__gmInit = resolve;
         const s = document.createElement('script');
-        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&libraries=directions&callback=__gmInit`;
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&callback=__gmInit`;
         document.head.appendChild(s);
       });
     }
@@ -321,8 +304,7 @@
       }
       document.getElementById('driverName').textContent = currentJob.driverName;
       document.getElementById('loadDetails').textContent = currentJob.jobType === 'empty' ? 'Empty Run — Collecting Livestock' : currentJob.loadDetails;
-      const dest = currentJob.jobType === 'empty' ? currentJob.pickupAddress : currentJob.deliveryAddress;
-      document.getElementById('deliveryAddress').textContent = dest;
+      document.getElementById('deliveryAddress').textContent = currentJob.jobType === 'empty' ? currentJob.pickupAddress : currentJob.deliveryAddress;
       if (currentJob.notes) {
         document.getElementById('notesText').textContent = currentJob.notes;
         document.getElementById('notesBox').style.display = 'block';
@@ -339,46 +321,32 @@
       startTracking();
     }
 
-    function showMapView(lat, lng) {
-      document.getElementById('mapView').classList.add('active');
-      document.body.style.overflow = 'hidden';
+    function showMap(lat, lng) {
       const dest = currentJob.jobType === 'empty' ? currentJob.pickupAddress : currentJob.deliveryAddress;
-      document.getElementById('mapAddress').textContent = dest;
+      document.getElementById('driveMap').classList.add('visible');
+      document.getElementById('gmapsLink').classList.add('visible');
       document.getElementById('gmapsLink').href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`;
 
-      if (!gmap) {
-        gmap = new google.maps.Map(document.getElementById('driveMap'), {
-          center: { lat, lng }, zoom: 14,
-          mapTypeId: 'roadmap',
-          mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
-          zoomControl: false
-        });
-        driverMarker = new google.maps.Marker({
-          position: { lat, lng }, map: gmap,
-          icon: { url: '/apple-touch-icon.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18) }
-        });
-        // Draw route
-        const ds = new google.maps.DirectionsService();
-        const dr = new google.maps.DirectionsRenderer({
-          map: gmap, suppressMarkers: true,
-          polylineOptions: { strokeColor: '#f59e0b', strokeWeight: 5 }
-        });
-        ds.route({
-          origin: { lat, lng },
-          destination: dest,
-          travelMode: google.maps.TravelMode.DRIVING
-        }, (result, status) => {
-          if (status === 'OK') dr.setDirections(result);
-        });
-      }
-    }
-
-    function updateMapPosition(lat, lng) {
-      if (!gmap) return;
-      const pos = { lat, lng };
-      driverMarker.setPosition(pos);
-      gmap.panTo(pos);
-      document.getElementById('mapCoords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      gmap = new google.maps.Map(document.getElementById('driveMap'), {
+        center: { lat, lng }, zoom: 13,
+        mapTypeId: 'roadmap',
+        mapTypeControl: false, streetViewControl: false, fullscreenControl: false, zoomControl: false
+      });
+      driverMarker = new google.maps.Marker({
+        position: { lat, lng }, map: gmap,
+        icon: { url: '/apple-touch-icon.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18) }
+      });
+      directionsRenderer = new google.maps.DirectionsRenderer({
+        map: gmap, suppressMarkers: true,
+        polylineOptions: { strokeColor: '#f59e0b', strokeWeight: 5 }
+      });
+      new google.maps.DirectionsService().route({
+        origin: { lat, lng },
+        destination: dest,
+        travelMode: google.maps.TravelMode.DRIVING
+      }, (result, status) => {
+        if (status === 'OK') directionsRenderer.setDirections(result);
+      });
     }
 
     function startTracking() {
@@ -402,8 +370,13 @@
           document.getElementById('statusText').textContent = 'Live';
           document.getElementById('coords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} · ±${Math.round(accuracy)}m`;
           document.getElementById('arrivedBtn').style.display = 'block';
-          if (!mapShown && typeof google !== 'undefined') { mapShown = true; showMapView(lat, lng); }
-          else updateMapPosition(lat, lng);
+          if (!mapShown && typeof google !== 'undefined') {
+            mapShown = true;
+            showMap(lat, lng);
+          } else if (gmap) {
+            driverMarker.setPosition({ lat, lng });
+            gmap.panTo({ lat, lng });
+          }
         },
         (err) => {
           document.getElementById('statusCircle').classList.add('error');
@@ -414,12 +387,15 @@
     }
 
     async function markArrived() {
-      const btn = document.getElementById('mapArrivedBtn');
+      const btn = document.getElementById('arrivedBtn');
       btn.disabled = true;
       btn.textContent = 'Marking arrived...';
       await fetch(`/jobs/${jobId}/complete`, { method: 'POST' });
       if (watchId) navigator.geolocation.clearWatch(watchId);
+      document.getElementById('statusCircle').classList.remove('active');
+      document.getElementById('statusText').textContent = 'Arrived';
       btn.textContent = 'Job Complete ✓';
+      document.getElementById('startBtn').style.display = 'none';
     }
 
     initMap();

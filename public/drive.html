@@ -193,6 +193,44 @@
       margin-bottom: 12px;
     }
     .btn-gmaps.visible { display: flex; }
+
+    /* Arrival confirmation modal */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0 16px 24px;
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), 24px);
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal-sheet {
+      background: #242424;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      padding: 28px 24px 24px;
+      text-align: center;
+    }
+    .modal-icon { font-size: 40px; margin-bottom: 12px; }
+    .modal-title { font-size: 20px; font-weight: 800; color: #eee; margin-bottom: 8px; }
+    .modal-body { font-size: 14px; color: #888; line-height: 1.5; margin-bottom: 24px; }
+    .modal-btns { display: flex; gap: 12px; }
+    .modal-cancel {
+      flex: 1; padding: 16px; border-radius: 12px;
+      border: 1.5px solid #333; background: none;
+      color: #aaa; font-size: 16px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+    }
+    .modal-confirm {
+      flex: 1; padding: 16px; border-radius: 12px;
+      border: none; background: #16a34a;
+      color: white; font-size: 16px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    .modal-confirm:disabled { background: #333; color: #666; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -236,7 +274,20 @@
     Start Sharing Location
   </button>
 
-  <button class="arrived-btn" id="arrivedBtn" onclick="markArrived()">I've Arrived</button>
+  <button class="arrived-btn" id="arrivedBtn" onclick="showArrivalConfirm()">I've Arrived</button>
+
+  <!-- Arrival confirmation modal -->
+  <div class="modal-overlay" id="arrivalModal">
+    <div class="modal-sheet">
+      <div class="modal-icon">📍</div>
+      <div class="modal-title">Confirm Arrival</div>
+      <div class="modal-body">This will end live tracking and notify your dispatcher that you've arrived.</div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="hideArrivalConfirm()">Cancel</button>
+        <button class="modal-confirm" id="confirmArriveBtn" onclick="markArrived()">Confirm Arrival</button>
+      </div>
+    </div>
+  </div>
 
   <div class="job-info" id="notesBox" style="display:none; border-left: 3px solid #f59e0b; background:#1e1a10; margin-top:16px; border-radius: 0 16px 16px 0;">
     <div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:6px;letter-spacing:0.5px;">NOTES FROM DISPATCHER</div>
@@ -253,7 +304,10 @@
 
   <script>
     const jobId = window.location.pathname.split('/').pop();
-    let watchId = null, wakeLock = null, currentJob = null;
+    let watchId = null, wakeLock = null, currentJob = null, arrivalSubmitting = false;
+
+    // Record that the driver opened this link
+    fetch(`/jobs/${jobId}/driver-open`, { method: 'POST' }).catch(() => {});
 
     async function requestWakeLock() {
       if ('wakeLock' in navigator) {
@@ -336,16 +390,32 @@
       );
     }
 
+    function showArrivalConfirm() {
+      document.getElementById('arrivalModal').classList.add('visible');
+    }
+
+    function hideArrivalConfirm() {
+      document.getElementById('arrivalModal').classList.remove('visible');
+    }
+
     async function markArrived() {
-      const btn = document.getElementById('arrivedBtn');
-      btn.disabled = true;
-      btn.textContent = 'Marking arrived...';
-      await fetch(`/jobs/${jobId}/complete`, { method: 'POST' });
+      if (arrivalSubmitting) return;
+      arrivalSubmitting = true;
+      const confirmBtn = document.getElementById('confirmArriveBtn');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Marking arrived…';
+      try {
+        await fetch(`/jobs/${jobId}/complete`, { method: 'POST' });
+      } catch {}
+      hideArrivalConfirm();
       if (watchId) navigator.geolocation.clearWatch(watchId);
       document.getElementById('statusCircle').classList.remove('active');
       document.getElementById('statusText').textContent = 'Arrived';
-      btn.textContent = 'Job Complete ✓';
+      const arrivedBtn = document.getElementById('arrivedBtn');
+      arrivedBtn.textContent = 'Job Complete ✓';
+      arrivedBtn.disabled = true;
       document.getElementById('startBtn').style.display = 'none';
+      document.getElementById('gmapsLink').classList.remove('visible');
     }
 
     loadJob();

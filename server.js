@@ -98,12 +98,32 @@ async function initDb() {
     createdAt TEXT DEFAULT (datetime('now'))
   )`);
 
-  // Schema migrations — safe to re-run, column already existing is caught
+  // Existing column migrations
   for (const col of ['pickupLat','pickupLng','deliveryLat','deliveryLng','currentLat','currentLng','notified15min','customerName','jobType','notes','companyId','truckRego']) {
     try { await dbRun(`ALTER TABLE jobs ADD COLUMN ${col} TEXT`); } catch {}
   }
   try { await dbRun(`ALTER TABLE drivers ADD COLUMN companyId INTEGER`); } catch {}
   try { await dbRun(`ALTER TABLE locations ADD COLUMN companyId INTEGER`); } catch {}
+
+  // Trial analytics and lifecycle timestamp columns
+  const newCols = [
+    'startedAt TEXT',
+    'completedAt TEXT',
+    'firstLocationAt TEXT',
+    'lastLocationAt TEXT',
+    'locationUpdateCount INTEGER DEFAULT 0',
+    'trackingSmsAttemptedAt TEXT',
+    'trackingSmsSentAt TEXT',
+    'trackingSmsFailedAt TEXT',
+    'firstTrackingViewAt TEXT',
+    'lastTrackingViewAt TEXT',
+    'trackingViewCount INTEGER DEFAULT 0',
+    'driverLinkOpenedAt TEXT',
+    'driverLinkOpenCount INTEGER DEFAULT 0',
+  ];
+  for (const col of newCols) {
+    try { await dbRun(`ALTER TABLE jobs ADD COLUMN ${col}`); } catch {}
+  }
 
   // Seed companies
   const companies = [
@@ -159,6 +179,7 @@ app.get('/drivers',    requireAuth, (req, res) => res.sendFile(__dirname + '/pub
 app.get('/clients',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/clients.html'));
 app.get('/locations',  requireAuth, (req, res) => res.sendFile(__dirname + '/public/locations.html'));
 app.get('/trucks',     requireAuth, (req, res) => res.sendFile(__dirname + '/public/trucks.html'));
+app.get('/trial',      requireAuth, (req, res) => res.sendFile(__dirname + '/public/trial.html'));
 app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.html'));
 app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
 
@@ -240,28 +261,77 @@ app.post('/jobs', requireAuth, async (req, res) => {
   res.json({ id, driverUrl });
 });
 
+// Driver opens the drive link — record first open and open count
+app.post('/jobs/:id/driver-open', async (req, res) => {
+  const now = new Date().toISOString();
+  try {
+    await dbRun(
+      `UPDATE jobs SET
+        driverLinkOpenedAt = COALESCE(driverLinkOpenedAt, ?),
+        driverLinkOpenCount = COALESCE(driverLinkOpenCount, 0) + 1
+       WHERE id = ?`,
+      [now, req.params.id]
+    );
+  } catch {}
+  res.json({ success: true });
+});
+
+// Driver taps "Start Trip" — idempotent: only sets startedAt once, SMS sent once
 app.post('/jobs/:id/start', async (req, res) => {
   const job = await dbGet('SELECT * FROM jobs WHERE id = ?', [req.params.id]);
   if (!job) return res.status(404).json({ error: 'Not found' });
-  await dbRun("UPDATE jobs SET status = 'active' WHERE id = ?", [req.params.id]);
+
+  const now = new Date().toISOString();
+
+  // Only record startedAt on the first call
+  if (!job.startedAt) {
+    await dbRun("UPDATE jobs SET status = 'active', startedAt = ? WHERE id = ?", [now, req.params.id]);
+  } else {
+    await dbRun("UPDATE jobs SET status = 'active' WHERE id = ?", [req.params.id]);
+  }
 
   res.json({ success: true });
 
-  const trackingUrl = `${req.protocol}://${req.get('host')}/track/${job.id}`;
-  const greeting = job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : '';
-  const smsBody = job.jobType === 'empty'
-    ? `${greeting}${job.driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
-    : `${greeting}your delivery of ${job.loadDetails} is on the way with ${job.driverName}. Track here: ${trackingUrl}`;
-  twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: job.customerMobile })
-    .then(() => console.log(`Start SMS sent to ${job.customerMobile}`))
-    .catch(err => console.error('Start SMS failed:', err.message));
+  // Only send tracking SMS once — guard on trackingSmsAttemptedAt
+  if (!job.trackingSmsAttemptedAt && job.customerMobile) {
+    await dbRun('UPDATE jobs SET trackingSmsAttemptedAt = ? WHERE id = ?', [now, req.params.id]);
+
+    const trackingUrl = `${req.protocol}://${req.get('host')}/track/${job.id}`;
+    const greeting = job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : '';
+    const smsBody = job.jobType === 'empty'
+      ? `${greeting}${job.driverName} is on the way to collect your livestock. Track here: ${trackingUrl}`
+      : `${greeting}your delivery of ${job.loadDetails} is on the way with ${job.driverName}. Track here: ${trackingUrl}`;
+
+    twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: job.customerMobile })
+      .then(async () => {
+        await dbRun('UPDATE jobs SET trackingSmsSentAt = ? WHERE id = ?', [new Date().toISOString(), job.id]);
+        console.log(`Start SMS sent to ${job.customerMobile}`);
+      })
+      .catch(async (err) => {
+        await dbRun('UPDATE jobs SET trackingSmsFailedAt = ? WHERE id = ?', [new Date().toISOString(), job.id]);
+        console.error('Start SMS failed:', err.message);
+      });
+  }
 });
 
+// Live GPS update — records first and last location times, increments count
 app.post('/jobs/:id/location', async (req, res) => {
   const { lat, lng } = req.body;
-  await dbRun('UPDATE jobs SET currentLat = ?, currentLng = ? WHERE id = ?', [lat, lng, req.params.id]);
-  const job = await dbGet('SELECT * FROM jobs WHERE id = ?', [req.params.id]);
+  const now = new Date().toISOString();
 
+  await dbRun(
+    `UPDATE jobs SET
+      currentLat = ?,
+      currentLng = ?,
+      firstLocationAt = COALESCE(firstLocationAt, ?),
+      lastLocationAt = ?,
+      locationUpdateCount = COALESCE(locationUpdateCount, 0) + 1
+     WHERE id = ?`,
+    [lat, lng, now, now, req.params.id]
+  );
+
+  // 15-min proximity SMS
+  const job = await dbGet('SELECT * FROM jobs WHERE id = ?', [req.params.id]);
   if (job && !job.notified15min && job.deliveryLat && job.deliveryLng) {
     const km = distanceKm(lat, lng, job.deliveryLat, job.deliveryLng);
     if (km / 80 * 60 <= 15) {
@@ -280,15 +350,72 @@ app.post('/jobs/:id/location', async (req, res) => {
   res.json({ success: true });
 });
 
+// Client opens tracking page — records first view time and view count
+// Called as a fire-and-forget beacon from the client tracking page JS
+app.post('/jobs/:id/view', async (req, res) => {
+  const now = new Date().toISOString();
+  try {
+    await dbRun(
+      `UPDATE jobs SET
+        firstTrackingViewAt = COALESCE(firstTrackingViewAt, ?),
+        lastTrackingViewAt = ?,
+        trackingViewCount = COALESCE(trackingViewCount, 0) + 1
+       WHERE id = ?`,
+      [now, now, req.params.id]
+    );
+  } catch {}
+  res.json({ success: true });
+});
+
+// Complete a job — idempotent, records completedAt once
 app.post('/jobs/:id/complete', async (req, res) => {
   const job = await dbGet('SELECT * FROM jobs WHERE id = ?', [req.params.id]);
   if (!job) return res.status(404).json({ error: 'Not found' });
-  await dbRun("UPDATE jobs SET status = 'complete' WHERE id = ?", [req.params.id]);
+
+  // Already complete — return success without side effects
+  if (job.status === 'complete') {
+    return res.json({ success: true, alreadyComplete: true });
+  }
+
+  const now = new Date().toISOString();
+  await dbRun("UPDATE jobs SET status = 'complete', completedAt = ? WHERE id = ?", [now, req.params.id]);
+
   if (job.companyId) {
     await dbRun("UPDATE drivers SET status = 'available' WHERE name = ? AND companyId = ?", [job.driverName, job.companyId]);
     if (job.truckRego) await dbRun("UPDATE trucks SET status = 'available' WHERE rego = ? AND companyId = ?", [job.truckRego, job.companyId]);
   }
   res.json({ success: true });
+});
+
+// Trial analytics — authenticated, scoped to company
+app.get('/api/trial', requireAuth, async (req, res) => {
+  const companyId = req.company.id;
+
+  const stats = await dbGet(`
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN startedAt IS NOT NULL THEN 1 ELSE 0 END) as started,
+      SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as completed,
+      SUM(CASE WHEN firstTrackingViewAt IS NOT NULL THEN 1 ELSE 0 END) as trackingOpened,
+      SUM(CASE WHEN firstLocationAt IS NOT NULL THEN 1 ELSE 0 END) as gotGps,
+      SUM(CASE WHEN trackingSmsFailedAt IS NOT NULL AND trackingSmsSentAt IS NULL THEN 1 ELSE 0 END) as smsFailed
+    FROM jobs WHERE companyId = ?
+  `, [companyId]);
+
+  const jobs = await dbAll(`
+    SELECT
+      id, loadDetails, driverName, customerName, status, jobType,
+      createdAt, startedAt, completedAt,
+      firstTrackingViewAt, lastTrackingViewAt, trackingViewCount,
+      firstLocationAt, lastLocationAt, locationUpdateCount,
+      trackingSmsSentAt, trackingSmsFailedAt, trackingSmsAttemptedAt,
+      driverLinkOpenedAt, driverLinkOpenCount
+    FROM jobs WHERE companyId = ?
+    ORDER BY createdAt DESC
+    LIMIT 100
+  `, [companyId]);
+
+  res.json({ stats, jobs });
 });
 
 app.get('/api/drivers', requireAuth, async (req, res) => {

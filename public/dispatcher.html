@@ -62,10 +62,50 @@
 
     @media (max-width: 1024px) { .job-inner { grid-template-columns: 180px 1fr 140px; } .driver-col { display: none; } }
     @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px 16px 80px; } .job-inner { grid-template-columns: 1fr; } .route-col { display: none; } .topbar { padding: 16px 20px; } }
+
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-overlay.visible { display: flex; }
+    .modal-box {
+      background: white; border-radius: 16px; padding: 28px 24px 24px;
+      max-width: 380px; width: 100%; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal-box h3 { font-size: 18px; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
+    .modal-box p { font-size: 14px; color: #888; line-height: 1.5; margin-bottom: 24px; }
+    .modal-btns { display: flex; gap: 10px; }
+    .modal-cancel {
+      flex: 1; padding: 14px; border-radius: 10px;
+      border: 1.5px solid #e5e5e5; background: white;
+      color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+    }
+    .modal-cancel:hover { border-color: #ccc; }
+    .modal-confirm {
+      flex: 1; padding: 14px; border-radius: 10px;
+      border: none; background: #f59e0b;
+      color: white; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit;
+    }
+    .modal-confirm:hover { background: #d97706; }
+    .modal-confirm:disabled { background: #ddd; color: #999; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div id="sidebar-root"></div>
+
+  <!-- Mark Delivered confirmation modal -->
+  <div class="modal-overlay" id="completeModal">
+    <div class="modal-box">
+      <h3 id="modalTitle">Mark as Delivered?</h3>
+      <p id="modalBody">This will end live tracking and move the job to History.</p>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="hideCompleteModal()">Cancel</button>
+        <button class="modal-confirm" id="modalConfirmBtn" onclick="confirmComplete()">Mark Delivered</button>
+      </div>
+    </div>
+  </div>
 
   <div class="main">
     <div class="topbar">
@@ -164,20 +204,56 @@
               <div class="actions-col">
                 ${j.status !== 'planned' ? `<a class="btn-track" href="/track/${j.id}" target="_blank">View Tracker</a>` : ''}
                 <a class="btn-track" href="/drive/${j.id}" target="_blank">Driver Link</a>
-                <button class="btn-done" onclick="complete('${j.id}')">Mark ${j.jobType === 'empty' ? 'Arrived' : 'Delivered'}</button>
+                <button class="btn-done" onclick="complete('${j.id}', ${j.jobType === 'empty'})">Mark ${j.jobType === 'empty' ? 'Arrived' : 'Delivered'}</button>
               </div>
             </div>
           </div>`).join('')}`;
     }
 
-    async function complete(id) {
-      if (!confirm('Mark this job as delivered?')) return;
-      await fetch(`/jobs/${id}/complete`, { method: 'POST' });
-      const card = document.getElementById(`job-${id}`);
-      card.style.opacity = '0.4';
-      card.style.pointerEvents = 'none';
-      setTimeout(() => { card.remove(); if (!document.querySelectorAll('.job-card').length) load(); }, 500);
+    let pendingCompleteId = null;
+
+    function complete(id, isEmptyRun) {
+      pendingCompleteId = id;
+      const title = isEmptyRun ? 'Mark as Arrived?' : 'Mark as Delivered?';
+      const body  = isEmptyRun
+        ? 'This will mark the driver as arrived and move the job to History.'
+        : 'This will end live tracking and move the job to History.';
+      const btnLabel = isEmptyRun ? 'Mark Arrived' : 'Mark Delivered';
+      document.getElementById('modalTitle').textContent = title;
+      document.getElementById('modalBody').textContent  = body;
+      const confirmBtn = document.getElementById('modalConfirmBtn');
+      confirmBtn.textContent = btnLabel;
+      confirmBtn.disabled = false;
+      document.getElementById('completeModal').classList.add('visible');
     }
+
+    function hideCompleteModal() {
+      document.getElementById('completeModal').classList.remove('visible');
+      pendingCompleteId = null;
+    }
+
+    async function confirmComplete() {
+      if (!pendingCompleteId) return;
+      const confirmBtn = document.getElementById('modalConfirmBtn');
+      confirmBtn.disabled = true;
+      confirmBtn.textContent = 'Saving…';
+      const id = pendingCompleteId;
+      try {
+        await fetch(`/jobs/${id}/complete`, { method: 'POST' });
+      } catch {}
+      hideCompleteModal();
+      const card = document.getElementById(`job-${id}`);
+      if (card) {
+        card.style.opacity = '0.4';
+        card.style.pointerEvents = 'none';
+        setTimeout(() => { card.remove(); if (!document.querySelectorAll('.job-card').length) load(); }, 500);
+      }
+    }
+
+    // Close modal on overlay click
+    document.getElementById('completeModal').addEventListener('click', function(e) {
+      if (e.target === this) hideCompleteModal();
+    });
 
     load().then(() => {
       const params = new URLSearchParams(location.search);

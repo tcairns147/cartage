@@ -41,6 +41,7 @@ function renderSidebar(active) {
   const allNav = [
     ...nav,
     { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
+    { id: 'trial',      icon: ICONS.package,    label: 'Trial',        href: '/trial' },
   ];
 
   setTimeout(loadCompanyName, 0);

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Drova">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Drova — Trial Overview</title>
+  <script src="/sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
+    .main { margin-left: 220px; flex: 1; min-width: 0; }
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .content { padding: 24px 32px 48px; }
+
+    /* Summary stat cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 18px 16px;
+      border: 1px solid #eee;
+    }
+    .stat-value { font-size: 36px; font-weight: 900; color: #1a1a1a; line-height: 1; }
+    .stat-label { font-size: 12px; color: #aaa; font-weight: 600; margin-top: 6px; }
+    .stat-card.warn .stat-value { color: #dc2626; }
+    .stat-card.green .stat-value { color: #16a34a; }
+
+    /* Section header */
+    .section-title {
+      font-size: 13px; font-weight: 700; color: #888;
+      letter-spacing: 0.5px; text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    /* Job rows */
+    .job-row {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      display: grid;
+      grid-template-columns: 180px 1fr 1fr 160px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .job-id { font-size: 11px; color: #bbb; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 3px; }
+    .job-load { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+    .job-meta { font-size: 12px; color: #aaa; }
+
+    .col-label { font-size: 10px; color: #bbb; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 4px; }
+    .col-value { font-size: 13px; color: #444; font-weight: 500; }
+    .col-value.muted { color: #ccc; }
+
+    /* Health badge */
+    .health-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+    .health-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .health-healthy  { background: #dcfce7; color: #166534; }
+    .health-healthy .health-dot  { background: #16a34a; }
+    .health-delayed  { background: #fef3c7; color: #92400e; }
+    .health-delayed .health-dot  { background: #f59e0b; }
+    .health-stale    { background: #fee2e2; color: #991b1b; }
+    .health-stale .health-dot    { background: #dc2626; }
+    .health-none     { background: #f3f4f6; color: #6b7280; }
+    .health-none .health-dot     { background: #9ca3af; }
+    .health-complete { background: #f0fdf4; color: #166534; }
+
+    /* SMS badge */
+    .sms-ok   { color: #16a34a; font-size: 12px; font-weight: 600; }
+    .sms-fail { color: #dc2626; font-size: 12px; font-weight: 600; }
+    .sms-none { color: #ccc;    font-size: 12px; }
+
+    /* Refresh */
+    .refresh-btn {
+      background: #f5f0e8; border: 1.5px solid #e5e0d5;
+      color: #555; font-size: 13px; font-weight: 600;
+      padding: 9px 16px; border-radius: 8px;
+      cursor: pointer; font-family: inherit;
+    }
+    .refresh-btn:hover { background: #eee; }
+
+    .topbar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+
+    @media (max-width: 768px) {
+      .main { margin-left: 0; }
+      .content { padding: 16px 16px 80px; }
+      .topbar { padding: 16px 20px; }
+      .job-row { grid-template-columns: 1fr 1fr; }
+      .job-col-route { display: none; }
+    }
+    @media (max-width: 480px) {
+      .job-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-row">
+        <div>
+          <h1>Trial Overview</h1>
+          <p id="lastUpdated">Loading…</p>
+        </div>
+        <button class="refresh-btn" onclick="load()">Refresh</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="stats-grid" id="statsGrid">
+        <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">Jobs Created</div></div>
+        <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">Jobs Started</div></div>
+        <div class="stat-card green"><div class="stat-value">—</div><div class="stat-label">Completed</div></div>
+        <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">Client Tracking Opened</div></div>
+        <div class="stat-card"><div class="stat-value">—</div><div class="stat-label">Got GPS</div></div>
+        <div class="stat-card warn"><div class="stat-value">—</div><div class="stat-label">SMS Failures</div></div>
+      </div>
+
+      <div class="section-title">Recent Jobs</div>
+      <div id="jobsList"><div style="padding:40px;text-align:center;color:#aaa;font-size:14px;">Loading…</div></div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('trial');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    function fmt(iso) {
+      if (!iso) return null;
+      const d = new Date(iso.endsWith('Z') ? iso : iso + 'Z');
+      return d.toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    function timeAgo(iso) {
+      if (!iso) return null;
+      const diffMin = Math.floor((Date.now() - new Date(iso.endsWith('Z') ? iso : iso + 'Z')) / 60000);
+      if (diffMin < 1)  return 'just now';
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const h = Math.floor(diffMin / 60);
+      const m = diffMin % 60;
+      return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
+    }
+
+    function gpsHealth(job) {
+      if (job.status === 'complete') {
+        return `<span class="health-badge health-complete">COMPLETED</span>`;
+      }
+      if (!job.firstLocationAt) {
+        return `<span class="health-badge health-none"><span class="health-dot"></span>NEVER STARTED</span>`;
+      }
+      const ageMin = Math.floor((Date.now() - new Date(job.lastLocationAt.endsWith('Z') ? job.lastLocationAt : job.lastLocationAt + 'Z')) / 60000);
+      if (ageMin < 10) {
+        return `<span class="health-badge health-healthy"><span class="health-dot"></span>HEALTHY</span><div style="font-size:11px;color:#aaa;margin-top:3px;">Last update ${timeAgo(job.lastLocationAt)}</div>`;
+      }
+      if (ageMin < 30) {
+        return `<span class="health-badge health-delayed"><span class="health-dot"></span>DELAYED</span><div style="font-size:11px;color:#aaa;margin-top:3px;">Last update ${timeAgo(job.lastLocationAt)}</div>`;
+      }
+      return `<span class="health-badge health-stale"><span class="health-dot"></span>STALE</span><div style="font-size:11px;color:#aaa;margin-top:3px;">Last update ${timeAgo(job.lastLocationAt)}</div>`;
+    }
+
+    function smsStatus(job) {
+      if (job.trackingSmsSentAt) return `<span class="sms-ok">✓ Sent ${timeAgo(job.trackingSmsSentAt)}</span>`;
+      if (job.trackingSmsFailedAt) return `<span class="sms-fail">✗ Failed</span>`;
+      if (job.trackingSmsAttemptedAt) return `<span class="sms-none">Sending…</span>`;
+      return `<span class="sms-none">Not sent</span>`;
+    }
+
+    async function load() {
+      document.getElementById('lastUpdated').textContent = 'Loading…';
+      let data;
+      try {
+        const res = await fetch('/api/trial');
+        if (!res.ok) { document.getElementById('jobsList').innerHTML = '<div style="padding:40px;text-align:center;color:#aaa;">Failed to load.</div>'; return; }
+        data = await res.json();
+      } catch {
+        document.getElementById('jobsList').innerHTML = '<div style="padding:40px;text-align:center;color:#aaa;">Network error.</div>';
+        return;
+      }
+
+      const { stats, jobs } = data;
+
+      // Stats grid
+      const vals = [stats.total, stats.started, stats.completed, stats.trackingOpened, stats.gotGps, stats.smsFailed];
+      const cards = document.getElementById('statsGrid').querySelectorAll('.stat-value');
+      vals.forEach((v, i) => { cards[i].textContent = v ?? 0; });
+
+      // Jobs list
+      if (!jobs.length) {
+        document.getElementById('jobsList').innerHTML = '<div style="padding:40px;text-align:center;color:#aaa;font-size:14px;">No jobs yet.</div>';
+      } else {
+        document.getElementById('jobsList').innerHTML = jobs.map(j => `
+          <div class="job-row">
+            <div>
+              <div class="job-id">JOB #${j.id.toUpperCase()}</div>
+              <div class="job-load">${j.loadDetails || '—'}</div>
+              <div class="job-meta">${j.driverName || '—'}${j.customerName ? ' · ' + j.customerName : ''}</div>
+            </div>
+            <div class="job-col-route">
+              <div class="col-label">Timeline</div>
+              <div class="col-value">${j.createdAt ? 'Created ' + timeAgo(j.createdAt) : '—'}</div>
+              ${j.startedAt   ? `<div class="col-value" style="font-size:12px;color:#aaa;">Started ${timeAgo(j.startedAt)}</div>` : ''}
+              ${j.completedAt ? `<div class="col-value" style="font-size:12px;color:#16a34a;">Completed ${timeAgo(j.completedAt)}</div>` : ''}
+            </div>
+            <div>
+              <div class="col-label">GPS Updates</div>
+              <div class="col-value ${!j.locationUpdateCount ? 'muted' : ''}">${j.locationUpdateCount || 0} updates</div>
+              <div style="margin-top:8px;">${gpsHealth(j)}</div>
+              <div style="margin-top:6px;">
+                <div class="col-label">Client Tracking</div>
+                <div class="col-value ${!j.trackingViewCount ? 'muted' : ''}">${j.trackingViewCount || 0} open${j.trackingViewCount !== 1 ? 's' : ''}${j.firstTrackingViewAt ? ' · first ' + timeAgo(j.firstTrackingViewAt) : ''}</div>
+              </div>
+            </div>
+            <div>
+              <div class="col-label">SMS</div>
+              <div>${smsStatus(j)}</div>
+              <div style="margin-top:8px;">
+                <div class="col-label">Driver Link</div>
+                <div class="col-value ${!j.driverLinkOpenCount ? 'muted' : ''}">${j.driverLinkOpenCount || 0} open${j.driverLinkOpenCount !== 1 ? 's' : ''}${j.driverLinkOpenedAt ? '<br><span style="font-size:11px;color:#aaa;">first ' + timeAgo(j.driverLinkOpenedAt) + '</span>' : ''}</div>
+              </div>
+            </div>
+          </div>`).join('');
+      }
+
+      document.getElementById('lastUpdated').textContent = `Updated ${new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+    }
+
+    load();
+  </script>
+</body>
+</html>

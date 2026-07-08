@@ -787,6 +787,9 @@
       }
     }
 
+    // Fire-and-forget: record that someone opened the tracking page
+    fetch(`/jobs/${jobId}/view`, { method: 'POST' }).catch(() => {});
+
     initMap();
   </script>
 </body>

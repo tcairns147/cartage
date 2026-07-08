@@ -47,12 +47,12 @@ function renderSidebar(active) {
   return `
     <div class="mobile-topbar">
       <img src="/logo.svg" alt="Drova" class="mobile-topbar-logo">
-      <img id="mobile-client-logo" src="" alt="" style="display:none; max-height:28px; max-width:100px; object-fit:contain;">
+      <img id="mobile-client-logo" src="" alt="" style="display:none; max-height:28px; max-width:100px; object-fit:contain; mix-blend-mode:screen;">
     </div>
     <aside class="sidebar">
       <div class="sidebar-logo"><img src="/logo.svg" alt="Drova"></div>
       <div id="sidebar-client-logo-wrap" style="padding: 14px 16px; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; justify-content: center;">
-        <img id="sidebar-client-logo" src="" alt="" style="display:none; width:100%; max-height:56px; object-fit:contain; mix-blend-mode:screen;">
+        <img id="sidebar-client-logo" src="" alt="" style="display:none; width:100%; max-height:56px; object-fit:contain;">
       </div>
       <nav class="sidebar-nav">
         ${allNav.map(n => `
@@ -127,6 +127,7 @@ const SIDEBAR_CSS = `
       position: fixed; top: 0; left: 0; right: 0; z-index: 500;
       padding-left: max(env(safe-area-inset-left), 16px);
       padding-right: max(env(safe-area-inset-right), 16px);
+      isolation: isolate;
     }
     .mobile-topbar-logo { height: 28px; filter: brightness(0) invert(1); }
     .main { padding-top: 50px; }

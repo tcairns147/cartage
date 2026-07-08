@@ -172,6 +172,42 @@
       color: #16a34a;
       font-weight: 600;
     }
+
+    #mapView {
+      display: none;
+      position: fixed;
+      inset: 0;
+      flex-direction: column;
+    }
+    #mapView.active { display: flex; }
+    #driveMap { flex: 1; }
+    .map-bottom {
+      background: #1a1a1a;
+      padding: 12px 16px;
+      padding-bottom: max(env(safe-area-inset-bottom), 12px);
+    }
+    .map-dest {
+      font-size: 12px; color: #888; margin-bottom: 2px;
+    }
+    .map-address {
+      font-size: 14px; font-weight: 600; color: white;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+    .map-actions { display: flex; gap: 10px; }
+    .btn-gmaps {
+      flex: 1; padding: 13px; border-radius: 12px; border: none;
+      background: #4285F4; color: white; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit; text-decoration: none;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-arrived {
+      flex: 1; padding: 13px; border-radius: 12px; border: none;
+      background: #f59e0b; color: white; font-size: 14px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-arrived:disabled { background: #333; color: #666; }
+    .map-coords { font-size: 10px; color: #444; text-align: center; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -224,28 +260,50 @@
 
   <div class="coords" id="coords"></div>
   <div class="wake-badge" id="wakeBadge">Screen will stay on while tracking</div>
-
   <div class="tip">Your location updates every few seconds. If GPS signal is lost, it will reconnect automatically.</div>
+
+  <!-- Live map view (shown after trip starts) -->
+  <div id="mapView">
+    <div id="driveMap"></div>
+    <div class="map-bottom">
+      <div class="map-dest">Delivering to</div>
+      <div class="map-address" id="mapAddress">—</div>
+      <div class="map-actions">
+        <a class="btn-gmaps" id="gmapsLink" href="#" target="_blank">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+          Open in Maps
+        </a>
+        <button class="btn-arrived" id="mapArrivedBtn" onclick="markArrived()">I've Arrived</button>
+      </div>
+      <div class="map-coords" id="mapCoords"></div>
+    </div>
+  </div>
 
   <script>
     const jobId = window.location.pathname.split('/').pop();
-    let watchId = null;
-    let wakeLock = null;
+    let watchId = null, wakeLock = null;
+    let gmap = null, driverMarker = null, currentJob = null;
 
     async function requestWakeLock() {
       if ('wakeLock' in navigator) {
-        try {
-          wakeLock = await navigator.wakeLock.request('screen');
-          document.getElementById('wakeBadge').style.display = 'block';
-        } catch(e) {}
+        try { wakeLock = await navigator.wakeLock.request('screen'); } catch(e) {}
       }
     }
 
     document.addEventListener('visibilitychange', async () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') {
-        await requestWakeLock();
-      }
+      if (wakeLock !== null && document.visibilityState === 'visible') await requestWakeLock();
     });
+
+    async function initMap() {
+      const { googleMapsKey } = await (await fetch('/api/config')).json();
+      if (!googleMapsKey) return;
+      await new Promise(resolve => {
+        window.__gmInit = resolve;
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${googleMapsKey}&libraries=directions&callback=__gmInit`;
+        document.head.appendChild(s);
+      });
+    }
 
     async function loadJob() {
       const res = await fetch(`/jobs/${jobId}`);
@@ -254,82 +312,117 @@
         document.getElementById('statusCircle').classList.add('error');
         return;
       }
-      const job = await res.json();
-      if (job.companySlug) {
+      currentJob = await res.json();
+      if (currentJob.companySlug) {
         const logo = document.getElementById('clientLogo');
-        logo.src = `/logo-${job.companySlug}.png`;
+        logo.src = `/logo-${currentJob.companySlug}.png`;
         logo.style.display = 'block';
         logo.onerror = () => { logo.style.display = 'none'; };
       }
-      document.getElementById('driverName').textContent = job.driverName;
-      document.getElementById('loadDetails').textContent = job.jobType === 'empty' ? 'Empty Run — Collecting Livestock' : job.loadDetails;
-      document.getElementById('deliveryAddress').textContent = job.jobType === 'empty' ? job.pickupAddress : job.deliveryAddress;
-      if (job.notes) {
-        document.getElementById('notesText').textContent = job.notes;
+      document.getElementById('driverName').textContent = currentJob.driverName;
+      document.getElementById('loadDetails').textContent = currentJob.jobType === 'empty' ? 'Empty Run — Collecting Livestock' : currentJob.loadDetails;
+      const dest = currentJob.jobType === 'empty' ? currentJob.pickupAddress : currentJob.deliveryAddress;
+      document.getElementById('deliveryAddress').textContent = dest;
+      if (currentJob.notes) {
+        document.getElementById('notesText').textContent = currentJob.notes;
         document.getElementById('notesBox').style.display = 'block';
       }
       const btn = document.getElementById('startBtn');
       btn.textContent = 'Start Trip & Share Location';
-      btn.onclick = () => startTrip(job.id);
+      btn.onclick = () => startTrip(currentJob.id);
       btn.disabled = false;
     }
 
-    async function startTrip(jobId) {
+    async function startTrip(id) {
       document.getElementById('startBtn').disabled = true;
-      await fetch(`/jobs/${jobId}/start`, { method: 'POST' });
+      await fetch(`/jobs/${id}/start`, { method: 'POST' });
       startTracking();
     }
 
-    function startTracking() {
-      if (!navigator.geolocation) {
-        alert('Your device does not support GPS tracking.');
-        return;
-      }
+    function showMapView(lat, lng) {
+      document.getElementById('mapView').classList.add('active');
+      document.body.style.overflow = 'hidden';
+      const dest = currentJob.jobType === 'empty' ? currentJob.pickupAddress : currentJob.deliveryAddress;
+      document.getElementById('mapAddress').textContent = dest;
+      document.getElementById('gmapsLink').href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(dest)}&travelmode=driving`;
 
+      if (!gmap) {
+        gmap = new google.maps.Map(document.getElementById('driveMap'), {
+          center: { lat, lng }, zoom: 14,
+          mapTypeId: 'roadmap',
+          mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+          zoomControl: false
+        });
+        driverMarker = new google.maps.Marker({
+          position: { lat, lng }, map: gmap,
+          icon: { url: '/apple-touch-icon.png', scaledSize: new google.maps.Size(36, 36), anchor: new google.maps.Point(18, 18) }
+        });
+        // Draw route
+        const ds = new google.maps.DirectionsService();
+        const dr = new google.maps.DirectionsRenderer({
+          map: gmap, suppressMarkers: true,
+          polylineOptions: { strokeColor: '#f59e0b', strokeWeight: 5 }
+        });
+        ds.route({
+          origin: { lat, lng },
+          destination: dest,
+          travelMode: google.maps.TravelMode.DRIVING
+        }, (result, status) => {
+          if (status === 'OK') dr.setDirections(result);
+        });
+      }
+    }
+
+    function updateMapPosition(lat, lng) {
+      if (!gmap) return;
+      const pos = { lat, lng };
+      driverMarker.setPosition(pos);
+      gmap.panTo(pos);
+      document.getElementById('mapCoords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) { alert('GPS not supported.'); return; }
       document.getElementById('startBtn').disabled = true;
       document.getElementById('startBtn').textContent = 'Sharing Location...';
       document.getElementById('statusText').textContent = 'Getting GPS...';
       document.getElementById('stepsSection').style.display = 'none';
       requestWakeLock();
+      let mapShown = false;
 
       watchId = navigator.geolocation.watchPosition(
         (pos) => {
           const { latitude: lat, longitude: lng, accuracy } = pos.coords;
-
           fetch(`/jobs/${jobId}/location`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ lat, lng })
           });
-
           document.getElementById('statusCircle').classList.add('active');
           document.getElementById('statusCircle').classList.remove('error');
           document.getElementById('statusText').textContent = 'Live';
-          document.getElementById('coords').textContent =
-            `${lat.toFixed(5)}, ${lng.toFixed(5)} · ±${Math.round(accuracy)}m`;
+          document.getElementById('coords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} · ±${Math.round(accuracy)}m`;
           document.getElementById('arrivedBtn').style.display = 'block';
+          if (!mapShown && typeof google !== 'undefined') { mapShown = true; showMapView(lat, lng); }
+          else updateMapPosition(lat, lng);
         },
         (err) => {
           document.getElementById('statusCircle').classList.add('error');
           document.getElementById('statusText').textContent = 'GPS Error';
-          document.getElementById('coords').textContent = err.message;
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
       );
     }
 
     async function markArrived() {
-      const btn = document.getElementById('arrivedBtn');
+      const btn = document.getElementById('mapArrivedBtn');
       btn.disabled = true;
       btn.textContent = 'Marking arrived...';
       await fetch(`/jobs/${jobId}/complete`, { method: 'POST' });
       if (watchId) navigator.geolocation.clearWatch(watchId);
-      document.getElementById('statusCircle').classList.remove('active');
-      document.getElementById('statusText').textContent = 'Arrived';
       btn.textContent = 'Job Complete ✓';
-      document.getElementById('startBtn').style.display = 'none';
     }
 
+    initMap();
     loadJob();
   </script>
 </body>

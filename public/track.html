@@ -411,9 +411,11 @@
     let gmap = null, truckOverlay = null, routeLine = null;
     let etaSeconds = 0, lastLocationTime = null, userHasPanned = false;
     let freshnessTimer = null, pollTimer = null;
+    let DrovaMarkerOverlay = null;
 
-    // ── DROVA MAP MARKER (OverlayView) ──────────────────────
-    class DrovaMarkerOverlay extends google.maps.OverlayView {
+    // ── DROVA MAP MARKER (OverlayView) — defined after Maps loads ──
+    function defineDrovaMarker() {
+      DrovaMarkerOverlay = class extends google.maps.OverlayView {
       constructor(latLng) {
         super();
         this._pos = latLng instanceof google.maps.LatLng ? latLng : new google.maps.LatLng(latLng.lat, latLng.lng);
@@ -465,7 +467,8 @@
       onRemove() {
         if (this._div) { this._div.parentNode.removeChild(this._div); this._div = null; }
       }
-    }
+    };
+    } // end defineDrovaMarker
 
     // ── SVG MARKER ICONS ──────────────────────────────────────
     function pickupIcon() {
@@ -502,6 +505,7 @@
         };
         document.head.appendChild(s);
       });
+      defineDrovaMarker();
       gmap = new google.maps.Map(document.getElementById('map'), {
         center: { lat: -33.5, lng: 148.5 }, zoom: 8,
         mapTypeId: 'roadmap',

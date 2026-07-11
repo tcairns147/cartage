@@ -341,9 +341,17 @@
         document.getElementById('notesBox').style.display = 'block';
       }
       const btn = document.getElementById('startBtn');
-      btn.textContent = 'Start Trip & Share Location';
-      btn.onclick = () => startTrip(currentJob.id);
-      btn.disabled = false;
+
+      if (currentJob.startedAt) {
+        // Job already started — skip the start button and resume tracking directly
+        btn.style.display = 'none';
+        document.getElementById('stepsSection').style.display = 'none';
+        startTracking();
+      } else {
+        btn.textContent = 'Start Trip & Share Location';
+        btn.onclick = () => startTrip(currentJob.id);
+        btn.disabled = false;
+      }
     }
 
     async function startTrip(id) {

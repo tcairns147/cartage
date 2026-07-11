@@ -144,7 +144,7 @@ async function initDb() {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser(COOKIE_SECRET));
-app.use(express.static('public'));
+app.use(express.static('public', { index: false }));
 
 async function requireAuth(req, res, next) {
   const slug = req.signedCookies.company;

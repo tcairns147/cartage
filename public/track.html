@@ -550,7 +550,8 @@
     function formatEtaRange(secs) {
       if (secs <= 0) return null;
       const now   = Date.now();
-      const early = new Date(now + (secs - 15 * 60) * 1000);
+      const earlyMs = Math.max(now + 60000, now + (secs - 5 * 60) * 1000); // min 1 min from now
+      const early = new Date(earlyMs);
       const late  = new Date(now + (secs + 15 * 60) * 1000);
       const fmt   = d => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
       const ef    = fmt(early);

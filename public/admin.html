@@ -71,6 +71,47 @@
       cursor: pointer; transition: border-color 0.2s, color 0.2s; white-space: nowrap;
     }
     .reset-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    .company-block { border-bottom: 1px solid #1c1c1c; }
+    .company-block:last-child { border-bottom: none; }
+    .company-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px; gap: 16px; cursor: pointer; transition: background 0.15s;
+    }
+    .company-header:hover { background: #161616; }
+    .company-name { font-size: 15px; font-weight: 700; }
+    .company-slug { font-size: 12px; color: #444; margin-top: 2px; }
+    .company-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+    .expand-icon { color: #333; font-size: 12px; transition: transform 0.2s; }
+    .expand-icon.open { transform: rotate(180deg); }
+    .company-detail { display: none; padding: 0 24px 20px; border-top: 1px solid #1c1c1c; }
+    .company-detail.open { display: block; }
+
+    .stats-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; padding: 16px 0; }
+    .stat { text-align: center; }
+    .stat-val { font-size: 28px; font-weight: 900; color: white; line-height: 1; }
+    .stat-val.red { color: #ef4444; }
+    .stat-val.green { color: #22c55e; }
+    .stat-lbl { font-size: 10px; color: #444; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+
+    .job-item {
+      background: #0d0d0d; border: 1px solid #1c1c1c; border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 8px;
+      display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px;
+    }
+    .job-load { font-size: 14px; font-weight: 700; color: white; }
+    .job-meta { font-size: 12px; color: #444; margin-top: 2px; }
+    .jlbl { font-size: 10px; color: #333; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+    .jval { font-size: 12px; color: #666; }
+    .jval.ok { color: #22c55e; }
+    .jval.fail { color: #ef4444; }
+    .status-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; text-transform: uppercase; }
+    .status-complete { background: #052e16; color: #22c55e; }
+    .status-active { background: #1c1400; color: #f59e0b; }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: repeat(3, 1fr); }
+      .job-item { grid-template-columns: 1fr 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -141,27 +182,87 @@
       const res = await fetch('/api/admin/companies');
       const companies = await res.json();
       document.getElementById('companies-sub').textContent =
-        `${companies.length} company${companies.length !== 1 ? 'ies' : ''} registered`;
+        `${companies.length} compan${companies.length !== 1 ? 'ies' : 'y'} registered`;
 
       document.getElementById('companies-list').innerHTML = companies.length === 0
         ? `<div class="empty">No companies yet.</div>`
         : companies.map(c => `
-          <div class="entry">
-            <div>
-              <div class="entry-name">${c.name}</div>
-              <div class="entry-business">/${c.slug}</div>
+          <div class="company-block">
+            <div class="company-header" onclick="toggleCompany(${c.id}, this)">
+              <div>
+                <div class="company-name">${c.name}</div>
+                <div class="company-slug">/${c.slug}</div>
+              </div>
+              <div class="company-actions">
+                <button class="reset-btn" onclick="event.stopPropagation(); resetCompany(${c.id}, '${c.name}')">Reset data</button>
+                <span class="expand-icon">▼</span>
+              </div>
             </div>
-            <div class="entry-right" style="display:flex;align-items:center;gap:16px;">
-              <div class="entry-meta">/${c.slug}</div>
-              <button class="reset-btn" onclick="resetCompany(${c.id}, '${c.name}')">Reset data</button>
+            <div class="company-detail" id="detail-${c.id}">
+              <div style="color:#333;font-size:13px;padding:16px 0;">Click to load…</div>
             </div>
           </div>`).join('');
+    }
+
+    async function toggleCompany(id, headerEl) {
+      const detail = document.getElementById(`detail-${id}`);
+      const icon = headerEl.querySelector('.expand-icon');
+      const isOpen = detail.classList.contains('open');
+      detail.classList.toggle('open');
+      icon.classList.toggle('open');
+      if (!isOpen && detail.dataset.loaded !== 'true') {
+        detail.innerHTML = `<div style="color:#333;font-size:13px;padding:16px 0;">Loading…</div>`;
+        const res = await fetch(`/api/admin/company/${id}/trial`);
+        const { stats, jobs } = await res.json();
+        detail.dataset.loaded = 'true';
+        detail.innerHTML = `
+          <div class="stats-row">
+            <div class="stat"><div class="stat-val">${stats.total || 0}</div><div class="stat-lbl">Jobs Created</div></div>
+            <div class="stat"><div class="stat-val">${stats.started || 0}</div><div class="stat-lbl">Started</div></div>
+            <div class="stat"><div class="stat-val green">${stats.completed || 0}</div><div class="stat-lbl">Completed</div></div>
+            <div class="stat"><div class="stat-val">${stats.trackingOpened || 0}</div><div class="stat-lbl">Tracking Opened</div></div>
+            <div class="stat"><div class="stat-val">${stats.gotGps || 0}</div><div class="stat-lbl">Got GPS</div></div>
+            <div class="stat"><div class="stat-val ${stats.smsFailed ? 'red' : ''}">${stats.smsFailed || 0}</div><div class="stat-lbl">SMS Failures</div></div>
+          </div>
+          ${jobs.length === 0 ? `<div style="color:#333;font-size:13px;padding:8px 0 12px;">No jobs yet.</div>` : jobs.map(j => `
+            <div class="job-item">
+              <div>
+                <div class="job-load">${j.loadDetails || '—'}</div>
+                <div class="job-meta">${j.driverName || '—'}${j.customerName ? ' · ' + j.customerName : ''}</div>
+                <div style="margin-top:6px;"><span class="status-pill ${j.status === 'complete' ? 'status-complete' : 'status-active'}">${j.status}</span></div>
+              </div>
+              <div>
+                <div class="jlbl">Timeline</div>
+                <div class="jval">${j.createdAt ? timeAgo(j.createdAt) + ' ago' : '—'}</div>
+                ${j.startedAt ? `<div class="jval" style="margin-top:2px;">Started ${timeAgo(j.startedAt)}</div>` : ''}
+                ${j.completedAt ? `<div class="jval ok" style="margin-top:2px;">Done ${timeAgo(j.completedAt)}</div>` : ''}
+              </div>
+              <div>
+                <div class="jlbl">GPS</div>
+                <div class="jval ${j.locationUpdateCount ? '' : 'fail'}">${j.locationUpdateCount || 0} updates</div>
+                <div class="jlbl" style="margin-top:6px;">Tracking Views</div>
+                <div class="jval">${j.trackingViewCount || 0} opens</div>
+              </div>
+              <div>
+                <div class="jlbl">SMS</div>
+                <div class="jval ${j.trackingSmsSentAt ? 'ok' : j.trackingSmsFailedAt ? 'fail' : ''}">${j.trackingSmsSentAt ? '✓ Sent' : j.trackingSmsFailedAt ? '✗ Failed' : 'Not sent'}</div>
+                <div class="jlbl" style="margin-top:6px;">Driver Link</div>
+                <div class="jval">${j.driverLinkOpenCount || 0} opens</div>
+              </div>
+            </div>`).join('')}`;
+      }
     }
 
     async function resetCompany(id, name) {
       if (!confirm(`Reset all data for ${name}?\n\nThis will permanently delete all jobs, drivers, trucks, and locations. This cannot be undone.`)) return;
       const res = await fetch(`/api/admin/company/${id}/reset`, { method: 'DELETE' });
-      if (res.ok) { alert(`${name} has been reset.`); } else { alert('Reset failed.'); }
+      if (res.ok) {
+        const detail = document.getElementById(`detail-${id}`);
+        detail.dataset.loaded = 'false';
+        detail.classList.remove('open');
+        document.querySelector(`#detail-${id}`).previousElementSibling.querySelector('.expand-icon').classList.remove('open');
+        alert(`${name} has been reset.`);
+      } else { alert('Reset failed.'); }
     }
 
     loadWaitlist();

@@ -247,6 +247,31 @@ app.get('/api/admin/companies', requireAdmin, async (req, res) => {
   res.json(companies);
 });
 
+app.get('/api/admin/company/:id/trial', requireAdmin, async (req, res) => {
+  const companyId = req.params.id;
+  const stats = await dbGet(`
+    SELECT
+      COUNT(*) as total,
+      SUM(CASE WHEN startedAt IS NOT NULL THEN 1 ELSE 0 END) as started,
+      SUM(CASE WHEN status = 'complete' THEN 1 ELSE 0 END) as completed,
+      SUM(CASE WHEN firstTrackingViewAt IS NOT NULL THEN 1 ELSE 0 END) as trackingOpened,
+      SUM(CASE WHEN firstLocationAt IS NOT NULL THEN 1 ELSE 0 END) as gotGps,
+      SUM(CASE WHEN trackingSmsFailedAt IS NOT NULL AND trackingSmsSentAt IS NULL THEN 1 ELSE 0 END) as smsFailed
+    FROM jobs WHERE companyId = ?
+  `, [companyId]);
+  const jobs = await dbAll(`
+    SELECT id, loadDetails, driverName, customerName, status, jobType,
+      createdAt, startedAt, completedAt,
+      firstTrackingViewAt, trackingViewCount,
+      firstLocationAt, lastLocationAt, locationUpdateCount,
+      trackingSmsSentAt, trackingSmsFailedAt, trackingSmsAttemptedAt,
+      driverLinkOpenedAt, driverLinkOpenCount
+    FROM jobs WHERE companyId = ?
+    ORDER BY createdAt DESC LIMIT 100
+  `, [companyId]);
+  res.json({ stats, jobs });
+});
+
 app.delete('/api/admin/company/:id/reset', requireAdmin, async (req, res) => {
   const id = req.params.id;
   await dbRun('DELETE FROM jobs WHERE companyId = ?', [id]);

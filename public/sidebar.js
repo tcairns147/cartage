@@ -42,7 +42,6 @@ function renderSidebar(active) {
   const allNav = [
     ...nav,
     { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
-    { id: 'waitlist',   icon: ICONS.list,       label: 'Waitlist',     href: '/waitlist' },
     { id: 'trial',      icon: ICONS.package,    label: 'Trial',        href: '/trial' },
   ];
 

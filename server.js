@@ -170,6 +170,11 @@ async function requireAuth(req, res, next) {
   } catch { res.redirect('/login'); }
 }
 
+function requireAdmin(req, res, next) {
+  if (req.signedCookies.admin === 'drova-admin') return next();
+  res.redirect('/admin/login');
+}
+
 app.get('/login', (req, res) => res.sendFile(__dirname + '/public/login.html'));
 
 app.post('/login', async (req, res) => {
@@ -195,8 +200,20 @@ app.delete('/api/company/all', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/landing',    (req, res) => res.sendFile(__dirname + '/public/landing.html'));
-app.get('/waitlist',   requireAuth, (req, res) => res.sendFile(__dirname + '/public/waitlist.html'));
+app.get('/landing',      (req, res) => res.sendFile(__dirname + '/public/landing.html'));
+app.get('/admin/login',  (req, res) => res.sendFile(__dirname + '/public/admin-login.html'));
+app.post('/admin/login', (req, res) => {
+  const { password } = req.body;
+  const adminPassword = process.env.ADMIN_PASSWORD || 'drova-admin-2025';
+  if (password !== adminPassword) return res.redirect('/admin/login?error=1');
+  res.cookie('admin', 'drova-admin', { signed: true, httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 });
+  res.redirect('/admin');
+});
+app.post('/admin/logout', (req, res) => {
+  res.clearCookie('admin');
+  res.redirect('/admin/login');
+});
+app.get('/admin',        requireAdmin, (req, res) => res.sendFile(__dirname + '/public/admin.html'));
 app.get('/', (req, res) => {
   const slug = req.signedCookies.company;
   if (slug) return res.sendFile(__dirname + '/public/index.html');
@@ -220,9 +237,14 @@ app.post('/api/waitlist', async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/waitlist', requireAuth, async (req, res) => {
+app.get('/api/waitlist', requireAdmin, async (req, res) => {
   const entries = await dbAll('SELECT * FROM waitlist ORDER BY createdAt DESC');
   res.json(entries);
+});
+
+app.get('/api/admin/companies', requireAdmin, async (req, res) => {
+  const companies = await dbAll('SELECT id, name, slug, createdAt FROM companies ORDER BY createdAt DESC');
+  res.json(companies);
 });
 
 app.get('/api/config', (req, res) => {

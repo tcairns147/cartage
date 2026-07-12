@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Drova Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card {
+      width: 100%;
+      max-width: 380px;
+      padding: 40px;
+    }
+    .logo { height: 36px; filter: brightness(0) invert(1); margin-bottom: 32px; display: block; }
+    h1 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+    p { font-size: 13px; color: #555; margin-bottom: 28px; }
+    label { display: block; font-size: 12px; font-weight: 600; color: #888; margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+    input {
+      width: 100%;
+      padding: 12px 14px;
+      background: #141414;
+      border: 1px solid #222;
+      border-radius: 8px;
+      color: white;
+      font-size: 15px;
+      margin-bottom: 16px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: #f59e0b; }
+    .error { font-size: 13px; color: #ef4444; margin-bottom: 14px; }
+    button {
+      width: 100%;
+      padding: 13px;
+      background: #f59e0b;
+      color: #0a0a0a;
+      font-size: 15px;
+      font-weight: 800;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #fbbf24; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="/logo.svg" alt="Drova" class="logo">
+    <h1>Admin</h1>
+    <p>Founder access only.</p>
+    <form method="POST" action="/admin/login">
+      <label>Password</label>
+      <input type="password" name="password" autofocus placeholder="Enter admin password">
+      <div id="err" class="error" style="display:none">Incorrect password.</div>
+      <button type="submit">Sign in</button>
+    </form>
+  </div>
+  <script>
+    if (location.search.includes('error=1')) document.getElementById('err').style.display = 'block';
+  </script>
+</body>
+</html>

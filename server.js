@@ -121,6 +121,9 @@ async function initDb() {
     'driverLinkOpenedAt TEXT',
     'driverLinkOpenCount INTEGER DEFAULT 0',
     'notifyMinsBefore INTEGER DEFAULT 15',
+    'distanceTravelledKm REAL DEFAULT 0',
+    'lastKnownLat REAL',
+    'lastKnownLng REAL',
   ];
   for (const col of newCols) {
     try { await dbRun(`ALTER TABLE jobs ADD COLUMN ${col}`); } catch {}
@@ -347,19 +350,28 @@ app.post('/jobs/:id/location', async (req, res) => {
   const { lat, lng } = req.body;
   const now = new Date().toISOString();
 
+  const job = await dbGet('SELECT * FROM jobs WHERE id = ?', [req.params.id]);
+
+  let extraKm = 0;
+  if (job && job.lastKnownLat && job.lastKnownLng) {
+    extraKm = distanceKm(job.lastKnownLat, job.lastKnownLng, lat, lng);
+    // Ignore implausible jumps (>5km between updates — likely GPS glitch)
+    if (extraKm > 5) extraKm = 0;
+  }
+
   await dbRun(
     `UPDATE jobs SET
       currentLat = ?,
       currentLng = ?,
+      lastKnownLat = ?,
+      lastKnownLng = ?,
       firstLocationAt = COALESCE(firstLocationAt, ?),
       lastLocationAt = ?,
-      locationUpdateCount = COALESCE(locationUpdateCount, 0) + 1
+      locationUpdateCount = COALESCE(locationUpdateCount, 0) + 1,
+      distanceTravelledKm = COALESCE(distanceTravelledKm, 0) + ?
      WHERE id = ?`,
-    [lat, lng, now, now, req.params.id]
+    [lat, lng, lat, lng, now, now, extraKm, req.params.id]
   );
-
-  // Proximity SMS
-  const job = await dbGet('SELECT * FROM jobs WHERE id = ?', [req.params.id]);
   if (job && !job.notified15min && job.deliveryLat && job.deliveryLng && job.customerMobile) {
     const km = distanceKm(lat, lng, job.deliveryLat, job.deliveryLng);
     const notify = job.notifyMinsBefore || 15;

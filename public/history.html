@@ -89,6 +89,7 @@
               <th>Customer</th>
               <th>Driver</th>
               <th>Route</th>
+              <th>Distance</th>
               <th>Date &amp; Time</th>
               <th>Status</th>
             </tr>
@@ -104,6 +105,9 @@
                 <td>${j.driverName}</td>
                 <td class="route-cell">
                   ${j.pickupAddress || '—'}${j.jobType !== 'empty' ? `<br>→ ${j.deliveryAddress || '—'}` : ''}
+                </td>
+                <td style="white-space:nowrap;">
+                  ${j.distanceTravelledKm ? `<span style="font-size:15px;font-weight:700;color:#1a1a1a;">${Math.round(j.distanceTravelledKm)} km</span>` : '<span style="color:#ccc;">—</span>'}
                 </td>
                 <td>
                   <div>${formatDate(j.createdAt)}</div>

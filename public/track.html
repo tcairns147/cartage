@@ -26,6 +26,7 @@
       justify-content: space-between;
       gap: 12px;
       min-height: 60px;
+      position: relative;
     }
 
     .header-drova img {
@@ -35,26 +36,22 @@
       flex-shrink: 0;
     }
 
-    /* ── CLIENT LOGO BAND ────────────────────────────────── */
-    .client-logo-band {
-      background: #111;
-      border-bottom: 1px solid #242424;
-      padding: 16px 24px;
-      padding-left: max(env(safe-area-inset-left), 24px);
-      padding-right: max(env(safe-area-inset-right), 24px);
-      display: none;
+    .header-client {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
       align-items: center;
-      justify-content: center;
-      min-height: 72px;
+      pointer-events: none;
     }
-    .client-logo-band.visible { display: flex; }
 
     #clientLogo {
-      max-height: 80px;
-      max-width: min(280px, 72vw);
+      max-height: 46px;
+      max-width: min(200px, 42vw);
       object-fit: contain;
       mix-blend-mode: lighten;
-      display: block;
+      display: none;
+      pointer-events: auto;
     }
 
     /* ── LIVE PILL ───────────────────────────────────────── */
@@ -335,6 +332,9 @@
   <div id="trackingView" style="display:none">
     <div class="header">
       <div class="header-drova"><img src="/logo.svg" alt="Drova"></div>
+      <div class="header-client">
+        <img id="clientLogo" src="" alt="">
+      </div>
       <div class="live-pill" id="livePill">
         <div class="live-dot"></div>
         <div class="live-pill-text">
@@ -342,10 +342,6 @@
           <div class="live-pill-ago" id="liveAgo"></div>
         </div>
       </div>
-    </div>
-
-    <div class="client-logo-band" id="clientLogoBand">
-      <img id="clientLogo" src="" alt="">
     </div>
 
     <div id="map"></div>
@@ -687,9 +683,8 @@
 
       if (job.companySlug) {
         const logo = document.getElementById('clientLogo');
-        const band = document.getElementById('clientLogoBand');
-        logo.onload  = () => { band.classList.add('visible'); };
-        logo.onerror = () => { band.classList.remove('visible'); };
+        logo.onload  = () => { logo.style.display = 'block'; };
+        logo.onerror = () => { logo.style.display = 'none'; };
         logo.src = `/logo-${job.companySlug}.png`;
       }
 

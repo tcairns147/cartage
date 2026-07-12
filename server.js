@@ -176,9 +176,13 @@ app.post('/logout', (req, res) => {
   res.redirect('/login');
 });
 
-// Wipe all jobs for the authenticated company (trial reset)
-app.delete('/api/jobs/all', requireAuth, async (req, res) => {
-  await dbRun('DELETE FROM jobs WHERE companyId = ?', [req.company.id]);
+// Delete all company data (jobs, drivers, trucks, locations) for trial reset
+app.delete('/api/company/all', requireAuth, async (req, res) => {
+  const id = req.company.id;
+  await dbRun('DELETE FROM jobs WHERE companyId = ?', [id]);
+  await dbRun('DELETE FROM drivers WHERE companyId = ?', [id]);
+  await dbRun('DELETE FROM trucks WHERE companyId = ?', [id]);
+  await dbRun('DELETE FROM locations WHERE companyId = ?', [id]);
   res.json({ ok: true });
 });
 

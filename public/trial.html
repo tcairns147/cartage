@@ -138,8 +138,8 @@
 <body>
   <div class="modal-backdrop" id="wipeModal" onclick="if(event.target===this)closeWipe()">
     <div class="modal">
-      <h3>Wipe all jobs?</h3>
-      <p>This will permanently delete every job for your company — active, planned, and completed. This cannot be undone.</p>
+      <h3>Delete all history?</h3>
+      <p>This will permanently delete all jobs, drivers, trucks, and saved locations for your company. This cannot be undone.</p>
       <div class="modal-btns">
         <button class="modal-cancel" onclick="closeWipe()">Cancel</button>
         <button class="modal-confirm" id="wipeConfirmBtn" onclick="wipeJobs()">Yes, wipe everything</button>
@@ -157,7 +157,7 @@
         </div>
         <div style="display:flex;gap:10px;">
           <button class="refresh-btn" onclick="load()">Refresh</button>
-          <button class="refresh-btn" onclick="confirmWipe()" style="color:#dc2626;border-color:#fca5a5;">Wipe All Jobs</button>
+          <button class="refresh-btn" onclick="confirmWipe()" style="color:#dc2626;border-color:#fca5a5;">Delete All History</button>
         </div>
       </div>
     </div>
@@ -289,7 +289,7 @@
       btn.disabled = true;
       btn.textContent = 'Wiping…';
       try {
-        await fetch('/api/jobs/all', { method: 'DELETE' });
+        await fetch('/api/company/all', { method: 'DELETE' });
       } catch {}
       closeWipe();
       btn.disabled = false;

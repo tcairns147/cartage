@@ -20,141 +20,158 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      padding: 24px;
-      text-align: center;
+      padding: 0 20px 40px;
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), 40px);
+      padding-left: max(env(safe-area-inset-left), 20px);
+      padding-right: max(env(safe-area-inset-right), 20px);
     }
 
-    .logo { margin-bottom: 4px; }
-    .logo img { height: 54px; filter: brightness(0) invert(1); }
-    .subtitle { font-size: 14px; color: #666; margin-bottom: 40px; }
+    /* ── HEADER ── */
+    .header {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 0 0;
+      padding-top: max(env(safe-area-inset-top, 0px), 20px);
+      margin-bottom: 8px;
+    }
 
+    .header-logo img {
+      height: 40px;
+      filter: brightness(0) invert(1);
+      display: block;
+    }
+
+    .header-center {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      padding: 0 12px;
+    }
+
+    #clientLogo {
+      display: none;
+      max-height: 36px;
+      max-width: 140px;
+      object-fit: contain;
+      mix-blend-mode: lighten;
+    }
+
+    .home-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: #252525;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    /* ── PAGE TITLE ── */
+    .page-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #555;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    /* ── STATUS CIRCLE ── */
     .status-circle {
-      width: 140px;
-      height: 140px;
+      width: 136px;
+      height: 136px;
       border-radius: 50%;
-      background: #2a2a2a;
-      border: 4px solid #333;
+      background: #222;
+      border: 3.5px solid #2e2e2e;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 32px;
+      margin: 0 auto 28px;
       transition: border-color 0.4s, background 0.4s;
     }
-
     .status-circle.active {
       border-color: #16a34a;
       background: #052e16;
       animation: pulse 2s infinite;
     }
-
     .status-circle.error {
       border-color: #dc2626;
       background: #2a0a0a;
     }
-
     @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
-      50% { box-shadow: 0 0 0 16px rgba(22, 163, 74, 0); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.35); }
+      50%       { box-shadow: 0 0 0 14px rgba(22, 163, 74, 0); }
     }
-
-    .status-icon { font-size: 40px; margin-bottom: 4px; }
-    .status-text { font-size: 13px; color: #aaa; font-weight: 600; }
+    .status-icon { margin-bottom: 6px; }
+    .status-text { font-size: 12px; color: #555; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
     .status-circle.active .status-text { color: #86efac; }
-    .status-circle.error .status-text { color: #fca5a5; }
+    .status-circle.error .status-text  { color: #fca5a5; }
 
-    .job-info {
-      background: #242424;
+    /* ── JOB INFO CARD ── */
+    .job-card {
+      background: #222;
       border-radius: 16px;
-      padding: 20px;
+      padding: 0;
       width: 100%;
-      max-width: 360px;
-      margin-bottom: 24px;
+      max-width: 400px;
+      margin-bottom: 16px;
+      overflow: hidden;
     }
 
     .info-row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      border-bottom: 1px solid #2e2e2e;
-      font-size: 14px;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 13px 18px;
+      border-bottom: 1px solid #2a2a2a;
     }
-
     .info-row:last-child { border-bottom: none; }
-    .info-label { color: #666; }
-    .info-value { color: #eee; font-weight: 500; text-align: right; max-width: 60%; }
+    .info-label { font-size: 12px; color: #555; font-weight: 600; flex-shrink: 0; padding-top: 1px; }
+    .info-value { font-size: 14px; color: #ddd; font-weight: 500; text-align: right; }
 
-    .start-btn {
-      width: 100%;
-      max-width: 360px;
-      padding: 18px;
-      background: #16a34a;
-      color: white;
-      border: none;
-      border-radius: 14px;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    .start-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
-
-    .arrived-btn {
+    /* ── NOTES BOX ── */
+    .notes-box {
       display: none;
       width: 100%;
-      max-width: 360px;
-      padding: 18px;
-      background: #f59e0b;
-      color: white;
-      border: none;
-      border-radius: 14px;
-      font-size: 18px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-top: 12px;
+      max-width: 400px;
+      background: #1e1a10;
+      border-left: 3px solid #f59e0b;
+      border-radius: 0 12px 12px 0;
+      padding: 14px 16px;
+      margin-bottom: 16px;
     }
-    .arrived-btn:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .notes-label { font-size: 10px; font-weight: 700; color: #f59e0b; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 6px; }
+    .notes-text { font-size: 13px; color: #ccc; line-height: 1.55; }
 
-    .coords {
-      margin-top: 16px;
-      font-size: 12px;
-      color: #444;
-    }
-
-    .tip {
-      margin-top: 20px;
-      font-size: 13px;
-      color: #555;
-      max-width: 320px;
-      line-height: 1.5;
-    }
-
+    /* ── STEPS ── */
     .steps {
-      margin-bottom: 28px;
       width: 100%;
-      max-width: 360px;
-      text-align: left;
+      max-width: 400px;
+      margin-bottom: 24px;
     }
-
     .step {
       display: flex;
       align-items: flex-start;
       gap: 12px;
       padding: 10px 0;
-      border-bottom: 1px solid #2a2a2a;
+      border-bottom: 1px solid #242424;
       font-size: 13px;
-      color: #888;
-      line-height: 1.4;
+      color: #777;
+      line-height: 1.45;
     }
-
     .step:last-child { border-bottom: none; }
-
     .step-num {
       width: 22px;
       height: 22px;
       border-radius: 50%;
-      background: #2a2a2a;
+      background: #252525;
       color: #f59e0b;
       font-size: 11px;
       font-weight: 800;
@@ -165,24 +182,40 @@
       margin-top: 1px;
     }
 
-    .wake-badge {
-      display: none;
-      margin-top: 12px;
-      font-size: 11px;
-      color: #16a34a;
-      font-weight: 600;
+    /* ── BUTTON GROUP ── */
+    .btn-group {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
     }
+
+    .start-btn {
+      width: 100%;
+      padding: 18px;
+      background: #16a34a;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.1px;
+    }
+    .start-btn:disabled { background: #252525; color: #444; cursor: not-allowed; }
 
     .btn-gmaps {
       display: none;
       width: 100%;
-      max-width: 360px;
       padding: 16px;
       border-radius: 14px;
-      border: none;
-      background: #4285F4;
-      color: white;
-      font-size: 16px;
+      border: 1.5px solid #2e3a5e;
+      background: #1a2540;
+      color: #7aadff;
+      font-size: 15px;
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
@@ -190,15 +223,46 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 12px;
     }
     .btn-gmaps.visible { display: flex; }
 
-    /* Arrival confirmation modal */
+    .arrived-btn {
+      display: none;
+      width: 100%;
+      padding: 18px;
+      background: #f59e0b;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      letter-spacing: 0.1px;
+    }
+    .arrived-btn:disabled { background: #252525; color: #444; cursor: not-allowed; }
+
+    /* ── COORDS + TIP ── */
+    .coords {
+      font-size: 11px;
+      color: #383838;
+      margin-bottom: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .tip {
+      font-size: 12px;
+      color: #444;
+      max-width: 320px;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* ── ARRIVAL MODAL ── */
     .modal-overlay {
       display: none;
       position: fixed; inset: 0;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.65);
       z-index: 1000;
       align-items: flex-end;
       justify-content: center;
@@ -207,55 +271,64 @@
     }
     .modal-overlay.visible { display: flex; }
     .modal-sheet {
-      background: #242424;
+      background: #232323;
       border-radius: 20px;
       width: 100%;
       max-width: 420px;
       padding: 28px 24px 24px;
       text-align: center;
     }
-    .modal-icon { font-size: 40px; margin-bottom: 12px; }
-    .modal-title { font-size: 20px; font-weight: 800; color: #eee; margin-bottom: 8px; }
-    .modal-body { font-size: 14px; color: #888; line-height: 1.5; margin-bottom: 24px; }
-    .modal-btns { display: flex; gap: 12px; }
+    .modal-icon { font-size: 36px; margin-bottom: 12px; }
+    .modal-title { font-size: 19px; font-weight: 800; color: #eee; margin-bottom: 8px; }
+    .modal-body { font-size: 14px; color: #777; line-height: 1.55; margin-bottom: 24px; }
+    .modal-btns { display: flex; gap: 10px; }
     .modal-cancel {
-      flex: 1; padding: 16px; border-radius: 12px;
+      flex: 1; padding: 15px; border-radius: 12px;
       border: 1.5px solid #333; background: none;
-      color: #aaa; font-size: 16px; font-weight: 600;
+      color: #888; font-size: 15px; font-weight: 600;
       cursor: pointer; font-family: inherit;
     }
     .modal-confirm {
-      flex: 1; padding: 16px; border-radius: 12px;
+      flex: 2; padding: 15px; border-radius: 12px;
       border: none; background: #16a34a;
-      color: white; font-size: 16px; font-weight: 700;
+      color: white; font-size: 15px; font-weight: 700;
       cursor: pointer; font-family: inherit;
     }
-    .modal-confirm:disabled { background: #333; color: #666; cursor: not-allowed; }
+    .modal-confirm:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
   </style>
 </head>
 <body>
 
-  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;max-width:360px;margin-bottom:4px;">
-    <div class="logo" style="margin-bottom:0;"><img src="/logo.svg" alt="Drova"></div>
-    <a href="/dispatcher" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:#2a2a2a;text-decoration:none;" title="Back to jobs">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  <!-- Header -->
+  <div class="header">
+    <div class="header-logo"><img src="/logo.svg" alt="Drova"></div>
+    <div class="header-center">
+      <img id="clientLogo" src="" alt="">
+    </div>
+    <a class="home-btn" href="/dispatcher" title="Back to jobs">
+      <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </a>
   </div>
-  <img id="clientLogo" src="" alt="" style="display:none;max-height:80px;max-width:280px;object-fit:contain;margin-bottom:4px;mix-blend-mode:lighten;">
-  <div class="subtitle">Driver Tracking</div>
 
+  <div class="page-title">Driver Tracking</div>
+
+  <!-- Steps (hidden once started) -->
   <div class="steps" id="stepsSection">
-    <div class="step"><div class="step-num">1</div><span>Tap <strong style="color:#eee">Start Sharing Location</strong> below</span></div>
-    <div class="step"><div class="step-num">2</div><span>When prompted, tap <strong style="color:#eee">Allow</strong> to give location access</span></div>
-    <div class="step"><div class="step-num">3</div><span>Keep this page open on your screen while driving — don't close the browser</span></div>
+    <div class="step"><div class="step-num">1</div><span>Tap <strong style="color:#ccc">Start Sharing Location</strong> below</span></div>
+    <div class="step"><div class="step-num">2</div><span>When prompted, tap <strong style="color:#ccc">Allow</strong> to give location access</span></div>
+    <div class="step"><div class="step-num">3</div><span>Keep this page open while driving — don't close the browser</span></div>
   </div>
 
+  <!-- GPS status circle -->
   <div class="status-circle" id="statusCircle">
-    <div class="status-icon"><svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+    <div class="status-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+    </div>
     <div class="status-text" id="statusText">Not Started</div>
   </div>
 
-  <div class="job-info" id="jobInfo">
+  <!-- Job info -->
+  <div class="job-card" id="jobInfo">
     <div class="info-row">
       <span class="info-label">Driver</span>
       <span class="info-value" id="driverName">—</span>
@@ -270,11 +343,26 @@
     </div>
   </div>
 
-  <button class="start-btn" id="startBtn" onclick="startTracking()" disabled>
-    Start Sharing Location
-  </button>
+  <!-- Dispatcher notes -->
+  <div class="notes-box" id="notesBox">
+    <div class="notes-label">Notes from Dispatcher</div>
+    <div class="notes-text" id="notesText"></div>
+  </div>
 
-  <button class="arrived-btn" id="arrivedBtn" onclick="showArrivalConfirm()">I've Arrived</button>
+  <!-- Action buttons -->
+  <div class="btn-group">
+    <button class="start-btn" id="startBtn" onclick="startTracking()" disabled>
+      Start Sharing Location
+    </button>
+    <a class="btn-gmaps" id="gmapsLink" href="#" target="_blank">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Open in Google Maps
+    </a>
+    <button class="arrived-btn" id="arrivedBtn" onclick="showArrivalConfirm()">I've Arrived</button>
+  </div>
+
+  <div class="coords" id="coords"></div>
+  <div class="tip">Location updates every few seconds. If GPS signal is lost, it will reconnect automatically.</div>
 
   <!-- Arrival confirmation modal -->
   <div class="modal-overlay" id="arrivalModal">
@@ -288,19 +376,6 @@
       </div>
     </div>
   </div>
-
-  <div class="job-info" id="notesBox" style="display:none; border-left: 3px solid #f59e0b; background:#1e1a10; margin-top:16px; border-radius: 0 16px 16px 0;">
-    <div style="font-size:11px;font-weight:700;color:#f59e0b;margin-bottom:6px;letter-spacing:0.5px;">NOTES FROM DISPATCHER</div>
-    <div id="notesText" style="font-size:14px;color:#ddd;line-height:1.5;"></div>
-  </div>
-
-  <a class="btn-gmaps" id="gmapsLink" href="#" target="_blank">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
-    Open in Google Maps
-  </a>
-  <div class="coords" id="coords"></div>
-  <div class="wake-badge" id="wakeBadge">Screen will stay on while tracking</div>
-  <div class="tip">Your location updates every few seconds. If GPS signal is lost, it will reconnect automatically.</div>
 
   <script>
     const jobId = window.location.pathname.split('/').pop();
@@ -343,7 +418,6 @@
       const btn = document.getElementById('startBtn');
 
       if (currentJob.startedAt) {
-        // Job already started — skip the start button and resume tracking directly
         btn.style.display = 'none';
         document.getElementById('stepsSection').style.display = 'none';
         startTracking();

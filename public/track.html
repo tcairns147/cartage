@@ -750,22 +750,30 @@
         updateEta(Math.max(0, remaining));
       }, 30000);
 
+      let lastKnownLat = +job.currentLat, lastKnownLng = +job.currentLng;
+
       async function poll() {
         try {
           const j = await fetch(`/jobs/${jobId}`).then(r => r.json());
           if (j.status === 'complete') { showDelivered(j); return; }
           if (j.currentLat && j.currentLng) {
-            lastLocationTime = Date.now();
-            moveTruck(+j.currentLat, +j.currentLng);
-            const dlat = delivery[0] - +j.currentLat;
-            const dlng = delivery[1] - +j.currentLng;
-            const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
-            const newSecs = Math.round(distKm / 80 * 3600);
-            // Anchor the local tick to this fresh GPS fix
-            etaSecsAtLastFix = newSecs;
-            etaFixedAt = Date.now();
-            updateEta(newSecs);
-            updateFreshnessUI();
+            const lat = +j.currentLat, lng = +j.currentLng;
+            // Only recalculate ETA if the position has actually changed
+            if (lat !== lastKnownLat || lng !== lastKnownLng) {
+              lastKnownLat = lat;
+              lastKnownLng = lng;
+              lastLocationTime = Date.now();
+              moveTruck(lat, lng);
+              const dlat = delivery[0] - lat;
+              const dlng = delivery[1] - lng;
+              const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
+              const newSecs = Math.round(distKm / 80 * 3600);
+              // Anchor the local tick to this fresh GPS fix
+              etaSecsAtLastFix = newSecs;
+              etaFixedAt = Date.now();
+              updateEta(newSecs);
+              updateFreshnessUI();
+            }
           }
         } catch {}
         pollTimer = setTimeout(poll, 5000);

@@ -43,11 +43,12 @@
     }
 
     .hero-bg {
-      position: absolute;
+      position: fixed;
       inset: 0;
       background-image: url('/drova-website-cover.png');
       background-size: cover;
       background-position: center 30%;
+      z-index: -2;
     }
 
     .hero-overlay {
@@ -58,8 +59,9 @@
         rgba(0,0,0,0.2) 0%,
         rgba(0,0,0,0.1) 30%,
         rgba(0,0,0,0.55) 65%,
-        rgba(0,0,0,0.92) 100%
+        rgba(0,0,0,0.95) 100%
       );
+      z-index: -1;
     }
 
     .hero-content {

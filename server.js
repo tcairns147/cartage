@@ -176,14 +176,10 @@ app.post('/logout', (req, res) => {
   res.redirect('/login');
 });
 
-// TEMP admin — delete all jobs for a company by slug
-app.get('/admin/clear-jobs/:slug', async (req, res) => {
-  const secret = req.query.secret;
-  if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'forbidden' });
-  const company = await dbGet('SELECT * FROM companies WHERE slug = ?', [req.params.slug]);
-  if (!company) return res.status(404).json({ error: 'company not found' });
-  const { rowsAffected } = await dbRun('DELETE FROM jobs WHERE companyId = ?', [company.id]);
-  res.json({ ok: true, deleted: rowsAffected, company: company.name });
+// Wipe all jobs for the authenticated company (trial reset)
+app.delete('/api/jobs/all', requireAuth, async (req, res) => {
+  await dbRun('DELETE FROM jobs WHERE companyId = ?', [req.company.id]);
+  res.json({ ok: true });
 });
 
 app.get('/',           requireAuth, (req, res) => res.sendFile(__dirname + '/public/index.html'));

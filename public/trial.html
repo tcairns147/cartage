@@ -104,6 +104,25 @@
 
     .topbar-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 
+    /* ── WIPE MODAL ─────────────────────────────────────── */
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5); z-index: 1000;
+      align-items: center; justify-content: center;
+    }
+    .modal-backdrop.visible { display: flex; }
+    .modal {
+      background: white; border-radius: 16px;
+      padding: 28px 28px 24px; max-width: 360px; width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal h3 { font-size: 18px; font-weight: 800; color: #1a1a1a; margin-bottom: 8px; }
+    .modal p { font-size: 14px; color: #666; line-height: 1.5; margin-bottom: 24px; }
+    .modal-btns { display: flex; gap: 10px; justify-content: flex-end; }
+    .modal-cancel { background: #f5f5f5; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; color: #555; cursor: pointer; font-family: inherit; }
+    .modal-confirm { background: #dc2626; border: none; border-radius: 8px; padding: 10px 18px; font-size: 14px; font-weight: 600; color: white; cursor: pointer; font-family: inherit; }
+    .modal-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
     @media (max-width: 768px) {
       .main { margin-left: 0; }
       .content { padding: 16px 16px 80px; }
@@ -117,6 +136,17 @@
   </style>
 </head>
 <body>
+  <div class="modal-backdrop" id="wipeModal" onclick="if(event.target===this)closeWipe()">
+    <div class="modal">
+      <h3>Wipe all jobs?</h3>
+      <p>This will permanently delete every job for your company — active, planned, and completed. This cannot be undone.</p>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeWipe()">Cancel</button>
+        <button class="modal-confirm" id="wipeConfirmBtn" onclick="wipeJobs()">Yes, wipe everything</button>
+      </div>
+    </div>
+  </div>
+
   <div id="sidebar-root"></div>
   <div class="main">
     <div class="topbar">
@@ -125,7 +155,10 @@
           <h1>Trial Overview</h1>
           <p id="lastUpdated">Loading…</p>
         </div>
-        <button class="refresh-btn" onclick="load()">Refresh</button>
+        <div style="display:flex;gap:10px;">
+          <button class="refresh-btn" onclick="load()">Refresh</button>
+          <button class="refresh-btn" onclick="confirmWipe()" style="color:#dc2626;border-color:#fca5a5;">Wipe All Jobs</button>
+        </div>
       </div>
     </div>
     <div class="content">
@@ -247,6 +280,22 @@
     }
 
     load();
+
+    function confirmWipe() { document.getElementById('wipeModal').classList.add('visible'); }
+    function closeWipe() { document.getElementById('wipeModal').classList.remove('visible'); }
+
+    async function wipeJobs() {
+      const btn = document.getElementById('wipeConfirmBtn');
+      btn.disabled = true;
+      btn.textContent = 'Wiping…';
+      try {
+        await fetch('/api/jobs/all', { method: 'DELETE' });
+      } catch {}
+      closeWipe();
+      btn.disabled = false;
+      btn.textContent = 'Yes, wipe everything';
+      load();
+    }
   </script>
 </body>
 </html>

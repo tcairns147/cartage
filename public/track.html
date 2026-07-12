@@ -17,7 +17,8 @@
     /* ── HEADER ──────────────────────────────────────────── */
     .header {
       background: #1a1a1a;
-      padding: 12px 20px;
+      padding: 14px 20px;
+      padding-top: max(env(safe-area-inset-top, 0px), 14px);
       padding-left: max(env(safe-area-inset-left), 20px);
       padding-right: max(env(safe-area-inset-right), 20px);
       display: flex;
@@ -28,28 +29,35 @@
     }
 
     .header-drova img {
-      height: 40px;
+      height: 36px;
       filter: brightness(0) invert(1);
       display: block;
       flex-shrink: 0;
     }
 
-    .header-client {
-      flex: 1;
-      display: flex;
-      justify-content: center;
+    /* ── CLIENT LOGO BAND ────────────────────────────────── */
+    .client-logo-band {
+      background: #111;
+      border-bottom: 1px solid #242424;
+      padding: 16px 24px;
+      padding-left: max(env(safe-area-inset-left), 24px);
+      padding-right: max(env(safe-area-inset-right), 24px);
+      display: none;
       align-items: center;
-      min-width: 0;
+      justify-content: center;
+      min-height: 72px;
     }
+    .client-logo-band.visible { display: flex; }
 
     #clientLogo {
-      max-height: 46px;
-      max-width: min(200px, 42vw);
+      max-height: 80px;
+      max-width: min(280px, 72vw);
       object-fit: contain;
       mix-blend-mode: lighten;
-      display: none;
+      display: block;
     }
 
+    /* ── LIVE PILL ───────────────────────────────────────── */
     .live-pill {
       display: none;
       align-items: flex-start;
@@ -238,19 +246,32 @@
     .delivered-header {
       background: #1a1a1a;
       padding: 16px 20px;
+      padding-top: max(env(safe-area-inset-top, 0px), 16px);
       display: flex;
       align-items: center;
       justify-content: space-between;
     }
 
     .delivered-header img { height: 36px; filter: brightness(0) invert(1); }
+
+    .delivered-logo-band {
+      background: #111;
+      border-bottom: 1px solid #242424;
+      padding: 14px 24px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      min-height: 64px;
+    }
+    .delivered-logo-band.visible { display: flex; }
+
     #deliveredClientLogo {
       filter: none;
       mix-blend-mode: lighten;
-      max-height: 32px;
-      max-width: 140px;
+      max-height: 64px;
+      max-width: min(240px, 72vw);
       object-fit: contain;
-      display: none;
+      display: block;
     }
 
     .delivered-body {
@@ -314,9 +335,6 @@
   <div id="trackingView" style="display:none">
     <div class="header">
       <div class="header-drova"><img src="/logo.svg" alt="Drova"></div>
-      <div class="header-client">
-        <img id="clientLogo" src="" alt="">
-      </div>
       <div class="live-pill" id="livePill">
         <div class="live-dot"></div>
         <div class="live-pill-text">
@@ -324,6 +342,10 @@
           <div class="live-pill-ago" id="liveAgo"></div>
         </div>
       </div>
+    </div>
+
+    <div class="client-logo-band" id="clientLogoBand">
+      <img id="clientLogo" src="" alt="">
     </div>
 
     <div id="map"></div>
@@ -381,6 +403,8 @@
   <div class="delivered-screen" id="deliveredScreen">
     <div class="delivered-header">
       <img src="/logo.svg" alt="Drova">
+    </div>
+    <div class="delivered-logo-band" id="deliveredLogoBand">
       <img id="deliveredClientLogo" src="" alt="">
     </div>
     <div class="delivered-body">
@@ -663,8 +687,9 @@
 
       if (job.companySlug) {
         const logo = document.getElementById('clientLogo');
-        logo.onload  = () => { logo.style.display = 'block'; };
-        logo.onerror = () => { logo.style.display = 'none'; };
+        const band = document.getElementById('clientLogoBand');
+        logo.onload  = () => { band.classList.add('visible'); };
+        logo.onerror = () => { band.classList.remove('visible'); };
         logo.src = `/logo-${job.companySlug}.png`;
       }
 
@@ -796,10 +821,11 @@
       document.getElementById('deliveredTitle').textContent = isEmptyRun ? 'Driver Arrived' : 'Delivered';
 
       if (job.companySlug) {
-        const cl = document.getElementById('deliveredClientLogo');
+        const cl   = document.getElementById('deliveredClientLogo');
+        const band = document.getElementById('deliveredLogoBand');
         cl.src = `/logo-${job.companySlug}.png`;
-        cl.onload  = () => { cl.style.display = 'block'; };
-        cl.onerror = () => { cl.style.display = 'none'; };
+        cl.onload  = () => { band.classList.add('visible'); };
+        cl.onerror = () => { band.classList.remove('visible'); };
       }
 
       document.getElementById('deliveredLoad').textContent    = isEmptyRun ? 'Empty Run — Collecting Livestock' : (job.loadDetails || '—');

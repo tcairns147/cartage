@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Drova">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Drova — Waitlist</title>
+  <script src="/sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
+    .main { margin-left: 220px; flex: 1; min-width: 0; }
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .content { padding: 24px 32px 48px; }
+
+    .empty { padding: 60px 20px; text-align: center; color: #aaa; font-size: 14px; }
+
+    .entry-card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid #eee;
+      padding: 18px 24px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .entry-name { font-size: 15px; font-weight: 700; color: #1a1a1a; margin-bottom: 2px; }
+    .entry-business { font-size: 13px; color: #888; }
+    .entry-right { text-align: right; flex-shrink: 0; }
+    .entry-phone { font-size: 14px; font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+    .entry-meta { font-size: 12px; color: #bbb; }
+    .jobs-badge {
+      display: inline-block;
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-top: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .main { margin-left: 0; }
+      .content { padding: 16px 16px 80px; }
+      .topbar { padding: 16px 20px; }
+      .entry-card { flex-direction: column; align-items: flex-start; }
+      .entry-right { text-align: left; }
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <div class="topbar">
+      <h1>Waitlist</h1>
+      <p id="subtitle">Loading…</p>
+    </div>
+    <div class="content" id="content">
+      <div class="empty">Loading…</div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('waitlist');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    function timeAgo(iso) {
+      if (!iso) return '';
+      const diff = Math.floor((Date.now() - new Date(iso.endsWith('Z') ? iso : iso + 'Z')) / 60000);
+      if (diff < 1)  return 'just now';
+      if (diff < 60) return `${diff}m ago`;
+      const h = Math.floor(diff / 60), m = diff % 60;
+      if (h < 24) return m > 0 ? `${h}h ${m}m ago` : `${h}h ago`;
+      const d = Math.floor(h / 24);
+      return `${d}d ago`;
+    }
+
+    function formatDate(iso) {
+      if (!iso) return '';
+      return new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+
+    async function load() {
+      const res = await fetch('/api/waitlist');
+      const entries = await res.json();
+
+      document.getElementById('subtitle').textContent =
+        entries.length === 0 ? 'No expressions of interest yet' :
+        `${entries.length} expression${entries.length !== 1 ? 's' : ''} of interest`;
+
+      if (!entries.length) {
+        document.getElementById('content').innerHTML = `<div class="empty">No one on the waitlist yet.<br>Share the landing page to get started.</div>`;
+        return;
+      }
+
+      document.getElementById('content').innerHTML = entries.map(e => `
+        <div class="entry-card">
+          <div>
+            <div class="entry-name">${e.name}</div>
+            <div class="entry-business">${e.businessName}</div>
+            ${e.jobsPerWeek ? `<div class="jobs-badge">${e.jobsPerWeek} jobs/week</div>` : ''}
+          </div>
+          <div class="entry-right">
+            <div class="entry-phone"><a href="tel:${e.phone}" style="color:inherit;text-decoration:none;">${e.phone}</a></div>
+            <div class="entry-meta">${formatDate(e.createdAt)} · ${timeAgo(e.createdAt)}</div>
+          </div>
+        </div>`).join('');
+    }
+
+    load();
+  </script>
+</body>
+</html>

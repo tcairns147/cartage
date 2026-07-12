@@ -98,6 +98,15 @@ async function initDb() {
     createdAt TEXT DEFAULT (datetime('now'))
   )`);
 
+  await dbRun(`CREATE TABLE IF NOT EXISTS waitlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    businessName TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    jobsPerWeek TEXT,
+    createdAt TEXT DEFAULT (datetime('now'))
+  )`);
+
   // Existing column migrations
   for (const col of ['pickupLat','pickupLng','deliveryLat','deliveryLng','currentLat','currentLng','notified15min','customerName','jobType','notes','companyId','truckRego']) {
     try { await dbRun(`ALTER TABLE jobs ADD COLUMN ${col} TEXT`); } catch {}
@@ -186,7 +195,13 @@ app.delete('/api/company/all', requireAuth, async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/',           requireAuth, (req, res) => res.sendFile(__dirname + '/public/index.html'));
+app.get('/landing',    (req, res) => res.sendFile(__dirname + '/public/landing.html'));
+app.get('/waitlist',   requireAuth, (req, res) => res.sendFile(__dirname + '/public/waitlist.html'));
+app.get('/', (req, res) => {
+  const slug = req.signedCookies.company;
+  if (slug) return res.sendFile(__dirname + '/public/index.html');
+  res.sendFile(__dirname + '/public/landing.html');
+});
 app.get('/dispatcher', requireAuth, (req, res) => res.sendFile(__dirname + '/public/dispatcher.html'));
 app.get('/history',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/history.html'));
 app.get('/drivers',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/drivers.html'));
@@ -196,6 +211,19 @@ app.get('/trucks',     requireAuth, (req, res) => res.sendFile(__dirname + '/pub
 app.get('/trial',      requireAuth, (req, res) => res.sendFile(__dirname + '/public/trial.html'));
 app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.html'));
 app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
+
+app.post('/api/waitlist', async (req, res) => {
+  const { name, businessName, phone, jobsPerWeek } = req.body;
+  if (!name || !businessName || !phone) return res.status(400).json({ error: 'Missing required fields' });
+  await dbRun('INSERT INTO waitlist (name, businessName, phone, jobsPerWeek) VALUES (?, ?, ?, ?)',
+    [name, businessName, phone, jobsPerWeek || null]);
+  res.json({ ok: true });
+});
+
+app.get('/api/waitlist', requireAuth, async (req, res) => {
+  const entries = await dbAll('SELECT * FROM waitlist ORDER BY createdAt DESC');
+  res.json(entries);
+});
 
 app.get('/api/config', (req, res) => {
   res.json({ googleMapsKey: process.env.GOOGLE_PLACES_KEY || '' });

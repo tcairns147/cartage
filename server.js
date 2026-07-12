@@ -243,7 +243,7 @@ app.get('/api/waitlist', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/companies', requireAdmin, async (req, res) => {
-  const companies = await dbAll('SELECT id, name, slug, createdAt FROM companies ORDER BY createdAt DESC');
+  const companies = await dbAll('SELECT id, name, slug FROM companies ORDER BY name ASC');
   res.json(companies);
 });
 

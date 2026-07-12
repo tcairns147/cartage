@@ -120,6 +120,7 @@ async function initDb() {
     'trackingViewCount INTEGER DEFAULT 0',
     'driverLinkOpenedAt TEXT',
     'driverLinkOpenCount INTEGER DEFAULT 0',
+    'notifyMinsBefore INTEGER DEFAULT 15',
   ];
   for (const col of newCols) {
     try { await dbRun(`ALTER TABLE jobs ADD COLUMN ${col}`); } catch {}
@@ -257,6 +258,7 @@ async function geocodeAddress(address) {
 app.post('/jobs', requireAuth, async (req, res) => {
   let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode, truckRego } = req.body;
   let { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
+  const notifyMinsBefore = parseInt(req.body.notifyMinsBefore) || 15;
   const id = crypto.randomBytes(4).toString('hex');
   jobType = jobType || 'loaded';
   const status = dispatchMode === 'plan' ? 'planned' : 'active';
@@ -275,9 +277,9 @@ app.post('/jobs', requireAuth, async (req, res) => {
   }
 
   await dbRun(
-    `INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes, status, truckRego)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null, status, truckRego || null]
+    `INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes, status, truckRego, notifyMinsBefore)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null, status, truckRego || null, notifyMinsBefore]
   );
 
   await dbRun("UPDATE drivers SET status = 'on-job' WHERE name = ? AND companyId = ?", [driverName, req.company.id]);
@@ -356,20 +358,21 @@ app.post('/jobs/:id/location', async (req, res) => {
     [lat, lng, now, now, req.params.id]
   );
 
-  // 15-min proximity SMS
+  // Proximity SMS
   const job = await dbGet('SELECT * FROM jobs WHERE id = ?', [req.params.id]);
-  if (job && !job.notified15min && job.deliveryLat && job.deliveryLng) {
+  if (job && !job.notified15min && job.deliveryLat && job.deliveryLng && job.customerMobile) {
     const km = distanceKm(lat, lng, job.deliveryLat, job.deliveryLng);
-    if (km / 80 * 60 <= 15) {
+    const notify = job.notifyMinsBefore || 15;
+    if (km / 80 * 60 <= notify) {
       await dbRun('UPDATE jobs SET notified15min = 1 WHERE id = ?', [job.id]);
       try {
         await twilioClient.messages.create({
-          body: `${job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : ''}${job.driverName} is about 15 minutes away with your ${job.loadDetails}.`,
+          body: `${job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : ''}${job.driverName} is about ${notify} minutes away with your ${job.loadDetails}.`,
           from: process.env.TWILIO_PHONE_NUMBER,
           to: job.customerMobile
         });
       } catch (err) {
-        console.error('15-min SMS failed:', err.message);
+        console.error('Proximity SMS failed:', err.message);
       }
     }
   }

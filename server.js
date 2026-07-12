@@ -238,15 +238,41 @@ app.get('/jobs/:id', async (req, res) => {
   res.json(job);
 });
 
+async function geocodeAddress(address) {
+  if (!address || !process.env.GOOGLE_MAPS_KEY) return null;
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&region=AU&key=${process.env.GOOGLE_MAPS_KEY}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if (data.status === 'OK' && data.results[0]) {
+      const loc = data.results[0].geometry.location;
+      return { lat: loc.lat, lng: loc.lng };
+    }
+  } catch (err) {
+    console.error('Geocode failed:', err.message);
+  }
+  return null;
+}
+
 app.post('/jobs', requireAuth, async (req, res) => {
   let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode, truckRego } = req.body;
-  const { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
+  let { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const id = crypto.randomBytes(4).toString('hex');
   jobType = jobType || 'loaded';
   const status = dispatchMode === 'plan' ? 'planned' : 'active';
 
   customerMobile = (customerMobile || '').replace(/\s/g, '');
   if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
+
+  // Geocode any addresses that don't already have coordinates
+  if ((!pickupLat || !pickupLng) && pickupAddress) {
+    const coords = await geocodeAddress(pickupAddress);
+    if (coords) { pickupLat = coords.lat; pickupLng = coords.lng; }
+  }
+  if ((!deliveryLat || !deliveryLng) && deliveryAddress) {
+    const coords = await geocodeAddress(deliveryAddress);
+    if (coords) { deliveryLat = coords.lat; deliveryLng = coords.lng; }
+  }
 
   await dbRun(
     `INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes, status, truckRego)

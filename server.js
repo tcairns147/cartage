@@ -247,6 +247,15 @@ app.get('/api/admin/companies', requireAdmin, async (req, res) => {
   res.json(companies);
 });
 
+app.delete('/api/admin/company/:id/reset', requireAdmin, async (req, res) => {
+  const id = req.params.id;
+  await dbRun('DELETE FROM jobs WHERE companyId = ?', [id]);
+  await dbRun('DELETE FROM drivers WHERE companyId = ?', [id]);
+  await dbRun('DELETE FROM trucks WHERE companyId = ?', [id]);
+  await dbRun('DELETE FROM locations WHERE companyId = ?', [id]);
+  res.json({ ok: true });
+});
+
 app.get('/api/config', (req, res) => {
   res.json({ googleMapsKey: process.env.GOOGLE_PLACES_KEY || '' });
 });

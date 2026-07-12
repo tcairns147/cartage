@@ -65,6 +65,12 @@
       margin-top: 6px;
     }
     .empty { padding: 40px 24px; text-align: center; color: #333; font-size: 14px; }
+    .reset-btn {
+      background: none; border: 1px solid #2a2a2a; color: #555;
+      padding: 6px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+      cursor: pointer; transition: border-color 0.2s, color 0.2s; white-space: nowrap;
+    }
+    .reset-btn:hover { border-color: #ef4444; color: #ef4444; }
   </style>
 </head>
 <body>
@@ -145,10 +151,17 @@
               <div class="entry-name">${c.name}</div>
               <div class="entry-business">/${c.slug}</div>
             </div>
-            <div class="entry-right">
+            <div class="entry-right" style="display:flex;align-items:center;gap:16px;">
               <div class="entry-meta">${formatDate(c.createdAt)}</div>
+              <button class="reset-btn" onclick="resetCompany(${c.id}, '${c.name}')">Reset data</button>
             </div>
           </div>`).join('');
+    }
+
+    async function resetCompany(id, name) {
+      if (!confirm(`Reset all data for ${name}?\n\nThis will permanently delete all jobs, drivers, trucks, and locations. This cannot be undone.`)) return;
+      const res = await fetch(`/api/admin/company/${id}/reset`, { method: 'DELETE' });
+      if (res.ok) { alert(`${name} has been reset.`); } else { alert('Reset failed.'); }
     }
 
     loadWaitlist();

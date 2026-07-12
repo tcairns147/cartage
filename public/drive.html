@@ -44,19 +44,13 @@
       display: block;
     }
 
-    .header-center {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      padding: 0 12px;
-    }
-
     #clientLogo {
       display: none;
-      max-height: 36px;
-      max-width: 140px;
+      max-height: 80px;
+      max-width: 280px;
       object-fit: contain;
       mix-blend-mode: lighten;
+      margin-bottom: 4px;
     }
 
     .home-btn {
@@ -302,14 +296,12 @@
   <!-- Header -->
   <div class="header">
     <div class="header-logo"><img src="/logo.svg" alt="Drova"></div>
-    <div class="header-center">
-      <img id="clientLogo" src="" alt="">
-    </div>
     <a class="home-btn" href="/dispatcher" title="Back to jobs">
       <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     </a>
   </div>
 
+  <img id="clientLogo" src="" alt="">
   <div class="page-title">Driver Tracking</div>
 
   <!-- Steps (hidden once started) -->

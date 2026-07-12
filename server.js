@@ -266,8 +266,10 @@ app.post('/jobs', requireAuth, async (req, res) => {
   jobType = jobType || 'loaded';
   const status = dispatchMode === 'plan' ? 'planned' : 'active';
 
-  customerMobile = (customerMobile || '').replace(/\s/g, '');
-  if (customerMobile.startsWith('0')) customerMobile = '+61' + customerMobile.slice(1);
+  customerMobile = (customerMobile || '').replace(/[\s\-().]/g, '');
+  if (customerMobile.startsWith('0'))        customerMobile = '+61' + customerMobile.slice(1);
+  else if (customerMobile.startsWith('61'))  customerMobile = '+' + customerMobile;
+  else if (!customerMobile.startsWith('+'))  customerMobile = '+61' + customerMobile;
 
   // Geocode any addresses that don't already have coordinates
   if ((!pickupLat || !pickupLng) && pickupAddress) {

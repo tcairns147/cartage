@@ -768,12 +768,12 @@
               const dlng = delivery[1] - lng;
               const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
               const newSecs = Math.round(distKm / 80 * 3600);
-              // Anchor the local tick to this fresh GPS fix
               etaSecsAtLastFix = newSecs;
               etaFixedAt = Date.now();
               updateEta(newSecs);
-              updateFreshnessUI();
             }
+            // Always update freshness so the pill reflects real signal age
+            updateFreshnessUI();
           }
         } catch {}
         pollTimer = setTimeout(poll, 5000);

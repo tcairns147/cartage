@@ -410,7 +410,8 @@
     const jobId = window.location.pathname.split('/').pop();
     let gmap = null, truckOverlay = null, routeLine = null;
     let etaSeconds = 0, lastLocationTime = null, userHasPanned = false;
-    let freshnessTimer = null, pollTimer = null;
+    let freshnessTimer = null, pollTimer = null, etaTickTimer = null;
+    let etaSecsAtLastFix = 0, etaFixedAt = null;
     let DrovaMarkerOverlay = null;
 
     // ── DROVA MAP MARKER (OverlayView) — defined after Maps loads ──
@@ -734,7 +735,20 @@
       freshnessTimer = setInterval(updateFreshnessUI, 20000);
 
       moveTruck(+job.currentLat, +job.currentLng);
-      updateEta(etaSeconds);
+
+      // Seed the local ETA tick from the initial estimate
+      etaSecsAtLastFix = etaSeconds;
+      etaFixedAt = Date.now();
+      updateEta(etaSecsAtLastFix);
+
+      // Local tick — runs every 30s and subtracts elapsed time since last real GPS fix
+      // so the ETA counts down even when signal is lost between server updates
+      etaTickTimer = setInterval(() => {
+        if (etaFixedAt === null) return;
+        const elapsed = Math.floor((Date.now() - etaFixedAt) / 1000);
+        const remaining = etaSecsAtLastFix - elapsed;
+        updateEta(Math.max(0, remaining));
+      }, 30000);
 
       async function poll() {
         try {
@@ -746,7 +760,11 @@
             const dlat = delivery[0] - +j.currentLat;
             const dlng = delivery[1] - +j.currentLng;
             const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
-            updateEta(Math.round(distKm / 80 * 3600));
+            const newSecs = Math.round(distKm / 80 * 3600);
+            // Anchor the local tick to this fresh GPS fix
+            etaSecsAtLastFix = newSecs;
+            etaFixedAt = Date.now();
+            updateEta(newSecs);
             updateFreshnessUI();
           }
         } catch {}
@@ -759,6 +777,7 @@
     function showDelivered(job) {
       clearTimeout(pollTimer);
       clearInterval(freshnessTimer);
+      clearInterval(etaTickTimer);
 
       document.getElementById('loadingState').style.display  = 'none';
       document.getElementById('trackingView').style.display  = 'none';

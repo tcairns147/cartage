@@ -136,6 +136,26 @@
       <h2>Companies</h2>
       <p class="section-sub" id="companies-sub">Loading…</p>
       <div class="card" id="companies-list"><div class="empty">Loading…</div></div>
+
+      <div style="margin-top:20px;background:#111;border:1px solid #1c1c1c;border-radius:12px;padding:24px;">
+        <h3 style="font-size:15px;font-weight:700;margin-bottom:16px;">Create New Account</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end;">
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Company Name</label>
+            <input id="new-name" type="text" placeholder="Sturgiss Pastoral Co" style="width:100%;padding:10px 12px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;color:white;font-size:14px;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Login Slug</label>
+            <input id="new-slug" type="text" placeholder="sturgiss" style="width:100%;padding:10px 12px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;color:white;font-size:14px;outline:none;">
+          </div>
+          <div>
+            <label style="display:block;font-size:11px;font-weight:700;color:#444;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Passcode</label>
+            <input id="new-passcode" type="text" placeholder="hay2025" style="width:100%;padding:10px 12px;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;color:white;font-size:14px;outline:none;">
+          </div>
+          <button onclick="createCompany()" style="padding:10px 20px;background:#f59e0b;color:#0a0a0a;font-size:14px;font-weight:800;border:none;border-radius:8px;cursor:pointer;white-space:nowrap;">Create</button>
+        </div>
+        <div id="create-error" style="display:none;color:#ef4444;font-size:13px;margin-top:10px;"></div>
+      </div>
     </div>
   </div>
 
@@ -191,7 +211,7 @@
             <div class="company-header" onclick="toggleCompany(${c.id}, this)">
               <div>
                 <div class="company-name">${c.name}</div>
-                <div class="company-slug">/${c.slug}</div>
+                <div class="company-slug">Slug: ${c.slug} · Passcode: ${c.passcode}</div>
               </div>
               <div class="company-actions">
                 <button class="reset-btn" onclick="event.stopPropagation(); resetCompany(${c.id}, '${c.name}')">Reset data</button>
@@ -263,6 +283,30 @@
         document.querySelector(`#detail-${id}`).previousElementSibling.querySelector('.expand-icon').classList.remove('open');
         alert(`${name} has been reset.`);
       } else { alert('Reset failed.'); }
+    }
+
+    async function createCompany() {
+      const name = document.getElementById('new-name').value.trim();
+      const slug = document.getElementById('new-slug').value.trim().toLowerCase().replace(/\s+/g, '-');
+      const passcode = document.getElementById('new-passcode').value.trim();
+      const errEl = document.getElementById('create-error');
+      errEl.style.display = 'none';
+      if (!name || !slug || !passcode) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
+      const res = await fetch('/api/admin/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, slug, passcode })
+      });
+      if (res.ok) {
+        document.getElementById('new-name').value = '';
+        document.getElementById('new-slug').value = '';
+        document.getElementById('new-passcode').value = '';
+        loadCompanies();
+      } else {
+        const data = await res.json();
+        errEl.textContent = data.error || 'Failed to create account.';
+        errEl.style.display = 'block';
+      }
     }
 
     loadWaitlist();

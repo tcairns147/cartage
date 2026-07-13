@@ -245,8 +245,17 @@ app.get('/api/waitlist', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/companies', requireAdmin, async (req, res) => {
-  const companies = await dbAll('SELECT id, name, slug FROM companies ORDER BY name ASC');
+  const companies = await dbAll('SELECT id, name, slug, passcode FROM companies ORDER BY name ASC');
   res.json(companies);
+});
+
+app.post('/api/admin/companies', requireAdmin, async (req, res) => {
+  const { name, slug, passcode } = req.body;
+  if (!name || !slug || !passcode) return res.status(400).json({ error: 'Missing fields' });
+  const existing = await dbGet('SELECT id FROM companies WHERE slug = ?', [slug]);
+  if (existing) return res.status(409).json({ error: 'Slug already taken' });
+  await dbRun('INSERT INTO companies (name, slug, passcode) VALUES (?, ?, ?)', [name, slug, passcode]);
+  res.json({ ok: true });
 });
 
 app.get('/api/admin/company/:id/trial', requireAdmin, async (req, res) => {

@@ -10,7 +10,6 @@
   <meta name="apple-mobile-web-app-title" content="Drova">
   <meta name="theme-color" content="#1a1a1a">
   <title>Drova — Locations</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <script src="/sidebar.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -99,40 +98,51 @@
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     document.getElementById('sidebar-root').innerHTML = renderSidebar('locations');
     document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
 
-    let pinLat = null, pinLng = null, pinMarker = null;
+    let pinLat = null, pinLng = null, pinMarker = null, gmap = null;
 
-    const addMap = L.map('addMap').setView([-25.2744, 133.7751], 4);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(addMap);
-    addMap.on('click', e => {
-      pinLat = e.latlng.lat; pinLng = e.latlng.lng;
-      if (pinMarker) addMap.removeLayer(pinMarker);
-      pinMarker = L.marker(e.latlng).addTo(addMap);
-      document.getElementById('pinnedNote').style.display = 'block';
-    });
+    window.__locInit = function() {
+      fetch('/api/config').then(r => r.json()).then(cfg => {
+        gmap = new google.maps.Map(document.getElementById('addMap'), {
+          center: { lat: -25.2744, lng: 133.7751 }, zoom: 4,
+          mapTypeControl: false, streetViewControl: false, fullscreenControl: false,
+          styles: [{ featureType: 'poi', stylers: [{ visibility: 'off' }] }],
+        });
 
-    // Address autocomplete
-    let debounce;
-    document.getElementById('lAddress').addEventListener('input', function() {
-      clearTimeout(debounce);
-      const q = this.value.trim();
-      if (q.length < 3) return;
-      debounce = setTimeout(async () => {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&countrycodes=au&limit=1`);
-        const data = await res.json();
-        if (data.length) {
-          pinLat = parseFloat(data[0].lat);
-          pinLng = parseFloat(data[0].lon);
-          addMap.setView([pinLat, pinLng], 13);
-          if (pinMarker) addMap.removeLayer(pinMarker);
-          pinMarker = L.marker([pinLat, pinLng]).addTo(addMap);
+        gmap.addListener('click', e => {
+          pinLat = e.latLng.lat(); pinLng = e.latLng.lng();
+          if (pinMarker) pinMarker.setMap(null);
+          pinMarker = new google.maps.Marker({ position: e.latLng, map: gmap });
           document.getElementById('pinnedNote').style.display = 'block';
-        }
-      }, 500);
+        });
+
+        // Places autocomplete
+        const autocomplete = new google.maps.places.Autocomplete(
+          document.getElementById('lAddress'),
+          { componentRestrictions: { country: 'au' }, fields: ['geometry', 'formatted_address'] }
+        );
+        autocomplete.addListener('place_changed', () => {
+          const place = autocomplete.getPlace();
+          if (!place.geometry) return;
+          pinLat = place.geometry.location.lat();
+          pinLng = place.geometry.location.lng();
+          gmap.setCenter(place.geometry.location);
+          gmap.setZoom(13);
+          if (pinMarker) pinMarker.setMap(null);
+          pinMarker = new google.maps.Marker({ position: place.geometry.location, map: gmap });
+          document.getElementById('pinnedNote').style.display = 'block';
+        });
+      });
+    };
+
+    fetch('/api/config').then(r => r.json()).then(cfg => {
+      const s = document.createElement('script');
+      s.src = `https://maps.googleapis.com/maps/api/js?key=${cfg.googleMapsKey}&libraries=places&callback=__locInit`;
+      s.async = true;
+      document.head.appendChild(s);
     });
 
     async function load() {

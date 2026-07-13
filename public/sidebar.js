@@ -32,7 +32,8 @@ async function loadCompanyName() {
 
 function renderSidebar(active) {
   const nav = [
-    { id: 'dispatcher', icon: ICONS.truck,     label: 'Active Jobs',  href: '/dispatcher' },
+    { id: 'fleet',      icon: ICONS.mappin,     label: 'Fleet Map',    href: '/fleet' },
+    { id: 'dispatcher', icon: ICONS.truck,      label: 'Active Jobs',  href: '/dispatcher' },
     { id: 'history',    icon: ICONS.clipboard,  label: 'History',      href: '/history' },
     { id: 'new',        icon: ICONS.plus,       label: 'New Job',      href: '/' },
     { id: 'drivers',    icon: ICONS.user,       label: 'Drivers',      href: '/drivers' },

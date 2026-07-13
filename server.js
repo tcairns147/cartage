@@ -219,6 +219,7 @@ app.get('/', (req, res) => {
   if (slug) return res.sendFile(__dirname + '/public/index.html');
   res.sendFile(__dirname + '/public/landing.html');
 });
+app.get('/fleet',      requireAuth, (req, res) => res.sendFile(__dirname + '/public/fleet.html'));
 app.get('/dispatcher', requireAuth, (req, res) => res.sendFile(__dirname + '/public/dispatcher.html'));
 app.get('/history',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/history.html'));
 app.get('/drivers',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/drivers.html'));

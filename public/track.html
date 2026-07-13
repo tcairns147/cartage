@@ -774,6 +774,7 @@
       }, 30000);
 
       let lastKnownLat = +job.currentLat, lastKnownLng = +job.currentLng;
+      let lastEtaRefreshAt = 0;
 
       async function poll() {
         try {
@@ -781,21 +782,24 @@
           if (j.status === 'complete') { showDelivered(j); return; }
           if (j.currentLat && j.currentLng) {
             const lat = +j.currentLat, lng = +j.currentLng;
-            // Only recalculate ETA if the position has actually changed
             if (lat !== lastKnownLat || lng !== lastKnownLng) {
               lastKnownLat = lat;
               lastKnownLng = lng;
               lastLocationTime = Date.now();
               moveTruck(lat, lng);
-              const dlat = delivery[0] - lat;
-              const dlng = delivery[1] - lng;
-              const distKm = Math.sqrt(dlat * dlat + dlng * dlng) * 111;
-              const newSecs = Math.round(distKm / 80 * 3600);
-              etaSecsAtLastFix = newSecs;
-              etaFixedAt = Date.now();
-              updateEta(newSecs);
+              // Refresh ETA via Directions API at most once every 2 minutes
+              const now = Date.now();
+              if (now - lastEtaRefreshAt > 2 * 60 * 1000) {
+                lastEtaRefreshAt = now;
+                getRoadRoute([lat, lng], delivery).then(route => {
+                  if (route) {
+                    etaSecsAtLastFix = route.duration;
+                    etaFixedAt = Date.now();
+                    updateEta(route.duration);
+                  }
+                }).catch(() => {});
+              }
             }
-            // Always update freshness so the pill reflects real signal age
             updateFreshnessUI();
           }
         } catch {}

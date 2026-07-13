@@ -694,8 +694,8 @@
       // Resolve coordinates
       let pickupCoords, deliveryCoords;
       if (isEmptyRun) {
-        deliveryCoords = (job.pickupLat && job.pickupLng) ? [+job.pickupLat, +job.pickupLng] : await geocode(job.pickupAddress);
-        pickupCoords   = deliveryCoords || [-32.2569, 148.6011];
+        pickupCoords   = (job.pickupLat && job.pickupLng) ? [+job.pickupLat, +job.pickupLng] : await geocode(job.pickupAddress);
+        pickupCoords   = pickupCoords || [-32.2569, 148.6011];
       } else {
         pickupCoords   = (job.pickupLat   && job.pickupLng)   ? [+job.pickupLat,   +job.pickupLng]   : await geocode(job.pickupAddress)   || [-32.2569, 148.6011];
         deliveryCoords = (job.deliveryLat && job.deliveryLng) ? [+job.deliveryLat, +job.deliveryLng] : await geocode(job.deliveryAddress) || [-33.2832, 149.1000];

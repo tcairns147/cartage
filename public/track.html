@@ -562,13 +562,9 @@
           destination: { lat: delivery[0], lng: delivery[1] },
           travelMode:  google.maps.TravelMode.DRIVING
         }, (result, status) => {
-          if (status !== 'OK') {
-            console.error('Directions API failed:', status, 'pickup:', pickup, 'delivery:', delivery);
-            return resolve(null);
-          }
+          if (status !== 'OK') return resolve(null);
           const leg    = result.routes[0].legs[0];
           const coords = result.routes[0].overview_path.map(p => [p.lat(), p.lng()]);
-          console.log('Directions API OK, duration:', leg.duration.text, 'distance:', leg.distance.text);
           resolve({ coords, duration: leg.duration.value });
         });
       });

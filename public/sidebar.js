@@ -37,11 +37,11 @@ function renderSidebar(active) {
     { id: 'history',    icon: ICONS.clipboard,  label: 'History',      href: '/history' },
     { id: 'new',        icon: ICONS.plus,       label: 'New Job',      href: '/' },
     { id: 'drivers',    icon: ICONS.user,       label: 'Drivers',      href: '/drivers' },
-    { id: 'locations',  icon: ICONS.mappin,     label: 'Locations',    href: '/locations' },
   ];
 
   const allNav = [
     ...nav,
+    { id: 'locations',  icon: ICONS.mappin,     label: 'Locations',    href: '/locations' },
     { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
   ];
 

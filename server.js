@@ -143,6 +143,7 @@ async function initDb() {
     { name: 'Sturgiss Pastoral Company Pty Ltd', slug: 'sturgiss', passcode: 'hay2025' },
     { name: 'Charlotte Horan', slug: 'horan', passcode: 'horan2025' },
     { name: 'Muddle Transport', slug: 'muddle', passcode: 'muddle2025' },
+    { name: 'Nutrien Ag Solutions Braidwood', slug: 'nutrien', passcode: 'nutrien2025' },
   ];
   for (const c of companies) {
     const existing = await dbGet('SELECT id FROM companies WHERE slug = ?', [c.slug]);

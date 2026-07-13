@@ -21,12 +21,12 @@
       padding-top: max(env(safe-area-inset-top, 0px), 14px);
       padding-left: max(env(safe-area-inset-left), 20px);
       padding-right: max(env(safe-area-inset-right), 20px);
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      gap: 8px;
       min-height: 60px;
-      position: relative;
+      isolation: isolate;
     }
 
     .header-drova img {
@@ -37,21 +37,22 @@
     }
 
     .header-client {
-      position: absolute;
-      left: 50%;
-      transform: translateX(-50%);
       display: flex;
       align-items: center;
-      pointer-events: none;
+      justify-content: center;
     }
 
     #clientLogo {
-      max-height: 46px;
-      max-width: min(200px, 42vw);
+      max-height: 42px;
+      max-width: 160px;
       object-fit: contain;
       mix-blend-mode: lighten;
       display: none;
-      pointer-events: auto;
+    }
+
+    .header-pill-wrap {
+      display: flex;
+      justify-content: flex-end;
     }
 
     /* ── LIVE PILL ───────────────────────────────────────── */
@@ -335,11 +336,13 @@
       <div class="header-client">
         <img id="clientLogo" src="" alt="">
       </div>
-      <div class="live-pill" id="livePill">
-        <div class="live-dot"></div>
-        <div class="live-pill-text">
-          <div class="live-pill-status" id="liveStatus">LIVE GPS</div>
-          <div class="live-pill-ago" id="liveAgo"></div>
+      <div class="header-pill-wrap">
+        <div class="live-pill" id="livePill">
+          <div class="live-dot"></div>
+          <div class="live-pill-text">
+            <div class="live-pill-status" id="liveStatus">LIVE GPS</div>
+            <div class="live-pill-ago" id="liveAgo"></div>
+          </div>
         </div>
       </div>
     </div>

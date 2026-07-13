@@ -282,7 +282,7 @@ app.delete('/api/admin/company/:id/reset', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/config', (req, res) => {
-  res.json({ googleMapsKey: process.env.GOOGLE_PLACES_KEY || '' });
+  res.json({ googleMapsKey: process.env.GOOGLE_MAPS_KEY || process.env.GOOGLE_PLACES_KEY || '' });
 });
 
 app.get('/api/places', async (req, res) => {

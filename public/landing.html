@@ -387,10 +387,6 @@
       <h2>Built for operators,<br>not <em>tech companies.</em></h2>
       <p>Drova was built from the ground up for Australian rural transport. No training required. Ready to run from day one, whether you're managing one truck or a full fleet.</p>
       <p style="margin-bottom: 28px; color: #444; font-size: 14px;">Drivers use a dedicated app on their own phone for reliable background GPS. Customers get a live tracking link — no download required on their end. We're onboarding a small number of founding operators now.</p>
-      <div class="testimonial">
-        <div class="testimonial-text">"After seeing it in action I wanted to get involved straight away. It solves a problem every transport operator has."</div>
-        <div class="testimonial-author">Pete Sturgiss — Sturgiss Pastoral Co, NSW</div>
-      </div>
     </div>
 
     <div class="form-card">
@@ -409,6 +405,10 @@
         <div class="field">
           <label>Mobile Number</label>
           <input type="tel" id="f-phone" placeholder="0400 000 000">
+        </div>
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="f-email" placeholder="e.g. john@smithtransport.com.au">
         </div>
         <div class="field">
           <label>Jobs per week</label>
@@ -443,6 +443,7 @@
       const name = document.getElementById('f-name').value.trim();
       const businessName = document.getElementById('f-business').value.trim();
       const phone = document.getElementById('f-phone').value.trim();
+      const email = document.getElementById('f-email').value.trim();
       const jobsPerWeek = document.getElementById('f-jobs').value;
 
       if (!name || !businessName || !phone) {
@@ -458,7 +459,7 @@
         await fetch('/api/waitlist', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, businessName, phone, jobsPerWeek })
+          body: JSON.stringify({ name, businessName, phone, email, jobsPerWeek })
         });
         document.getElementById('formWrap').style.display = 'none';
         document.getElementById('successMsg').style.display = 'block';

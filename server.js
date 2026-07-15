@@ -103,9 +103,11 @@ async function initDb() {
     name TEXT NOT NULL,
     businessName TEXT NOT NULL,
     phone TEXT NOT NULL,
+    email TEXT,
     jobsPerWeek TEXT,
     createdAt TEXT DEFAULT (datetime('now'))
   )`);
+  try { await dbRun(`ALTER TABLE waitlist ADD COLUMN email TEXT`); } catch {}
 
   // Existing column migrations
   for (const col of ['pickupLat','pickupLng','deliveryLat','deliveryLng','currentLat','currentLng','notified15min','customerName','jobType','notes','companyId','truckRego']) {
@@ -232,10 +234,10 @@ app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.htm
 app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
 
 app.post('/api/waitlist', async (req, res) => {
-  const { name, businessName, phone, jobsPerWeek } = req.body;
+  const { name, businessName, phone, email, jobsPerWeek } = req.body;
   if (!name || !businessName || !phone) return res.status(400).json({ error: 'Missing required fields' });
-  await dbRun('INSERT INTO waitlist (name, businessName, phone, jobsPerWeek) VALUES (?, ?, ?, ?)',
-    [name, businessName, phone, jobsPerWeek || null]);
+  await dbRun('INSERT INTO waitlist (name, businessName, phone, email, jobsPerWeek) VALUES (?, ?, ?, ?, ?)',
+    [name, businessName, phone, email || null, jobsPerWeek || null]);
   res.json({ ok: true });
 });
 

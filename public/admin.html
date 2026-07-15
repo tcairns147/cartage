@@ -233,7 +233,7 @@
       if (!isOpen && detail.dataset.loaded !== 'true') {
         detail.innerHTML = `<div style="color:#333;font-size:13px;padding:16px 0;">Loading…</div>`;
         const res = await fetch(`/api/admin/company/${id}/trial`);
-        const { stats, jobs } = await res.json();
+        const { stats, jobs, drivers, locations } = await res.json();
         detail.dataset.loaded = 'true';
         detail.innerHTML = `
           <div class="stats-row">
@@ -244,7 +244,9 @@
             <div class="stat"><div class="stat-val">${stats.gotGps || 0}</div><div class="stat-lbl">Got GPS</div></div>
             <div class="stat"><div class="stat-val ${stats.smsFailed ? 'red' : ''}">${stats.smsFailed || 0}</div><div class="stat-lbl">SMS Failures</div></div>
           </div>
-          ${jobs.length === 0 ? `<div style="color:#333;font-size:13px;padding:8px 0 12px;">No jobs yet.</div>` : jobs.map(j => `
+
+          <div style="font-size:11px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:0.5px;padding:4px 0 10px;">Jobs</div>
+          ${jobs.length === 0 ? `<div style="color:#333;font-size:13px;padding:0 0 12px;">No jobs yet.</div>` : jobs.map(j => `
             <div class="job-item">
               <div>
                 <div class="job-load">${j.loadDetails || '—'}</div>
@@ -269,7 +271,36 @@
                 <div class="jlbl" style="margin-top:6px;">Driver Link</div>
                 <div class="jval">${j.driverLinkOpenCount || 0} opens</div>
               </div>
-            </div>`).join('')}`;
+            </div>`).join('')}
+
+          <div style="font-size:11px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:0.5px;padding:12px 0 10px;">Drivers (${drivers.length})</div>
+          ${drivers.length === 0
+            ? `<div style="color:#333;font-size:13px;padding:0 0 12px;">No drivers added yet.</div>`
+            : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-bottom:12px;">
+                ${drivers.map(d => `
+                  <div style="background:#0d0d0d;border:1px solid #1c1c1c;border-radius:8px;padding:12px 14px;">
+                    <div style="font-size:13px;font-weight:700;color:white;">${d.name}</div>
+                    <div style="font-size:11px;color:#444;margin-top:3px;">${d.mobile || '—'}</div>
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+                      ${d.licenceClass ? `<span style="font-size:10px;font-weight:700;background:#1a1a00;color:#f59e0b;padding:2px 8px;border-radius:20px;">Class ${d.licenceClass}</span>` : '<span></span>'}
+                      <span style="font-size:10px;font-weight:700;color:${d.status === 'active' ? '#22c55e' : '#444'};">${d.status || 'active'}</span>
+                    </div>
+                  </div>`).join('')}
+              </div>`}
+
+          <div style="font-size:11px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:0.5px;padding:4px 0 10px;">Saved Locations (${locations.length})</div>
+          ${locations.length === 0
+            ? `<div style="color:#333;font-size:13px;padding:0 0 16px;">No locations saved yet.</div>`
+            : `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:8px;margin-bottom:16px;">
+                ${locations.map(l => `
+                  <div style="background:#0d0d0d;border:1px solid #1c1c1c;border-radius:8px;padding:12px 14px;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                      <span style="font-size:10px;font-weight:700;background:#0f172a;color:#60a5fa;padding:2px 8px;border-radius:20px;">${l.type || 'location'}</span>
+                    </div>
+                    <div style="font-size:13px;font-weight:700;color:white;">${l.name}</div>
+                    <div style="font-size:11px;color:#444;margin-top:3px;">${l.address || '—'}</div>
+                  </div>`).join('')}
+              </div>`}`;
       }
     }
 

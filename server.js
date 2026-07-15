@@ -282,7 +282,9 @@ app.get('/api/admin/company/:id/trial', requireAdmin, async (req, res) => {
     FROM jobs WHERE companyId = ?
     ORDER BY createdAt DESC LIMIT 100
   `, [companyId]);
-  res.json({ stats, jobs });
+  const drivers = await dbAll(`SELECT id, name, mobile, licenceClass, status, createdAt FROM drivers WHERE companyId = ? ORDER BY name ASC`, [companyId]);
+  const locations = await dbAll(`SELECT id, name, address, type, createdAt FROM locations WHERE companyId = ? ORDER BY name ASC`, [companyId]);
+  res.json({ stats, jobs, drivers, locations });
 });
 
 app.delete('/api/admin/company/:id/reset', requireAdmin, async (req, res) => {

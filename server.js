@@ -164,17 +164,18 @@ async function initDb() {
 
   // Seed companies
   const companies = [
-    { name: 'Sturgiss Pastoral Company Pty Ltd', slug: 'sturgiss', passcode: 'hay2025' },
-    { name: 'Charlotte Horan', slug: 'horan', passcode: 'horan2025' },
-    { name: 'Muddle Transport', slug: 'muddle', passcode: 'muddle2025' },
-    { name: 'Nutrien Ag Solutions Braidwood', slug: 'nutrien', passcode: 'nutrien2025' },
+    { name: 'Sturgiss Pastoral Company Pty Ltd', slug: 'sturgiss', passcode: 'hay2025', accountType: 'carrier' },
+    { name: 'Charlotte Horan', slug: 'horan', passcode: 'horan2025', accountType: 'carrier' },
+    { name: 'Muddle Transport', slug: 'muddle', passcode: 'muddle2025', accountType: 'carrier' },
+    { name: 'Nutrien Ag Solutions Braidwood', slug: 'nutrien', passcode: 'nutrien2025', accountType: 'carrier' },
+    { name: 'Elders Goulburn', slug: 'elders', passcode: 'elders2025', accountType: 'agent' },
   ];
   for (const c of companies) {
     const existing = await dbGet('SELECT id FROM companies WHERE slug = ?', [c.slug]);
     if (existing) {
-      await dbRun('UPDATE companies SET name = ?, passcode = ? WHERE slug = ?', [c.name, c.passcode, c.slug]);
+      await dbRun('UPDATE companies SET name = ?, passcode = ?, accountType = ? WHERE slug = ?', [c.name, c.passcode, c.accountType, c.slug]);
     } else {
-      await dbRun('INSERT INTO companies (name, slug, passcode) VALUES (?, ?, ?)', [c.name, c.slug, c.passcode]);
+      await dbRun('INSERT INTO companies (name, slug, passcode, accountType) VALUES (?, ?, ?, ?)', [c.name, c.slug, c.passcode, c.accountType]);
     }
   }
 }

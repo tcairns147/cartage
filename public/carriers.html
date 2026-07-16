@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Drova">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Drova — Carriers</title>
+  <script src="/sidebar.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0ebe2; min-height: 100vh; display: flex; }
+    .main { margin-left: 220px; flex: 1; min-height: 100vh; }
+
+    .topbar { background: white; padding: 20px 32px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+    .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
+    .add-btn { display: flex; align-items: center; gap: 8px; background: #f59e0b; color: white; border: none; border-radius: 12px; padding: 12px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .add-btn:hover { background: #d97706; }
+
+    .content { padding: 28px 32px 120px; max-width: 800px; }
+
+    .empty-state { background: white; border-radius: 18px; padding: 56px 32px; text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .empty-icon { color: #ddd; margin-bottom: 16px; }
+    .empty-title { font-size: 18px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
+    .empty-sub { font-size: 14px; color: #aaa; margin-bottom: 24px; }
+    .empty-btn { display: inline-flex; align-items: center; gap: 8px; background: #f59e0b; color: white; border: none; border-radius: 12px; padding: 14px 24px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    .carrier-card { background: white; border-radius: 16px; padding: 20px 24px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .carrier-avatar { width: 44px; height: 44px; border-radius: 12px; background: #fff8eb; border: 2px solid #fde68a; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 800; color: #d97706; flex-shrink: 0; }
+    .carrier-info { flex: 1; min-width: 0; }
+    .carrier-name { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+    .carrier-meta { font-size: 13px; color: #888; margin-top: 3px; }
+    .carrier-actions { display: flex; gap: 10px; flex-shrink: 0; }
+    .delete-btn { background: none; border: 1.5px solid #eee; border-radius: 10px; color: #ccc; width: 38px; height: 38px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s; }
+    .delete-btn:hover { border-color: #ef4444; color: #ef4444; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 1000; align-items: center; justify-content: center; padding: 16px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: white; border-radius: 20px; width: 100%; max-width: 480px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-header { padding: 20px 24px 0; }
+    .modal-header h2 { font-size: 18px; font-weight: 800; color: #1a1a1a; }
+    .modal-body { padding: 20px 24px; display: flex; flex-direction: column; gap: 14px; }
+    .field label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 7px; }
+    .field input { width: 100%; padding: 12px 14px; border: 1.5px solid #e8e8e8; border-radius: 12px; font-size: 15px; color: #1a1a1a; background: #f8f8f8; font-family: inherit; transition: border-color 0.2s; }
+    .field input:focus { outline: none; border-color: #f59e0b; background: white; }
+    .field input::placeholder { color: #bbb; }
+    .modal-footer { padding: 0 24px 24px; display: flex; gap: 10px; }
+    .btn-cancel { flex: 1; padding: 13px; border-radius: 12px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-save { flex: 2; padding: 13px; border-radius: 12px; background: #f59e0b; border: none; color: white; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .btn-save:hover { background: #d97706; }
+    .btn-save:disabled { background: #ddd; color: #aaa; cursor: not-allowed; }
+
+    @media (max-width: 768px) {
+      .main { margin-left: 0; }
+      .topbar { padding: 16px 20px; }
+      .content { padding: 16px 16px 160px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="sidebar-root"></div>
+  <div class="main">
+    <div class="topbar">
+      <h1>Carriers</h1>
+      <button class="add-btn" onclick="openModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Add Carrier
+      </button>
+    </div>
+    <div class="content" id="content">
+      <div style="color:#aaa;font-size:14px;">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Add carrier modal -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Add Carrier</h2>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label>Carrier / Business Name <span style="color:#ef4444;">*</span></label>
+          <input type="text" id="c-name" placeholder="e.g. Smith Rural Transport" oninput="checkSave()">
+        </div>
+        <div class="field">
+          <label>Contact Name</label>
+          <input type="text" id="c-contact" placeholder="e.g. Tom Smith">
+        </div>
+        <div class="field">
+          <label>Phone</label>
+          <input type="tel" id="c-phone" placeholder="0400 000 000">
+        </div>
+        <div class="field">
+          <label>ABN</label>
+          <input type="text" id="c-abn" placeholder="12 345 678 901">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button class="btn-save" id="saveBtn" onclick="saveCarrier()" disabled>Save Carrier</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('sidebar-root').innerHTML = renderSidebar('carriers');
+    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+    let carriers = [];
+
+    function render() {
+      const el = document.getElementById('content');
+      if (carriers.length === 0) {
+        el.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13" rx="1"/><path d="M16 8h4l3 5v3h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+            </div>
+            <div class="empty-title">No carriers yet</div>
+            <div class="empty-sub">Add the transport companies you work with to assign them jobs.</div>
+            <button class="empty-btn" onclick="openModal()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add First Carrier
+            </button>
+          </div>`;
+        return;
+      }
+      el.innerHTML = carriers.map(c => `
+        <div class="carrier-card">
+          <div class="carrier-avatar">${c.name.charAt(0).toUpperCase()}</div>
+          <div class="carrier-info">
+            <div class="carrier-name">${c.name}</div>
+            <div class="carrier-meta">
+              ${c.contactName ? c.contactName : ''}${c.contactName && c.phone ? ' · ' : ''}${c.phone ? `<a href="tel:${c.phone}" style="color:#888;text-decoration:none;">${c.phone}</a>` : ''}
+              ${!c.contactName && !c.phone ? 'No contact details' : ''}
+              ${c.abn ? ` · ABN ${c.abn}` : ''}
+            </div>
+          </div>
+          <div class="carrier-actions">
+            <button class="delete-btn" onclick="deleteCarrier(${c.id}, '${c.name.replace(/'/g,"\\'")}')">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>
+          </div>
+        </div>`).join('');
+    }
+
+    async function load() {
+      const res = await fetch('/api/carriers');
+      carriers = await res.json();
+      render();
+    }
+
+    function openModal() { document.getElementById('modal').classList.add('open'); document.getElementById('c-name').focus(); }
+    function closeModal() {
+      document.getElementById('modal').classList.remove('open');
+      ['c-name','c-contact','c-phone','c-abn'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('saveBtn').disabled = true;
+    }
+    function checkSave() { document.getElementById('saveBtn').disabled = !document.getElementById('c-name').value.trim(); }
+
+    async function saveCarrier() {
+      const name = document.getElementById('c-name').value.trim();
+      const contactName = document.getElementById('c-contact').value.trim();
+      const phone = document.getElementById('c-phone').value.trim();
+      const abn = document.getElementById('c-abn').value.trim();
+      const btn = document.getElementById('saveBtn');
+      btn.disabled = true; btn.textContent = 'Saving…';
+      const res = await fetch('/api/carriers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, contactName, phone, abn }) });
+      if (res.ok) { const c = await res.json(); carriers.push(c); render(); closeModal(); }
+      else { btn.disabled = false; btn.textContent = 'Save Carrier'; alert('Could not save carrier.'); }
+    }
+
+    async function deleteCarrier(id, name) {
+      if (!confirm(`Remove ${name}?\n\nThis won't affect existing jobs.`)) return;
+      await fetch(`/api/carriers/${id}`, { method: 'DELETE' });
+      carriers = carriers.filter(c => c.id !== id);
+      render();
+    }
+
+    document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    load();
+  </script>
+</body>
+</html>

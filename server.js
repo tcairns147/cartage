@@ -28,6 +28,14 @@ async function dbRun(sql, args = []) {
   return await db.execute({ sql, args });
 }
 
+function formatMobile(mobile) {
+  mobile = (mobile || '').replace(/[\s\-().]/g, '');
+  if (mobile.startsWith('0'))      return '+61' + mobile.slice(1);
+  if (mobile.startsWith('61'))     return '+' + mobile;
+  if (!mobile.startsWith('+'))     return '+61' + mobile;
+  return mobile;
+}
+
 function distanceKm(lat1, lng1, lat2, lng2) {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -108,6 +116,20 @@ async function initDb() {
     createdAt TEXT DEFAULT (datetime('now'))
   )`);
   try { await dbRun(`ALTER TABLE waitlist ADD COLUMN email TEXT`); } catch {}
+
+  await dbRun(`CREATE TABLE IF NOT EXISTS carriers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    companyId INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    contactName TEXT,
+    phone TEXT,
+    abn TEXT,
+    createdAt TEXT DEFAULT (datetime('now'))
+  )`);
+
+  try { await dbRun(`ALTER TABLE companies ADD COLUMN accountType TEXT DEFAULT 'carrier'`); } catch {}
+  try { await dbRun(`ALTER TABLE jobs ADD COLUMN carrierId INTEGER`); } catch {}
+  try { await dbRun(`ALTER TABLE jobs ADD COLUMN driverMobile TEXT`); } catch {}
 
   // Existing column migrations
   for (const col of ['pickupLat','pickupLng','deliveryLat','deliveryLng','currentLat','currentLng','notified15min','customerName','jobType','notes','companyId','truckRego']) {
@@ -229,6 +251,7 @@ app.get('/drivers',    requireAuth, (req, res) => res.sendFile(__dirname + '/pub
 app.get('/clients',    requireAuth, (req, res) => res.sendFile(__dirname + '/public/clients.html'));
 app.get('/locations',  requireAuth, (req, res) => res.sendFile(__dirname + '/public/locations.html'));
 app.get('/trucks',     requireAuth, (req, res) => res.sendFile(__dirname + '/public/trucks.html'));
+app.get('/carriers',   requireAuth, (req, res) => res.sendFile(__dirname + '/public/carriers.html'));
 app.get('/trial',      requireAuth, (req, res) => res.sendFile(__dirname + '/public/trial.html'));
 app.get('/track/:id',  (req, res) => res.sendFile(__dirname + '/public/track.html'));
 app.get('/drive/:id',  (req, res) => res.sendFile(__dirname + '/public/drive.html'));
@@ -247,7 +270,7 @@ app.get('/api/waitlist', requireAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/companies', requireAdmin, async (req, res) => {
-  const companies = await dbAll('SELECT id, name, slug, passcode FROM companies ORDER BY name ASC');
+  const companies = await dbAll('SELECT id, name, slug, passcode, accountType FROM companies ORDER BY name ASC');
   res.json(companies);
 });
 
@@ -285,6 +308,13 @@ app.get('/api/admin/company/:id/trial', requireAdmin, async (req, res) => {
   const drivers = await dbAll(`SELECT id, name, mobile, licenceClass, status, createdAt FROM drivers WHERE companyId = ? ORDER BY name ASC`, [companyId]);
   const locations = await dbAll(`SELECT id, name, address, type, createdAt FROM locations WHERE companyId = ? ORDER BY name ASC`, [companyId]);
   res.json({ stats, jobs, drivers, locations });
+});
+
+app.post('/api/admin/companies/:id/type', requireAdmin, async (req, res) => {
+  const { accountType } = req.body;
+  if (!['carrier', 'agent'].includes(accountType)) return res.status(400).json({ error: 'Invalid type' });
+  await dbRun('UPDATE companies SET accountType = ? WHERE id = ?', [accountType, req.params.id]);
+  res.json({ ok: true });
 });
 
 app.delete('/api/admin/company/:id/reset', requireAdmin, async (req, res) => {
@@ -334,7 +364,7 @@ app.get('/api/places/detail', async (req, res) => {
 app.get('/api/me', requireAuth, async (req, res) => {
   const logoPath = `${__dirname}/public/logo-${req.company.slug}.png`;
   const logoUrl = fs.existsSync(logoPath) ? `/logo-${req.company.slug}.png` : null;
-  res.json({ name: req.company.name, slug: req.company.slug, logoUrl });
+  res.json({ name: req.company.name, slug: req.company.slug, logoUrl, accountType: req.company.accountType || 'carrier' });
 });
 
 app.get('/jobs', requireAuth, async (req, res) => {
@@ -368,19 +398,16 @@ async function geocodeAddress(address) {
 }
 
 app.post('/jobs', requireAuth, async (req, res) => {
-  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode, truckRego } = req.body;
+  let { customerName, customerMobile, pickupAddress, deliveryAddress, driverName, loadDetails, jobType, notes, dispatchMode, truckRego, carrierId, driverMobile } = req.body;
   let { pickupLat, pickupLng, deliveryLat, deliveryLng } = req.body;
   const notifyMinsBefore = parseInt(req.body.notifyMinsBefore) || 15;
   const id = crypto.randomBytes(4).toString('hex');
   jobType = jobType || 'loaded';
   const status = dispatchMode === 'plan' ? 'planned' : 'active';
 
-  customerMobile = (customerMobile || '').replace(/[\s\-().]/g, '');
-  if (customerMobile.startsWith('0'))        customerMobile = '+61' + customerMobile.slice(1);
-  else if (customerMobile.startsWith('61'))  customerMobile = '+' + customerMobile;
-  else if (!customerMobile.startsWith('+'))  customerMobile = '+61' + customerMobile;
+  customerMobile = formatMobile(customerMobile);
+  if (driverMobile) driverMobile = formatMobile(driverMobile);
 
-  // Geocode any addresses that don't already have coordinates
   if ((!pickupLat || !pickupLng) && pickupAddress) {
     const coords = await geocodeAddress(pickupAddress);
     if (coords) { pickupLat = coords.lat; pickupLng = coords.lng; }
@@ -391,9 +418,9 @@ app.post('/jobs', requireAuth, async (req, res) => {
   }
 
   await dbRun(
-    `INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, loadDetails, jobType, notes, status, truckRego, notifyMinsBefore)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, loadDetails, jobType, notes || null, status, truckRego || null, notifyMinsBefore]
+    `INSERT INTO jobs (id, companyId, customerName, customerMobile, pickupAddress, deliveryAddress, pickupLat, pickupLng, deliveryLat, deliveryLng, driverName, driverMobile, loadDetails, jobType, notes, status, truckRego, notifyMinsBefore, carrierId)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [id, req.company.id, customerName || null, customerMobile, pickupAddress, deliveryAddress, pickupLat || null, pickupLng || null, deliveryLat || null, deliveryLng || null, driverName, driverMobile || null, loadDetails, jobType, notes || null, status, truckRego || null, notifyMinsBefore, carrierId || null]
   );
 
   await dbRun("UPDATE drivers SET status = 'on-job' WHERE name = ? AND companyId = ?", [driverName, req.company.id]);
@@ -401,6 +428,15 @@ app.post('/jobs', requireAuth, async (req, res) => {
 
   const driverUrl = `${req.protocol}://${req.get('host')}/drive/${id}`;
   res.json({ id, driverUrl });
+
+  // For agent accounts: auto-SMS the driver with their job link
+  if (req.company.accountType === 'agent' && driverMobile && dispatchMode !== 'plan') {
+    const firstName = (driverName || 'there').split(' ')[0];
+    const agentName = req.company.name;
+    const smsBody = `Hi ${firstName}, ${agentName} has a job for you. Open your driver link to view details and start when ready: ${driverUrl}`;
+    twilioClient.messages.create({ body: smsBody, from: process.env.TWILIO_PHONE_NUMBER, to: driverMobile })
+      .catch(err => console.error('Driver SMS failed:', err.message));
+  }
 });
 
 // Driver opens the drive link — record first open and open count
@@ -610,6 +646,25 @@ app.get('/api/clients', requireAuth, async (req, res) => {
     GROUP BY customerMobile
     ORDER BY lastJob DESC
   `, [req.company.id]));
+});
+
+app.get('/api/carriers', requireAuth, async (req, res) => {
+  res.json(await dbAll('SELECT * FROM carriers WHERE companyId = ? ORDER BY name ASC', [req.company.id]));
+});
+
+app.post('/api/carriers', requireAuth, async (req, res) => {
+  const { name, contactName, phone, abn } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name required' });
+  const result = await dbRun(
+    'INSERT INTO carriers (companyId, name, contactName, phone, abn) VALUES (?, ?, ?, ?, ?)',
+    [req.company.id, name, contactName || null, phone || null, abn || null]
+  );
+  res.json({ id: Number(result.lastInsertRowid), name, contactName, phone, abn });
+});
+
+app.delete('/api/carriers/:id', requireAuth, async (req, res) => {
+  await dbRun('DELETE FROM carriers WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
+  res.json({ success: true });
 });
 
 app.get('/api/locations', requireAuth, async (req, res) => {

@@ -71,6 +71,14 @@
       cursor: pointer; transition: border-color 0.2s, color 0.2s; white-space: nowrap;
     }
     .reset-btn:hover { border-color: #ef4444; color: #ef4444; }
+    .type-badge {
+      font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.5px; cursor: pointer; border: none;
+      transition: opacity 0.2s; white-space: nowrap;
+    }
+    .type-badge.carrier { background: #1c1c1c; color: #555; }
+    .type-badge.agent { background: #1c1400; color: #f59e0b; }
+    .type-badge:hover { opacity: 0.7; }
 
     .company-block { border-bottom: 1px solid #1c1c1c; }
     .company-block:last-child { border-bottom: none; }
@@ -214,6 +222,10 @@
                 <div class="company-slug">Slug: ${c.slug} · Passcode: ${c.passcode}</div>
               </div>
               <div class="company-actions">
+                <button class="type-badge ${c.accountType === 'agent' ? 'agent' : 'carrier'}" id="type-badge-${c.id}"
+                  onclick="event.stopPropagation(); toggleAccountType(${c.id})">
+                  ${c.accountType === 'agent' ? 'Agent' : 'Carrier'}
+                </button>
                 <button class="reset-btn" onclick="event.stopPropagation(); resetCompany(${c.id}, '${c.name}')">Reset data</button>
                 <span class="expand-icon">▼</span>
               </div>
@@ -301,6 +313,23 @@
                     <div style="font-size:11px;color:#444;margin-top:3px;">${l.address || '—'}</div>
                   </div>`).join('')}
               </div>`}`;
+      }
+    }
+
+    async function toggleAccountType(id) {
+      const badge = document.getElementById(`type-badge-${id}`);
+      const current = badge.classList.contains('agent') ? 'agent' : 'carrier';
+      const next = current === 'agent' ? 'carrier' : 'agent';
+      const res = await fetch(`/api/admin/companies/${id}/type`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accountType: next })
+      });
+      if (res.ok) {
+        badge.classList.remove(current); badge.classList.add(next);
+        badge.textContent = next.charAt(0).toUpperCase() + next.slice(1);
+        // Force reload of detail if already open
+        const detail = document.getElementById(`detail-${id}`);
+        if (detail) detail.dataset.loaded = 'false';
       }
     }
 

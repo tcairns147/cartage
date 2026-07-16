@@ -14,12 +14,13 @@ async function loadCompanyName() {
   try {
     const res = await fetch('/api/me');
     if (!res.ok) return;
-    const { name, logoUrl } = await res.json();
+    const { name, logoUrl, accountType } = await res.json();
+    window.__accountType = accountType || 'carrier';
     const nameEl = document.getElementById('sidebar-company-name');
     const roleEl = document.getElementById('sidebar-company-role');
     const avatarEl = document.getElementById('sidebar-avatar');
     if (nameEl) nameEl.textContent = name;
-    if (roleEl) roleEl.textContent = 'Dispatcher';
+    if (roleEl) roleEl.textContent = accountType === 'agent' ? 'Agent' : 'Dispatcher';
     if (avatarEl) avatarEl.textContent = name.charAt(0).toUpperCase();
     if (logoUrl) {
       const logoEl = document.getElementById('sidebar-client-logo');
@@ -27,6 +28,12 @@ async function loadCompanyName() {
       const mobileEl = document.getElementById('mobile-client-logo');
       if (mobileEl) { mobileEl.src = logoUrl; mobileEl.style.display = 'block'; mobileEl.onerror = () => { mobileEl.style.display = 'none'; }; }
     }
+    // Hide agent-only nav items for carrier accounts
+    if (accountType !== 'agent') {
+      document.querySelectorAll('.nav-agent-only').forEach(el => el.style.display = 'none');
+    }
+    // Dispatch event so pages can react to account type
+    window.dispatchEvent(new CustomEvent('accountTypeLoaded', { detail: { accountType } }));
   } catch {}
 }
 
@@ -41,6 +48,7 @@ function renderSidebar(active) {
 
   const allNav = [
     ...nav,
+    { id: 'carriers',   icon: ICONS.trucklist,  label: 'Carriers',     href: '/carriers',   agentOnly: true },
     { id: 'locations',  icon: ICONS.mappin,     label: 'Locations',    href: '/locations' },
     { id: 'clients',    icon: ICONS.users,      label: 'Clients',      href: '/clients' },
   ];
@@ -58,7 +66,7 @@ function renderSidebar(active) {
       </div>
       <nav class="sidebar-nav">
         ${allNav.map(n => `
-          <a class="nav-item${active === n.id ? ' active' : ''}" href="${n.href}">
+          <a class="nav-item${active === n.id ? ' active' : ''}${n.agentOnly ? ' nav-agent-only' : ''}" href="${n.href}">
             <span class="nav-icon">${n.icon}</span>${n.label}
           </a>`).join('')}
       </nav>

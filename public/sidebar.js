@@ -140,18 +140,20 @@ const SIDEBAR_CSS = `
       padding-bottom: env(safe-area-inset-bottom);
       padding-left: max(env(safe-area-inset-left), 12px);
       padding-right: max(env(safe-area-inset-right), 12px);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
     }
     .bottom-nav-item {
       flex: 1; display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 10px 8px 8px; gap: 4px;
+      justify-content: center; padding: 10px 4px 8px; gap: 3px;
       text-decoration: none; color: #555; transition: color 0.15s;
-      min-width: 0;
+      min-width: 0; overflow: hidden;
     }
     .bottom-nav-item.active { color: #f59e0b; }
     .bottom-nav-item:hover { color: #ccc; }
-    .bottom-nav-icon { display: flex; }
+    .bottom-nav-icon { display: flex; flex-shrink: 0; }
     .bottom-nav-icon svg { width: 22px; height: 22px; }
-    .bottom-nav-label { font-size: 10px; font-weight: 600; }
+    .bottom-nav-label { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     .bottom-nav-item.active .bottom-nav-icon svg { stroke: #f59e0b; }
   }
 `;

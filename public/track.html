@@ -838,6 +838,12 @@
                     etaSecsAtLastFix = route.duration;
                     etaFixedAt = Date.now();
                     updateEta(route.duration);
+                    // Redraw the route line from driver's current position
+                    if (routeLine) routeLine.setMap(null);
+                    routeLine = new google.maps.Polyline({
+                      path: route.coords.map(([rlat, rlng]) => ({ lat: rlat, lng: rlng })),
+                      strokeColor: '#f59e0b', strokeWeight: 4, strokeOpacity: 0.75, map: gmap
+                    });
                   }
                 }).catch(() => {});
               }

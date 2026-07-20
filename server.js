@@ -524,15 +524,18 @@ app.post('/jobs/:id/location', async (req, res) => {
     const km = distanceKm(lat, lng, job.deliveryLat, job.deliveryLng);
     const notify = job.notifyMinsBefore || 15;
     if (km / 80 * 60 <= notify) {
-      await dbRun('UPDATE jobs SET notified15min = 1 WHERE id = ?', [job.id]);
-      try {
-        await twilioClient.messages.create({
-          body: `${job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : ''}${job.driverName} is about ${notify} minutes away with your ${job.loadDetails}.`,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: job.customerMobile
-        });
-      } catch (err) {
-        console.error('Proximity SMS failed:', err.message);
+      // Atomic flag flip — only the request that changes the row sends the SMS
+      const result = await dbRun('UPDATE jobs SET notified15min = 1 WHERE id = ? AND notified15min = 0', [job.id]);
+      if (result.rowsAffected > 0) {
+        try {
+          await twilioClient.messages.create({
+            body: `${job.customerName ? `Hi ${job.customerName.split(' ')[0]}, ` : ''}${job.driverName} is about ${notify} minutes away with your ${job.loadDetails}.`,
+            from: process.env.TWILIO_PHONE_NUMBER,
+            to: job.customerMobile
+          });
+        } catch (err) {
+          console.error('Proximity SMS failed:', err.message);
+        }
       }
     }
   }

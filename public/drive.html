@@ -383,7 +383,15 @@
     }
 
     document.addEventListener('visibilitychange', async () => {
-      if (wakeLock !== null && document.visibilityState === 'visible') await requestWakeLock();
+      if (document.visibilityState === 'visible') {
+        if (wakeLock !== null) await requestWakeLock();
+        // Restart GPS if we were tracking but iOS paused the tab
+        if (watchId !== null) {
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
+          startTracking();
+        }
+      }
     });
 
     async function loadJob() {
@@ -458,7 +466,14 @@
         },
         (err) => {
           document.getElementById('statusCircle').classList.add('error');
-          document.getElementById('statusText').textContent = 'GPS Error';
+          document.getElementById('statusCircle').classList.remove('active');
+          document.getElementById('statusText').textContent = 'Reconnecting…';
+          // Clear and retry after 8 seconds
+          navigator.geolocation.clearWatch(watchId);
+          watchId = null;
+          setTimeout(() => {
+            if (watchId === null) startTracking();
+          }, 8000);
         },
         { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
       );

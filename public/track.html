@@ -101,6 +101,30 @@
     .live-pill-status { line-height: 1; margin-bottom: 2px; letter-spacing: 0.3px; }
     .live-pill-ago { font-size: 9px; font-weight: 500; opacity: 0.8; line-height: 1; }
 
+    /* ── DISPATCHER BACK BUTTON ──────────────────────────── */
+    #dispatcherBack {
+      display: none;
+      position: fixed;
+      bottom: max(env(safe-area-inset-bottom, 0px), 20px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      background: #1a1a1a;
+      color: #f59e0b;
+      border: 1px solid #333;
+      border-radius: 24px;
+      padding: 11px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+      white-space: nowrap;
+    }
+    #dispatcherBack.visible { display: flex; }
+
     /* ── MAP ─────────────────────────────────────────────── */
     #map { height: clamp(220px, 46vh, 400px); width: 100%; }
 
@@ -328,6 +352,12 @@
     <img src="/logo.svg" alt="Drova">
     <p>Loading tracking information…</p>
   </div>
+
+  <!-- Dispatcher back button (hidden from customers, shown to logged-in dispatchers) -->
+  <a id="dispatcherBack" href="/dispatcher">
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to Dashboard
+  </a>
 
   <!-- Main tracking view -->
   <div id="trackingView" style="display:none">
@@ -854,6 +884,11 @@
         timeEl.textContent = isEmptyRun ? 'Your driver has arrived at the pickup location.' : 'Your load has been delivered successfully.';
       }
     }
+
+    // Show back button only to logged-in dispatchers
+    fetch('/api/me').then(r => {
+      if (r.ok) document.getElementById('dispatcherBack').classList.add('visible');
+    }).catch(() => {});
 
     // Fire-and-forget: record that someone opened the tracking page
     fetch(`/jobs/${jobId}/view`, { method: 'POST' }).catch(() => {});

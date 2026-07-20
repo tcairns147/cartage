@@ -891,10 +891,10 @@
       }
     }
 
-    // Show back button only to logged-in dispatchers
-    fetch('/api/me').then(r => {
-      if (r.ok) document.getElementById('dispatcherBack').classList.add('visible');
-    }).catch(() => {});
+    // Show back button only when opened from the dispatcher dashboard (?back=1)
+    if (new URLSearchParams(window.location.search).get('back') === '1') {
+      document.getElementById('dispatcherBack').classList.add('visible');
+    }
 
     // Fire-and-forget: record that someone opened the tracking page
     fetch(`/jobs/${jobId}/view`, { method: 'POST' }).catch(() => {});

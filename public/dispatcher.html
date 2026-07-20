@@ -202,7 +202,7 @@
                 </div>
               </div>
               <div class="actions-col">
-                ${j.status !== 'planned' ? `<a class="btn-track" href="/track/${j.id}" target="_blank">Client Tracker</a>` : ''}
+                ${j.status !== 'planned' ? `<a class="btn-track" href="/track/${j.id}?back=1" target="_blank">Client Tracker</a>` : ''}
                 <a class="btn-track" href="/drive/${j.id}" target="_blank">Driver Link</a>
                 <button class="btn-done" onclick="complete('${j.id}', ${j.jobType === 'empty'})">Mark ${j.jobType === 'empty' ? 'Arrived' : 'Delivered'}</button>
               </div>

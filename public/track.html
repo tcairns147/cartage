@@ -750,10 +750,17 @@
     }
 
     // ── LIVE TRACKING ─────────────────────────────────────────
+    function parseServerTime(ts) {
+      if (!ts) return null;
+      // Turso stores UTC without 'Z' — append it so Date parses correctly
+      return new Date(ts.endsWith('Z') ? ts : ts + 'Z').getTime();
+    }
+
     function startLive(job, delivery) {
       const pill = document.getElementById('livePill');
       pill.classList.add('visible');
-      lastLocationTime = Date.now();
+      // Seed from server timestamp so freshness is accurate even on initial page load
+      lastLocationTime = parseServerTime(job.lastLocationAt) || Date.now();
       updateFreshnessUI();
       freshnessTimer = setInterval(updateFreshnessUI, 20000);
 
@@ -782,10 +789,15 @@
           if (j.status === 'complete') { showDelivered(j); return; }
           if (j.currentLat && j.currentLng) {
             const lat = +j.currentLat, lng = +j.currentLng;
+            // Always sync freshness from the server's lastLocationAt timestamp —
+            // this correctly goes stale when the driver closes the app, even if
+            // the truck hasn't moved (coordinates unchanged doesn't mean app is open)
+            const serverTime = parseServerTime(j.lastLocationAt);
+            if (serverTime) lastLocationTime = serverTime;
+
             if (lat !== lastKnownLat || lng !== lastKnownLng) {
               lastKnownLat = lat;
               lastKnownLng = lng;
-              lastLocationTime = Date.now();
               moveTruck(lat, lng);
               // Refresh ETA via Directions API at most once every 2 minutes
               const now = Date.now();

@@ -200,7 +200,9 @@
                   ${j.customerName ? `<div style="font-size:12px;color:#aaa;font-weight:500;margin-top:2px;">${j.loadDetails}</div>` : ''}
                   ${j.status === 'planned'
                     ? `<span class="in-transit" style="background:#f0ebe2;color:#92400e;"><span class="status-dot" style="background:#f59e0b;"></span> PLANNED</span>`
-                    : `<span class="in-transit"><span class="status-dot"></span> ${j.jobType === 'empty' ? 'EMPTY RUN' : 'IN TRANSIT'}</span>`}
+                    : j.startedAt
+                      ? `<span class="in-transit"><span class="status-dot"></span> ${j.jobType === 'empty' ? 'EMPTY RUN' : 'IN TRANSIT'}</span>`
+                      : `<span class="in-transit" style="background:#e0e7ff;color:#3730a3;"><span class="status-dot" style="background:#6366f1;"></span> PENDING</span>`}
                 </div>
               </div>
               <div class="driver-col">

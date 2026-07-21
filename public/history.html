@@ -121,13 +121,13 @@
               </tr>`).join('')}
           </tbody>
         </table>`;
+    }
 
     async function deleteJob(id) {
       if (!confirm('Delete this job from history? This cannot be undone.')) return;
       await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
       const row = document.getElementById(`hist-${id}`);
       if (row) { row.style.opacity = '0'; row.style.transition = 'opacity 0.3s'; setTimeout(() => row.remove(), 300); }
-    }
     }
 
     load();

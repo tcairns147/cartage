@@ -384,9 +384,11 @@ app.get('/jobs', requireAuth, async (req, res) => {
 });
 
 app.delete('/api/jobs/:id', requireAuth, async (req, res) => {
-  const job = await dbGet('SELECT id FROM jobs WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
+  const job = await dbGet('SELECT * FROM jobs WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
   if (!job) return res.status(404).json({ error: 'Not found' });
   await dbRun('DELETE FROM jobs WHERE id = ?', [req.params.id]);
+  if (job.driverName) await dbRun("UPDATE drivers SET status = 'available' WHERE name = ? AND companyId = ?", [job.driverName, req.company.id]);
+  if (job.truckRego) await dbRun("UPDATE trucks SET status = 'available' WHERE rego = ? AND companyId = ?", [job.truckRego, req.company.id]);
   res.json({ ok: true });
 });
 

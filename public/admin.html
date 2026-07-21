@@ -227,6 +227,7 @@
                   ${c.accountType === 'agent' ? 'Agent' : 'Carrier'}
                 </button>
                 <button class="reset-btn" onclick="event.stopPropagation(); resetCompany(${c.id}, '${c.name}')">Reset data</button>
+                <button class="reset-btn" style="border-color:#ef4444;color:#ef4444;" onclick="event.stopPropagation(); deleteCompany(${c.id}, '${c.name}')">Delete</button>
                 <span class="expand-icon">▼</span>
               </div>
             </div>
@@ -343,6 +344,15 @@
         document.querySelector(`#detail-${id}`).previousElementSibling.querySelector('.expand-icon').classList.remove('open');
         alert(`${name} has been reset.`);
       } else { alert('Reset failed.'); }
+    }
+
+    async function deleteCompany(id, name) {
+      if (!confirm(`Delete ${name}?\n\nThis will permanently delete the company and ALL its jobs, drivers, trucks, and locations. This cannot be undone.`)) return;
+      const res = await fetch(`/api/admin/company/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        document.querySelector(`[id="detail-${id}"]`)?.closest('.company-block')?.remove();
+        alert(`${name} has been deleted.`);
+      } else { alert('Delete failed.'); }
     }
 
     async function createCompany() {

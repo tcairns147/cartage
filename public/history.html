@@ -92,11 +92,12 @@
               <th>Distance</th>
               <th>Date &amp; Time</th>
               <th>Status</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             ${jobs.map(j => `
-              <tr>
+              <tr id="hist-${j.id}">
                 <td>
                   <div class="job-id">JOB #${j.id.toUpperCase()}</div>
                   <div class="load-cell">${j.jobType === 'empty' ? 'Empty Run' : j.loadDetails}</div>
@@ -114,9 +115,19 @@
                   <div style="font-size:12px;color:#aaa;">${formatTime(j.createdAt)}</div>
                 </td>
                 <td><span class="done-badge">${j.jobType === 'empty' ? 'Collected' : 'Delivered'}</span></td>
+                <td>
+                  <button onclick="deleteJob('${j.id}')" style="background:none;border:1.5px solid #fee2e2;border-radius:6px;color:#ef4444;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;">Delete</button>
+                </td>
               </tr>`).join('')}
           </tbody>
         </table>`;
+
+    async function deleteJob(id) {
+      if (!confirm('Delete this job from history? This cannot be undone.')) return;
+      await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+      const row = document.getElementById(`hist-${id}`);
+      if (row) { row.style.opacity = '0'; row.style.transition = 'opacity 0.3s'; setTimeout(() => row.remove(), 300); }
+    }
     }
 
     load();

@@ -59,6 +59,12 @@
     .btn-track:hover { border-color: #f59e0b; color: #d97706; }
     .btn-done { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 14px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: white; background: #f59e0b; cursor: pointer; font-family: inherit; }
     .btn-done:hover { background: #d97706; }
+    .btn-delete { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 14px; border: 1.5px solid #fee2e2; border-radius: 8px; font-size: 13px; font-weight: 600; color: #ef4444; background: white; cursor: pointer; font-family: inherit; }
+    .btn-delete:hover { background: #fff5f5; border-color: #ef4444; }
+    .reorder-col { display: flex; flex-direction: column; gap: 4px; justify-content: center; padding: 0 8px 0 0; }
+    .btn-reorder { background: none; border: 1.5px solid #e5e5e5; border-radius: 6px; width: 30px; height: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #aaa; transition: all 0.15s; }
+    .btn-reorder:hover:not(:disabled) { border-color: #f59e0b; color: #f59e0b; }
+    .btn-reorder:disabled { opacity: 0.25; cursor: default; }
 
     @media (max-width: 1024px) { .job-inner { grid-template-columns: 180px 1fr 140px; } .driver-col { display: none; } }
     @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px 16px 80px; } .job-inner { grid-template-columns: 1fr; } .route-col { display: none; } .topbar { padding: 16px 20px; } }
@@ -156,6 +162,7 @@
       const res = await fetch('/jobs');
       const jobs = await res.json();
       const content = document.getElementById('content');
+      jobOrder = jobs.map(j => j.id);
 
       if (!jobs.length) {
         content.innerHTML = `
@@ -170,9 +177,17 @@
 
       content.innerHTML = `
         <div class="count">${jobs.length} job${jobs.length !== 1 ? 's' : ''} in transit</div>
-        ${jobs.map(j => `
-          <div class="job-card" id="job-${j.id}">
+        ${jobs.map((j, idx) => `
+          <div class="job-card" id="job-${j.id}" data-id="${j.id}">
             <div class="job-inner">
+              <div class="reorder-col">
+                <button class="btn-reorder" onclick="moveJob('${j.id}', -1)" ${idx === 0 ? 'disabled' : ''} title="Move up">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                </button>
+                <button class="btn-reorder" onclick="moveJob('${j.id}', 1)" ${idx === jobs.length - 1 ? 'disabled' : ''} title="Move down">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+              </div>
               <div class="load-col">
                 <div class="load-icon">${loadIcon(j.loadDetails)}</div>
                 <div>
@@ -205,9 +220,33 @@
                 ${j.status !== 'planned' ? `<a class="btn-track" href="/track/${j.id}?back=1" target="_blank">Client Tracker</a>` : ''}
                 <a class="btn-track" href="/drive/${j.id}" target="_blank">Driver Link</a>
                 <button class="btn-done" onclick="complete('${j.id}', ${j.jobType === 'empty'})">Mark ${j.jobType === 'empty' ? 'Arrived' : 'Delivered'}</button>
+                <button class="btn-delete" onclick="deleteJob('${j.id}')">Delete Job</button>
               </div>
             </div>
           </div>`).join('')}`;
+    }
+
+    let jobOrder = [];
+
+    async function moveJob(id, direction) {
+      const idx = jobOrder.indexOf(id);
+      const newIdx = idx + direction;
+      if (newIdx < 0 || newIdx >= jobOrder.length) return;
+      jobOrder.splice(idx, 1);
+      jobOrder.splice(newIdx, 0, id);
+      await fetch('/api/jobs/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: jobOrder })
+      });
+      load();
+    }
+
+    async function deleteJob(id) {
+      if (!confirm('Delete this job? This cannot be undone.')) return;
+      await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
+      const card = document.getElementById(`job-${id}`);
+      if (card) { card.style.opacity = '0'; card.style.transition = 'opacity 0.3s'; setTimeout(() => load(), 300); }
     }
 
     let pendingCompleteId = null;

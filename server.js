@@ -161,6 +161,7 @@ async function initDb() {
   for (const col of newCols) {
     try { await dbRun(`ALTER TABLE jobs ADD COLUMN ${col}`); } catch {}
   }
+  try { await dbRun(`ALTER TABLE jobs ADD COLUMN sortOrder INTEGER DEFAULT 0`); } catch {}
 
   // Seed companies
   const companies = [
@@ -369,7 +370,23 @@ app.get('/api/me', requireAuth, async (req, res) => {
 });
 
 app.get('/jobs', requireAuth, async (req, res) => {
-  res.json(await dbAll("SELECT * FROM jobs WHERE companyId = ? AND status IN ('active','planned') ORDER BY createdAt DESC", [req.company.id]));
+  res.json(await dbAll("SELECT * FROM jobs WHERE companyId = ? AND status IN ('active','planned') ORDER BY sortOrder ASC, createdAt ASC", [req.company.id]));
+});
+
+app.delete('/api/jobs/:id', requireAuth, async (req, res) => {
+  const job = await dbGet('SELECT id FROM jobs WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
+  if (!job) return res.status(404).json({ error: 'Not found' });
+  await dbRun('DELETE FROM jobs WHERE id = ?', [req.params.id]);
+  res.json({ ok: true });
+});
+
+app.post('/api/jobs/reorder', requireAuth, async (req, res) => {
+  const { order } = req.body; // array of job ids in desired order
+  if (!Array.isArray(order)) return res.status(400).json({ error: 'Invalid' });
+  for (let i = 0; i < order.length; i++) {
+    await dbRun('UPDATE jobs SET sortOrder = ? WHERE id = ? AND companyId = ?', [i, order[i], req.company.id]);
+  }
+  res.json({ ok: true });
 });
 
 app.get('/jobs/history', requireAuth, async (req, res) => {

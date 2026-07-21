@@ -312,27 +312,7 @@
               <input type="hidden" name="deliveryLng" id="deliveryLng">
             </div>
           </div>
-        <!-- Dispatch Mode -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            </div>
-            <div class="card-title">When to Dispatch</div>
-          </div>
-          <div class="job-type-toggle">
-            <button type="button" class="type-btn active" id="modeNow" onclick="setDispatchMode('now')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-              Dispatch Now
-            </button>
-            <button type="button" class="type-btn" id="modePlan" onclick="setDispatchMode('plan')">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Plan for Later
-            </button>
-          </div>
-          <div id="dispatchNote" style="font-size:13px;color:#aaa;margin-top:12px;display:none;">Customer SMS will be sent when the driver starts the trip.</div>
-          <input type="hidden" name="dispatchMode" id="dispatchModeInput" value="now">
-        </div>
+        <input type="hidden" name="dispatchMode" value="now">
       </div>
       </div>
 
@@ -341,8 +321,8 @@
       <!-- Success state -->
       <div class="card success-box" id="successBox">
         <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9 12 11 14 15 10"/></svg>
-        <h3>Job Dispatched!</h3>
-        <p>SMS sent to customer. Send the driver link to <strong id="driverDisplay"></strong>.</p>
+        <h3>Job Created!</h3>
+        <p>Send the driver link to <strong id="driverDisplay"></strong>. Customer SMS will go out automatically when the driver starts.</p>
         <div class="success-actions">
           <a class="btn-outline" id="trackBtn" href="#" target="_blank">Customer Tracker</a>
           <a class="btn-solid" id="driverBtn" href="#" target="_blank">Driver Link</a>
@@ -354,8 +334,8 @@
     <!-- Fixed bottom button -->
     <div class="submit-wrap">
       <button type="submit" form="jobForm" class="submit-btn" id="submitBtn" disabled>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        Dispatch Job
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create Job
       </button>
     </div>
   </div>
@@ -583,17 +563,6 @@
         driverReady = document.getElementById('driverSelect').value;
       }
       document.getElementById('submitBtn').disabled = !(mobile && driverReady && pickup && pickupConfirmed && load);
-    }
-
-    function setDispatchMode(mode) {
-      document.getElementById('dispatchModeInput').value = mode;
-      document.getElementById('modeNow').classList.toggle('active', mode === 'now');
-      document.getElementById('modePlan').classList.toggle('active', mode === 'plan');
-      document.getElementById('dispatchNote').style.display = mode === 'plan' ? 'block' : 'none';
-      const btn = document.querySelector('.submit-btn');
-      btn.innerHTML = mode === 'plan'
-        ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Save Planned Job`
-        : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Dispatch Job`;
     }
 
     function setJobType(type) {

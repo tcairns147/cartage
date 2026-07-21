@@ -32,7 +32,7 @@
 
     .job-card { background: white; border-radius: 14px; margin-bottom: 14px; border: 1px solid #eee; overflow: hidden; transition: box-shadow 0.2s; }
     .job-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
-    .job-inner { display: grid; grid-template-columns: 200px 1fr 1fr 140px; align-items: center; padding: 20px 24px; gap: 24px; }
+    .job-inner { display: grid; grid-template-columns: 40px 200px 1fr 1fr 140px; align-items: center; padding: 20px 24px; gap: 24px; }
 
     .load-col { display: flex; align-items: center; gap: 12px; }
     .load-icon { width: 48px; height: 48px; border-radius: 50%; background: #f59e0b; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -66,8 +66,12 @@
     .btn-reorder:hover:not(:disabled) { border-color: #f59e0b; color: #f59e0b; }
     .btn-reorder:disabled { opacity: 0.25; cursor: default; }
 
-    @media (max-width: 1024px) { .job-inner { grid-template-columns: 180px 1fr 140px; } .driver-col { display: none; } }
-    @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px 16px 80px; } .job-inner { grid-template-columns: 1fr; } .route-col { display: none; } .topbar { padding: 16px 20px; } }
+    @media (max-width: 1024px) { .job-inner { grid-template-columns: 40px 180px 1fr 140px; } .driver-col { display: none; } }
+    @media (max-width: 768px) {
+      .main { margin-left: 0; } .content { padding: 16px 16px 80px; } .route-col { display: none; } .topbar { padding: 16px 20px; }
+      .job-inner { grid-template-columns: 1fr; padding: 16px; gap: 12px; }
+      .reorder-col { flex-direction: row; gap: 8px; padding: 0; justify-content: flex-start; }
+    }
 
     .modal-overlay {
       display: none; position: fixed; inset: 0;

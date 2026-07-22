@@ -72,8 +72,10 @@
     }
 
     async function load() {
-      const res = await fetch('/jobs/history');
+      const [res, contactsRes] = await Promise.all([fetch('/jobs/history'), fetch('/api/contacts')]);
       const jobs = await res.json();
+      const contacts = contactsRes.ok ? await contactsRes.json() : [];
+      const savedNames = new Set(contacts.map(c => (c.name || '').toLowerCase()));
       const card = document.getElementById('historyCard');
 
       if (!jobs.length) {
@@ -116,7 +118,7 @@
                 </td>
                 <td><span class="done-badge">${j.jobType === 'empty' ? 'Collected' : 'Delivered'}</span></td>
                 <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;border-bottom:none;">
-                  <span id="save-${j.id}"><button onclick="saveAsClient('${j.id}')" style="background:none;border:1.5px solid #d1fae5;border-radius:6px;color:#059669;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;">Save as Client</button></span>
+                  <span id="save-${j.id}">${savedNames.has((j.customerName || '').toLowerCase()) ? '<span style="font-size:12px;font-weight:600;color:#059669;">✓ Saved</span>' : `<button onclick="saveAsClient('${j.id}')" style="background:none;border:1.5px solid #d1fae5;border-radius:6px;color:#059669;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;">Save as Client</button>`}</span>
                   <button onclick="deleteJob('${j.id}')" style="background:none;border:1.5px solid #fee2e2;border-radius:6px;color:#ef4444;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;">Delete</button>
                 </td>
               </tr>`).join('')}

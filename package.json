@@ -16,11 +16,18 @@
     "node": ">=20"
   },
   "dependencies": {
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/ios": "^8.4.2",
     "@libsql/client": "^0.17.4",
+    "bcrypt": "^6.0.0",
     "better-sqlite3": "^12.11.1",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "twilio": "^6.0.2"
+  },
+  "allowScripts": {
+    "bcrypt@6.0.0": true
   }
 }

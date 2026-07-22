@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Drova">
+  <meta name="theme-color" content="#1a1a1a">
+  <title>Drova — Driver Login</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f0f0f;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .logo { margin-bottom: 32px; }
+    .logo img { height: 52px; filter: brightness(0) invert(1); display: block; }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    h2 { font-size: 20px; font-weight: 800; color: #ffffff; margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: #666; margin-bottom: 28px; }
+
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #aaa; margin-bottom: 7px; }
+    input {
+      width: 100%; padding: 13px 14px;
+      border: 1.5px solid #2a2a2a; border-radius: 12px;
+      font-size: 15px; color: #ffffff; background: #111;
+      font-family: inherit; transition: border-color 0.2s, background 0.2s;
+    }
+    input:focus { outline: none; border-color: #f59e0b; background: #0f0f0f; }
+    input::placeholder { color: #444; }
+    input[type="tel"] { letter-spacing: 0.2em; font-size: 18px; font-weight: 700; }
+
+    .error {
+      background: rgba(220, 38, 38, 0.1); border: 1px solid rgba(220, 38, 38, 0.3);
+      color: #f87171; font-size: 13px; font-weight: 600;
+      padding: 10px 14px; border-radius: 10px; margin-bottom: 16px;
+      display: none;
+    }
+    .error.visible { display: block; }
+
+    .btn {
+      width: 100%; padding: 16px;
+      background: #f59e0b; color: white; border: none;
+      border-radius: 12px; font-size: 16px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      transition: background 0.2s;
+      margin-top: 4px;
+    }
+    .btn:hover { background: #d97706; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .footer { margin-top: 28px; font-size: 12px; color: #444; text-align: center; }
+    .footer a { color: #666; text-decoration: none; }
+    .footer a:hover { color: #f59e0b; }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <img src="/logo.svg" alt="Drova">
+  </div>
+
+  <div class="card">
+    <h2>Driver sign in</h2>
+    <p class="subtitle">Enter your company code, name and PIN.</p>
+
+    <div class="error" id="errorMsg">Incorrect details. Try again.</div>
+
+    <div class="field">
+      <label>Company Code</label>
+      <input type="text" id="companySlug" placeholder="e.g. sturgiss" autocomplete="off" autocapitalize="none" autocorrect="off">
+    </div>
+    <div class="field">
+      <label>Your Name</label>
+      <input type="text" id="driverName" placeholder="Full name" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>PIN</label>
+      <input type="tel" id="pin" placeholder="••••" maxlength="4" inputmode="numeric" pattern="\d{4}">
+    </div>
+
+    <button class="btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+  </div>
+
+  <div class="footer">
+    Company login? <a href="/login">Sign in here</a>
+  </div>
+
+  <script>
+    async function doLogin() {
+      const companySlug = document.getElementById('companySlug').value.trim();
+      const driverName = document.getElementById('driverName').value.trim();
+      const pin = document.getElementById('pin').value.trim();
+      const errorEl = document.getElementById('errorMsg');
+      const btn = document.getElementById('loginBtn');
+
+      errorEl.classList.remove('visible');
+
+      if (!companySlug || !driverName || !pin) {
+        errorEl.textContent = 'Please fill in all fields.';
+        errorEl.classList.add('visible');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Signing in…';
+
+      try {
+        const res = await fetch('/api/driver/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ companySlug, driverName, pin })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.ok) {
+          window.location.href = '/driver';
+        } else {
+          errorEl.textContent = data.error || 'Sign in failed. Try again.';
+          errorEl.classList.add('visible');
+          btn.disabled = false;
+          btn.textContent = 'Sign In';
+        }
+      } catch {
+        errorEl.textContent = 'Network error. Check your connection.';
+        errorEl.classList.add('visible');
+        btn.disabled = false;
+        btn.textContent = 'Sign In';
+      }
+    }
+
+    // Allow pressing Enter in any field
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') doLogin();
+    });
+  </script>
+</body>
+</html>

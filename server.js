@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const twilio = require('twilio');
 const cookieParser = require('cookie-parser');
 const fs = require('fs');
+const bcrypt = require('bcrypt');
 
 const app = express();
 const db = createClient({
@@ -137,6 +138,8 @@ async function initDb() {
   }
   try { await dbRun(`ALTER TABLE drivers ADD COLUMN companyId INTEGER`); } catch {}
   try { await dbRun(`ALTER TABLE locations ADD COLUMN companyId INTEGER`); } catch {}
+  try { await dbRun(`ALTER TABLE drivers ADD COLUMN pin TEXT DEFAULT NULL`); } catch {}
+  try { await dbRun(`ALTER TABLE drivers ADD COLUMN canEditJobs INTEGER DEFAULT 0`); } catch {}
 
   // Trial analytics and lifecycle timestamp columns
   const newCols = [
@@ -202,6 +205,20 @@ function requireAdmin(req, res, next) {
   res.redirect('/admin/login');
 }
 
+function requireDriverAuth(req, res, next) {
+  const raw = req.signedCookies.driver;
+  if (!raw) return res.status(401).json({ error: 'Not authenticated as driver' });
+  try {
+    req.driver = JSON.parse(raw);
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid driver session' });
+  }
+}
+
+app.get('/driver-login', (req, res) => res.sendFile(__dirname + '/public/driver-login.html'));
+app.get('/driver', requireDriverAuth, (req, res) => res.sendFile(__dirname + '/public/driver.html'));
+
 app.get('/login', (req, res) => res.sendFile(__dirname + '/public/login.html'));
 
 app.post('/login', async (req, res) => {
@@ -215,6 +232,80 @@ app.post('/login', async (req, res) => {
 app.post('/logout', (req, res) => {
   res.clearCookie('company');
   res.redirect('/login');
+});
+
+// --- Driver PIN login ---
+
+app.post('/api/driver/login', async (req, res) => {
+  const { companySlug, driverName, pin } = req.body;
+  if (!companySlug || !driverName || !pin) return res.status(400).json({ error: 'Missing fields' });
+  try {
+    const company = await dbGet('SELECT * FROM companies WHERE slug = ?', [companySlug]);
+    if (!company) return res.status(401).json({ error: 'Company not found' });
+    const driver = await dbGet('SELECT * FROM drivers WHERE name = ? AND companyId = ?', [driverName, company.id]);
+    if (!driver) return res.status(401).json({ error: 'Driver not found' });
+    if (!driver.pin) return res.status(403).json({ error: 'No PIN set — ask your dispatcher' });
+    const match = await bcrypt.compare(pin, driver.pin);
+    if (!match) return res.status(401).json({ error: 'Incorrect PIN' });
+    const cookieData = JSON.stringify({ driverId: driver.id, companyId: company.id, driverName: driver.name });
+    const cookieOptions = { signed: true, httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 };
+    if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+    res.cookie('driver', cookieData, cookieOptions);
+    res.json({ ok: true, driverName: driver.name, canEditJobs: !!driver.canEditJobs });
+  } catch (err) {
+    console.error('Driver login error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/driver/logout', (req, res) => {
+  res.clearCookie('driver');
+  res.json({ ok: true });
+});
+
+app.get('/api/driver/me', requireDriverAuth, async (req, res) => {
+  try {
+    const driver = await dbGet('SELECT id, name, canEditJobs FROM drivers WHERE id = ?', [req.driver.driverId]);
+    if (!driver) return res.status(404).json({ error: 'Driver not found' });
+    const company = await dbGet('SELECT name, slug FROM companies WHERE id = ?', [req.driver.companyId]);
+    const jobs = await dbAll(
+      "SELECT * FROM jobs WHERE companyId = ? AND driverName = ? AND status IN ('active','planned') ORDER BY sortOrder ASC, createdAt ASC",
+      [req.driver.companyId, req.driver.driverName]
+    );
+    res.json({ driverName: driver.name, companyName: company?.name, companySlug: company?.slug, canEditJobs: !!driver.canEditJobs, jobs });
+  } catch (err) {
+    console.error('Driver me error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.get('/api/driver/jobs', requireDriverAuth, async (req, res) => {
+  try {
+    const jobs = await dbAll(
+      "SELECT * FROM jobs WHERE companyId = ? AND driverName = ? AND status IN ('active','planned') ORDER BY sortOrder ASC, createdAt ASC",
+      [req.driver.companyId, req.driver.driverName]
+    );
+    res.json(jobs);
+  } catch (err) {
+    console.error('Driver jobs error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Set driver PIN (company owner only)
+app.post('/api/drivers/:id/pin', requireAuth, async (req, res) => {
+  const { pin, canEditJobs } = req.body;
+  if (!pin || !/^\d{4}$/.test(pin)) return res.status(400).json({ error: 'PIN must be exactly 4 digits' });
+  const driver = await dbGet('SELECT * FROM drivers WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
+  if (!driver) return res.status(404).json({ error: 'Driver not found' });
+  try {
+    const hash = await bcrypt.hash(pin, 10);
+    await dbRun('UPDATE drivers SET pin = ?, canEditJobs = ? WHERE id = ?', [hash, canEditJobs ? 1 : 0, req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Set PIN error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 // Delete all company data (jobs, drivers, trucks, locations) for trial reset

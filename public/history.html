@@ -115,7 +115,8 @@
                   <div style="font-size:12px;color:#aaa;">${formatTime(j.createdAt)}</div>
                 </td>
                 <td><span class="done-badge">${j.jobType === 'empty' ? 'Collected' : 'Delivered'}</span></td>
-                <td>
+                <td style="white-space:nowrap;display:flex;gap:6px;align-items:center;border-bottom:none;">
+                  <span id="save-${j.id}"><button onclick="saveAsClient('${j.id}')" style="background:none;border:1.5px solid #d1fae5;border-radius:6px;color:#059669;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;">Save as Client</button></span>
                   <button onclick="deleteJob('${j.id}')" style="background:none;border:1.5px solid #fee2e2;border-radius:6px;color:#ef4444;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;">Delete</button>
                 </td>
               </tr>`).join('')}
@@ -128,6 +129,28 @@
       await fetch(`/api/jobs/${id}`, { method: 'DELETE' });
       const row = document.getElementById(`hist-${id}`);
       if (row) { row.style.opacity = '0'; row.style.transition = 'opacity 0.3s'; setTimeout(() => row.remove(), 300); }
+    }
+
+    async function saveAsClient(jobId) {
+      const wrap = document.getElementById(`save-${jobId}`);
+      if (!wrap) return;
+      wrap.innerHTML = '<span style="font-size:12px;color:#aaa;">Saving...</span>';
+      try {
+        const res = await fetch('/api/contacts/save-from-job', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ jobId })
+        });
+        if (!res.ok) throw new Error('Server error');
+        const data = await res.json();
+        if (data.created) {
+          wrap.innerHTML = '<span style="font-size:12px;font-weight:600;color:#059669;">✓ Saved</span>';
+        } else {
+          wrap.innerHTML = '<span style="font-size:12px;font-weight:600;color:#aaa;">Already saved</span>';
+        }
+      } catch (err) {
+        wrap.innerHTML = '<span style="font-size:12px;color:#ef4444;">Error — try again</span>';
+      }
     }
 
     load();

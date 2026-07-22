@@ -117,6 +117,48 @@
       .submit-wrap { left: 0; bottom: 62px; }
       .form-grid { grid-template-columns: 1fr; gap: 0; }
     }
+
+    /* Client search */
+    .client-search-wrap { position: relative; }
+    .client-search-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid #f59e0b; border-top: none; border-radius: 0 0 12px 12px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,0.1); display: none; }
+    .client-search-dropdown.open { display: block; }
+    .client-search-item { padding: 10px 14px; font-size: 13px; color: #333; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
+    .client-search-item:last-child { border-bottom: none; }
+    .client-search-item:hover { background: #fff8eb; }
+    .client-search-item-name { font-weight: 600; }
+    .client-search-item-meta { font-size: 11px; color: #aaa; margin-top: 1px; }
+    .client-selected-bar { display: none; align-items: center; gap: 8px; margin-top: 6px; font-size: 12px; color: #92400e; background: #fff8eb; border: 1px solid #fde68a; border-radius: 8px; padding: 6px 10px; }
+    .client-selected-bar.visible { display: flex; }
+    .client-clear-link { margin-left: auto; color: #f59e0b; font-weight: 600; cursor: pointer; font-size: 12px; }
+    .saved-addr-section { display: none; margin-top: 8px; }
+    .saved-addr-section.visible { display: block; }
+    .saved-addr-label { font-size: 12px; color: #888; margin-bottom: 5px; }
+    .saved-addr-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .saved-addr-chip { font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 8px; background: #f8f8f8; border: 1.5px solid #e8e8e8; color: #555; cursor: pointer; transition: all 0.15s; }
+    .saved-addr-chip:hover { background: #fff8eb; border-color: #f59e0b; color: #d97706; }
+    .saved-addr-chip.selected { background: #fff8eb; border-color: #f59e0b; color: #d97706; }
+
+    /* Add Driver modal (dark theme) */
+    .driver-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center; }
+    .driver-modal-overlay.open { display: flex; }
+    .driver-modal { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; width: 92%; max-width: 400px; overflow: hidden; }
+    .driver-modal-header { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #2a2a2a; }
+    .driver-modal-title { color: white; font-size: 16px; font-weight: 700; }
+    .driver-modal-close { background: none; border: none; color: #666; font-size: 20px; cursor: pointer; line-height: 1; }
+    .driver-modal-close:hover { color: #999; }
+    .driver-modal-body { padding: 20px; }
+    .driver-modal-field { margin-bottom: 14px; }
+    .driver-modal-field:last-child { margin-bottom: 0; }
+    .driver-modal-label { display: block; font-size: 12px; font-weight: 600; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .driver-modal-input { width: 100%; padding: 12px 14px; background: #0f0f0f; border: 1.5px solid #2a2a2a; border-radius: 10px; color: white; font-size: 14px; font-family: inherit; transition: border-color 0.2s; appearance: none; }
+    .driver-modal-input:focus { outline: none; border-color: #f59e0b; }
+    .driver-modal-input::placeholder { color: #444; }
+    .driver-modal-footer { padding: 16px 20px; border-top: 1px solid #2a2a2a; display: flex; gap: 10px; }
+    .driver-modal-cancel { flex: 1; padding: 12px; background: #2a2a2a; border: none; border-radius: 10px; color: #aaa; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .driver-modal-cancel:hover { background: #333; }
+    .driver-modal-save { flex: 1; padding: 12px; background: #f59e0b; border: none; border-radius: 10px; color: white; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; transition: background 0.2s; }
+    .driver-modal-save:hover { background: #d97706; }
+    .driver-modal-save:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -140,6 +182,20 @@
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
             <div class="card-title">Customer Details</div>
+          </div>
+          <div class="field">
+            <label>Search Saved Clients</label>
+            <div class="client-search-wrap">
+              <div class="input-wrap">
+                <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+                <input type="text" id="clientSearch" placeholder="Search saved clients..." autocomplete="off" oninput="onClientSearch(this.value)">
+              </div>
+              <div class="client-search-dropdown" id="clientDropdown"></div>
+            </div>
+            <div class="client-selected-bar" id="clientSelectedBar">
+              <span id="clientSelectedName"></span>
+              <span class="client-clear-link" onclick="clearClientSelection()">Clear</span>
+            </div>
           </div>
           <div class="field">
             <label>Customer Name</label>
@@ -199,7 +255,7 @@
           </div>
           <!-- Carrier account: driver dropdown -->
           <div class="field" id="carrierDriverField">
-            <label>Driver</label>
+            <label style="display:flex;align-items:center;justify-content:space-between;">Driver <button type="button" onclick="openAddDriverModal()" style="background:none;border:none;color:#f59e0b;font-weight:600;font-size:12px;cursor:pointer;padding:0;font-family:inherit;">+ New</button></label>
             <div class="input-wrap select-wrap">
               <span class="input-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
               <select name="driverName" id="driverSelect">
@@ -310,6 +366,10 @@
               <div class="pinned-badge" id="deliveryBadge">Location pinned on map</div>
               <input type="hidden" name="deliveryLat" id="deliveryLat">
               <input type="hidden" name="deliveryLng" id="deliveryLng">
+              <div class="saved-addr-section" id="savedAddrSection">
+                <div class="saved-addr-label">Saved addresses:</div>
+                <div class="saved-addr-chips" id="savedAddrChips"></div>
+              </div>
             </div>
           </div>
         <input type="hidden" name="dispatchMode" value="now">
@@ -337,6 +397,33 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Create Job
       </button>
+    </div>
+  </div>
+
+  <div class="driver-modal-overlay" id="addDriverModal" onclick="onDriverModalOverlayClick(event)">
+    <div class="driver-modal">
+      <div class="driver-modal-header">
+        <span class="driver-modal-title">Add Driver</span>
+        <button class="driver-modal-close" onclick="closeAddDriverModal()">✕</button>
+      </div>
+      <div class="driver-modal-body">
+        <div class="driver-modal-field">
+          <label class="driver-modal-label">Name *</label>
+          <input type="text" class="driver-modal-input" id="newDriverName" placeholder="e.g. Tom Smith" oninput="checkNewDriver()">
+        </div>
+        <div class="driver-modal-field">
+          <label class="driver-modal-label">Mobile</label>
+          <input type="tel" class="driver-modal-input" id="newDriverMobile" placeholder="0400 000 000">
+        </div>
+        <div class="driver-modal-field">
+          <label class="driver-modal-label">Licence Class</label>
+          <input type="text" class="driver-modal-input" id="newDriverLicence" placeholder="e.g. HC, MC">
+        </div>
+      </div>
+      <div class="driver-modal-footer">
+        <button class="driver-modal-cancel" onclick="closeAddDriverModal()">Cancel</button>
+        <button class="driver-modal-save" id="saveDriverBtn" onclick="saveNewDriver()" disabled>Save Driver</button>
+      </div>
     </div>
   </div>
 
@@ -445,6 +532,7 @@
 
     loadAccountType();
     loadTrucks();
+    loadContacts();
 
     let acDebounce;
     function showAddressBadge(badgeId, text, confirmed) {
@@ -605,6 +693,166 @@
     if ('contacts' in navigator && 'ContactsManager' in window) {
       document.body.classList.add('contacts-api-supported');
     }
+
+    // --- Saved Clients ---
+    let allContacts = [];
+
+    async function loadContacts() {
+      try {
+        const res = await fetch('/api/contacts');
+        if (res.ok) allContacts = await res.json();
+      } catch {}
+    }
+
+    let clientSearchDebounce;
+    function onClientSearch(val) {
+      clearTimeout(clientSearchDebounce);
+      clientSearchDebounce = setTimeout(() => {
+        const q = val.trim().toLowerCase();
+        const dropdown = document.getElementById('clientDropdown');
+        if (!q) { dropdown.innerHTML = ''; dropdown.classList.remove('open'); return; }
+        const matches = allContacts.filter(c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.mobile && c.mobile.toLowerCase().includes(q))
+        );
+        if (!matches.length) {
+          dropdown.innerHTML = '<div class="client-search-item" style="color:#aaa;cursor:default;">No saved clients found</div>';
+          dropdown.classList.add('open');
+          return;
+        }
+        dropdown.innerHTML = matches.map(c => `
+          <div class="client-search-item" onclick="selectContact(${c.id})">
+            <div class="client-search-item-name">${c.name}</div>
+            <div class="client-search-item-meta">${c.mobile || ''}${c.addresses && c.addresses.length ? ' · ' + c.addresses.length + ' saved address' + (c.addresses.length !== 1 ? 'es' : '') : ''}</div>
+          </div>
+        `).join('');
+        dropdown.classList.add('open');
+      }, 300);
+    }
+
+    function selectContact(id) {
+      const contact = allContacts.find(c => c.id === id);
+      if (!contact) return;
+      document.querySelector('[name="customerName"]').value = contact.name;
+      document.querySelector('[name="customerMobile"]').value = contact.mobile || '';
+      document.getElementById('clientSearch').value = '';
+      document.getElementById('clientDropdown').innerHTML = '';
+      document.getElementById('clientDropdown').classList.remove('open');
+      document.getElementById('clientSelectedName').textContent = contact.name;
+      document.getElementById('clientSelectedBar').classList.add('visible');
+      if (contact.addresses && contact.addresses.length) {
+        const chips = document.getElementById('savedAddrChips');
+        chips.innerHTML = contact.addresses.map(a => `
+          <div class="saved-addr-chip"
+               onclick="selectSavedAddress(this)"
+               data-address="${(a.address || '').replace(/"/g, '&quot;')}"
+               data-lat="${a.lat != null ? a.lat : ''}"
+               data-lng="${a.lng != null ? a.lng : ''}">
+            ${a.label || a.address}
+          </div>
+        `).join('');
+        document.getElementById('savedAddrSection').classList.add('visible');
+      } else {
+        document.getElementById('savedAddrSection').classList.remove('visible');
+      }
+      checkForm();
+    }
+
+    function selectSavedAddress(chip) {
+      document.querySelectorAll('.saved-addr-chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      const address = chip.dataset.address;
+      const lat = chip.dataset.lat;
+      const lng = chip.dataset.lng;
+      document.getElementById('deliveryAddress').value = address;
+      document.getElementById('deliveryLat').value = lat;
+      document.getElementById('deliveryLng').value = lng;
+      document.getElementById('deliveryList').innerHTML = '';
+      if (lat && lng) {
+        const parts = address.split(',');
+        const suburb = parts.length >= 2 ? parts.slice(-3, -1).join(',').trim() : address;
+        showAddressBadge('deliveryBadge', '✓ ' + suburb, true);
+      }
+      checkForm();
+    }
+
+    function clearClientSelection() {
+      document.getElementById('clientSearch').value = '';
+      document.getElementById('clientDropdown').innerHTML = '';
+      document.getElementById('clientDropdown').classList.remove('open');
+      document.getElementById('clientSelectedBar').classList.remove('visible');
+      document.getElementById('savedAddrSection').classList.remove('visible');
+      document.querySelector('[name="customerName"]').value = '';
+      document.querySelector('[name="customerMobile"]').value = '';
+      checkForm();
+    }
+
+    document.addEventListener('click', e => {
+      const search = document.getElementById('clientSearch');
+      const dropdown = document.getElementById('clientDropdown');
+      if (search && !search.contains(e.target) && dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    // --- Add Driver modal ---
+    function openAddDriverModal() {
+      document.getElementById('newDriverName').value = '';
+      document.getElementById('newDriverMobile').value = '';
+      document.getElementById('newDriverLicence').value = '';
+      document.getElementById('saveDriverBtn').disabled = true;
+      document.getElementById('addDriverModal').classList.add('open');
+      setTimeout(() => document.getElementById('newDriverName').focus(), 100);
+    }
+
+    function closeAddDriverModal() {
+      document.getElementById('addDriverModal').classList.remove('open');
+    }
+
+    function onDriverModalOverlayClick(e) {
+      if (e.target === document.getElementById('addDriverModal')) closeAddDriverModal();
+    }
+
+    function checkNewDriver() {
+      document.getElementById('saveDriverBtn').disabled = !document.getElementById('newDriverName').value.trim();
+    }
+
+    async function saveNewDriver() {
+      const name = document.getElementById('newDriverName').value.trim();
+      const mobile = document.getElementById('newDriverMobile').value.trim();
+      const licenceClass = document.getElementById('newDriverLicence').value.trim();
+      if (!name) return;
+      const btn = document.getElementById('saveDriverBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      try {
+        const res = await fetch('/api/drivers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, mobile: mobile || null, licenceClass: licenceClass || null })
+        });
+        if (!res.ok) throw new Error('Server error');
+        const driver = await res.json();
+        const sel = document.getElementById('driverSelect');
+        const opt = document.createElement('option');
+        opt.value = driver.name;
+        opt.textContent = driver.name;
+        sel.appendChild(opt);
+        sel.value = driver.name;
+        closeAddDriverModal();
+        checkForm();
+      } catch (err) {
+        alert('Could not add driver: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'Save Driver';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && document.getElementById('addDriverModal').classList.contains('open')) {
+        closeAddDriverModal();
+      }
+    });
 
     async function pickContact() {
       try {

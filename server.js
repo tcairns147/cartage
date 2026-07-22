@@ -118,6 +118,25 @@ async function initDb() {
   )`);
   try { await dbRun(`ALTER TABLE waitlist ADD COLUMN email TEXT`); } catch {}
 
+  await dbRun(`CREATE TABLE IF NOT EXISTS contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    companyId INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    mobile TEXT,
+    createdAt TEXT DEFAULT (datetime('now'))
+  )`);
+
+  await dbRun(`CREATE TABLE IF NOT EXISTS contact_addresses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    contactId INTEGER NOT NULL,
+    companyId INTEGER NOT NULL,
+    label TEXT,
+    address TEXT NOT NULL,
+    lat REAL,
+    lng REAL,
+    createdAt TEXT DEFAULT (datetime('now'))
+  )`);
+
   await dbRun(`CREATE TABLE IF NOT EXISTS carriers (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     companyId INTEGER NOT NULL,
@@ -804,6 +823,122 @@ app.post('/api/locations', requireAuth, async (req, res) => {
 app.delete('/api/locations/:id', requireAuth, async (req, res) => {
   await dbRun('DELETE FROM locations WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
   res.json({ success: true });
+});
+
+// --- Contacts API ---
+
+app.get('/api/contacts', requireAuth, async (req, res) => {
+  try {
+    const contacts = await dbAll('SELECT * FROM contacts WHERE companyId = ? ORDER BY name ASC', [req.company.id]);
+    const addresses = await dbAll('SELECT * FROM contact_addresses WHERE companyId = ? ORDER BY createdAt ASC', [req.company.id]);
+    const contactMap = {};
+    for (const c of contacts) {
+      contactMap[String(c.id)] = {
+        id: Number(c.id), name: c.name, mobile: c.mobile, createdAt: c.createdAt, addresses: []
+      };
+    }
+    for (const a of addresses) {
+      const key = String(a.contactId);
+      if (contactMap[key]) {
+        contactMap[key].addresses.push({
+          id: Number(a.id), contactId: Number(a.contactId), label: a.label,
+          address: a.address, lat: a.lat != null ? Number(a.lat) : null, lng: a.lng != null ? Number(a.lng) : null
+        });
+      }
+    }
+    res.json(Object.values(contactMap));
+  } catch (err) {
+    console.error('GET /api/contacts error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/contacts/save-from-job', requireAuth, async (req, res) => {
+  try {
+    const { jobId } = req.body;
+    const job = await dbGet('SELECT * FROM jobs WHERE id = ? AND companyId = ?', [jobId, req.company.id]);
+    if (!job) return res.status(404).json({ error: 'Job not found' });
+    let contact = await dbGet('SELECT * FROM contacts WHERE companyId = ? AND name = ?', [req.company.id, job.customerName || '']);
+    let created = false;
+    if (!contact) {
+      const result = await dbRun('INSERT INTO contacts (companyId, name, mobile) VALUES (?, ?, ?)',
+        [req.company.id, job.customerName || 'Unknown', job.customerMobile || null]);
+      contact = await dbGet('SELECT * FROM contacts WHERE id = ?', [Number(result.lastInsertRowid)]);
+      created = true;
+    }
+    if (job.deliveryAddress && contact) {
+      const existing = await dbGet('SELECT id FROM contact_addresses WHERE contactId = ? AND address = ?',
+        [Number(contact.id), job.deliveryAddress]);
+      if (!existing) {
+        await dbRun('INSERT INTO contact_addresses (contactId, companyId, address, lat, lng) VALUES (?, ?, ?, ?, ?)',
+          [Number(contact.id), req.company.id, job.deliveryAddress,
+           job.deliveryLat != null ? Number(job.deliveryLat) : null,
+           job.deliveryLng != null ? Number(job.deliveryLng) : null]);
+      }
+    }
+    res.json({ ok: true, created });
+  } catch (err) {
+    console.error('save-from-job error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/contacts', requireAuth, async (req, res) => {
+  try {
+    const { name, mobile } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name required' });
+    const result = await dbRun('INSERT INTO contacts (companyId, name, mobile) VALUES (?, ?, ?)',
+      [req.company.id, name, mobile || null]);
+    res.json({ id: Number(result.lastInsertRowid), name, mobile: mobile || null, addresses: [] });
+  } catch (err) {
+    console.error('POST /api/contacts error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/contacts/:id', requireAuth, async (req, res) => {
+  try {
+    const contact = await dbGet('SELECT id FROM contacts WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
+    if (!contact) return res.status(404).json({ error: 'Not found' });
+    await dbRun('DELETE FROM contact_addresses WHERE contactId = ?', [req.params.id]);
+    await dbRun('DELETE FROM contacts WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/contacts/:id error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/contacts/:id/addresses', requireAuth, async (req, res) => {
+  try {
+    const contact = await dbGet('SELECT id FROM contacts WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
+    if (!contact) return res.status(404).json({ error: 'Contact not found' });
+    const { label, address, lat, lng } = req.body;
+    if (!address) return res.status(400).json({ error: 'Address required' });
+    const result = await dbRun(
+      'INSERT INTO contact_addresses (contactId, companyId, label, address, lat, lng) VALUES (?, ?, ?, ?, ?, ?)',
+      [req.params.id, req.company.id, label || null, address, lat || null, lng || null]
+    );
+    res.json({ id: Number(result.lastInsertRowid), contactId: Number(req.params.id), label: label || null, address, lat: lat || null, lng: lng || null });
+  } catch (err) {
+    console.error('POST /api/contacts/:id/addresses error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/contact-addresses/:id', requireAuth, async (req, res) => {
+  try {
+    const addr = await dbGet(
+      'SELECT ca.id FROM contact_addresses ca WHERE ca.id = ? AND ca.companyId = ?',
+      [req.params.id, req.company.id]
+    );
+    if (!addr) return res.status(404).json({ error: 'Not found' });
+    await dbRun('DELETE FROM contact_addresses WHERE id = ?', [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('DELETE /api/contact-addresses/:id error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 const PORT = process.env.PORT || 3000;

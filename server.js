@@ -714,6 +714,19 @@ app.post('/jobs/:id/complete', async (req, res) => {
   if (job.companyId) {
     await dbRun("UPDATE drivers SET status = 'available' WHERE name = ? AND companyId = ?", [job.driverName, job.companyId]);
     if (job.truckRego) await dbRun("UPDATE trucks SET status = 'available' WHERE rego = ? AND companyId = ?", [job.truckRego, job.companyId]);
+
+    // Auto-save customer as contact
+    if (job.customerName) {
+      let contact = await dbGet('SELECT id FROM contacts WHERE companyId = ? AND LOWER(name) = LOWER(?)', [job.companyId, job.customerName]);
+      if (!contact) {
+        const result = await dbRun('INSERT INTO contacts (companyId, name, mobile) VALUES (?, ?, ?)', [job.companyId, job.customerName, job.customerMobile || null]);
+        contact = { id: Number(result.lastInsertRowid) };
+      }
+      if (job.deliveryAddress && job.deliveryLat) {
+        const exists = await dbGet('SELECT id FROM contact_addresses WHERE contactId = ? AND LOWER(address) = LOWER(?)', [contact.id, job.deliveryAddress]);
+        if (!exists) await dbRun('INSERT INTO contact_addresses (contactId, companyId, address, lat, lng) VALUES (?, ?, ?, ?, ?)', [contact.id, job.companyId, job.deliveryAddress, job.deliveryLat, job.deliveryLng]);
+      }
+    }
   }
   res.json({ success: true });
 });

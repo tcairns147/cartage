@@ -185,6 +185,57 @@
       line-height: 1.7;
     }
 
+    /* ── EDGE / POSITIONING ─────────────────────────────── */
+    .edge { padding: 80px 48px; max-width: 1100px; margin: 0 auto; }
+    .edge h2 {
+      font-size: clamp(28px, 3.5vw, 42px);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -0.5px;
+      max-width: 640px;
+      margin-bottom: 16px;
+    }
+    .edge h2 em { font-style: normal; color: #f59e0b; }
+    .edge-sub {
+      font-size: 15px;
+      color: #666;
+      line-height: 1.7;
+      max-width: 560px;
+      margin-bottom: 48px;
+    }
+    .edge-compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: #1c1c1c;
+      border: 1px solid #1c1c1c;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 40px;
+    }
+    .edge-col { background: #0a0a0a; padding: 32px; }
+    .edge-col-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 18px;
+    }
+    .edge-col-old .edge-col-label { color: #555; }
+    .edge-col-new .edge-col-label { color: #f59e0b; }
+    .edge-col ul { list-style: none; }
+    .edge-col li {
+      font-size: 14px;
+      line-height: 1.7;
+      padding-left: 22px;
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .edge-col-old li { color: #555; }
+    .edge-col-old li::before { content: "✕"; position: absolute; left: 0; color: #444; }
+    .edge-col-new li { color: #ccc; }
+    .edge-col-new li::before { content: "✓"; position: absolute; left: 0; color: #f59e0b; }
+
     /* ── FORM SECTION ────────────────────────────────────── */
     .form-wrap {
       padding: 0 48px 100px;
@@ -330,6 +381,8 @@
       .hero-content { padding: 0 24px; }
       .hero { padding-bottom: 56px; }
       .features { padding: 56px 24px; }
+      .edge { padding: 56px 24px; }
+      .edge-compare { grid-template-columns: 1fr; }
       .form-wrap { grid-template-columns: 1fr; gap: 40px; padding: 0 24px 72px; }
       .footer { padding: 24px; flex-direction: column; text-align: center; }
     }
@@ -377,10 +430,41 @@
       <div class="feature">
         <div class="feature-num">04</div>
         <div class="feature-title">Job history & automatic invoicing</div>
-        <div class="feature-desc">Every run is logged — distance, delivery time, customer details. Set a $/km or $/hr rate and the moment a job is complete, an invoice is generated automatically and ready to send or push directly to Xero.</div>
+        <div class="feature-desc">Every run is logged — distance, delivery time, customer details. Set a $/km or $/hr rate and the moment a job is complete, an invoice is generated automatically and ready to send or push directly to Xero or MYOB.</div>
       </div>
     </div>
   </section>
+
+  <hr class="section-divider">
+
+  <section class="edge">
+    <div class="features-label">Get ahead of the industry</div>
+    <h2>Your competitors are still <em>making phone calls.</em></h2>
+    <p class="edge-sub">Every "where's my truck" call your competitor takes is one less delivery they get to. Give customers the answer before they ask — and look like the most professional operator in the region while you're at it.</p>
+
+    <div class="edge-compare">
+      <div class="edge-col edge-col-old">
+        <div class="edge-col-label">Most operators today</div>
+        <ul>
+          <li>Customer calls to ask "where's my truck"</li>
+          <li>Driver pulls over to answer the phone</li>
+          <li>Invoices written up after the fact</li>
+        </ul>
+      </div>
+      <div class="edge-col edge-col-new">
+        <div class="edge-col-label">Operators on Drova</div>
+        <ul>
+          <li>Customer already has a live tracking link</li>
+          <li>Driver stays focused on the road</li>
+          <li>Invoice sent automatically on delivery</li>
+        </ul>
+      </div>
+    </div>
+
+    <a href="#waitlist" class="hero-cta">Get the edge — join the waitlist</a>
+  </section>
+
+  <hr class="section-divider">
 
   <section class="form-wrap" id="waitlist">
     <div class="form-left">

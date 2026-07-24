@@ -15,90 +15,769 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f0e8; min-height: 100vh; display: flex; }
     .main { margin-left: 220px; flex: 1; }
-    .topbar { background: white; padding: 16px 32px 20px; border-bottom: 1px solid #eee; }
-    .topbar-logo { height: 52px; margin-bottom: 8px; display: block; }
+
+    /* ── Topbar ── */
+    .topbar { background: white; padding: 16px 32px 20px; border-bottom: 1px solid #eee; display: flex; align-items: flex-end; justify-content: space-between; }
+    .topbar-left { display: flex; flex-direction: column; }
+    .topbar-logo { height: 52px; margin-bottom: 8px; }
     .topbar h1 { font-size: 22px; font-weight: 800; color: #1a1a1a; }
     .topbar p { font-size: 13px; color: #aaa; margin-top: 2px; }
+    .topbar-actions { display: flex; gap: 10px; align-items: center; }
+    .btn-primary { background: #f59e0b; color: white; border: none; padding: 11px 18px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .btn-primary:hover { background: #d97706; }
+    .btn-secondary { background: white; color: #555; border: 1.5px solid #e5e5e5; padding: 10px 18px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .btn-secondary:hover { border-color: #ccc; color: #333; }
+
+    /* ── Content ── */
     .content { padding: 24px 32px; }
-    .card { background: white; border-radius: 16px; border: 1px solid #eee; overflow: hidden; }
-    .empty { padding: 80px 20px; text-align: center; }
-    .empty-icon { font-size: 48px; margin-bottom: 12px; }
-    .empty h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
-    .empty p { font-size: 14px; color: #aaa; }
-    table { width: 100%; border-collapse: collapse; }
-    thead { background: #fafafa; }
-    th { padding: 12px 20px; text-align: left; font-size: 11px; font-weight: 700; color: #aaa; letter-spacing: 0.5px; text-transform: uppercase; border-bottom: 1px solid #eee; }
-    td { padding: 14px 20px; border-bottom: 1px solid #f9f9f9; font-size: 14px; color: #333; vertical-align: middle; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #fafafa; }
-    .client-cell { display: flex; align-items: center; gap: 12px; }
-    .avatar { width: 38px; height: 38px; border-radius: 50%; background: #e8f4fd; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #1a6fa8; flex-shrink: 0; }
-    .client-name { font-size: 14px; font-weight: 600; color: #1a1a1a; }
-    .client-mobile { font-size: 12px; color: #aaa; }
-    .jobs-count { display: inline-block; background: #fef3c7; color: #92400e; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
-    .date-cell { font-size: 13px; color: #888; }
-    @media (max-width: 768px) { .main { margin-left: 0; } .content { padding: 16px 16px 80px; } th:nth-child(3), td:nth-child(3) { display: none; } }
+    .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .search-wrap { position: relative; flex: 1; max-width: 340px; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; color: #aaa; }
+    .search-input { width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid #e5e5e5; border-radius: 10px; font-size: 14px; font-family: inherit; background: white; color: #1a1a1a; outline: none; }
+    .search-input:focus { border-color: #f59e0b; }
+    .count-label { font-size: 13px; color: #888; font-weight: 600; margin-left: auto; }
+
+    /* ── Empty state ── */
+    .empty-state { background: white; border-radius: 16px; border: 1px solid #eee; padding: 80px 20px; text-align: center; }
+    .empty-state svg { display: block; margin: 0 auto 16px; }
+    .empty-state h3 { font-size: 18px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
+    .empty-state p { font-size: 14px; color: #aaa; }
+
+    /* ── Client cards ── */
+    .client-card { background: white; border-radius: 14px; border: 1px solid #eee; margin-bottom: 12px; overflow: hidden; transition: box-shadow 0.2s; }
+    .client-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+
+    .client-header { display: flex; align-items: center; gap: 14px; padding: 16px 20px; }
+    .client-avatar { width: 42px; height: 42px; border-radius: 50%; background: #fef3c7; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; color: #92400e; flex-shrink: 0; }
+    .client-info { flex: 1; min-width: 0; }
+    .client-name { font-size: 15px; font-weight: 700; color: #1a1a1a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .client-mobile { font-size: 13px; color: #888; margin-top: 2px; }
+    .addr-badge { background: #f0f0f0; color: #555; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; }
+    .addr-badge.has-addrs { background: #fef3c7; color: #92400e; }
+
+    .card-actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-icon { padding: 7px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1.5px solid #e5e5e5; background: white; color: #555; transition: all 0.15s; }
+    .btn-icon:hover { border-color: #ccc; color: #333; }
+    .btn-icon.danger { color: #ef4444; border-color: #fee2e2; }
+    .btn-icon.danger:hover { background: #fff5f5; border-color: #ef4444; }
+    .btn-icon.amber { color: #d97706; border-color: #fef3c7; }
+    .btn-icon.amber:hover { background: #fffbeb; border-color: #f59e0b; }
+    .btn-expand { width: 32px; height: 32px; border-radius: 8px; border: 1.5px solid #e5e5e5; background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #aaa; transition: all 0.15s; flex-shrink: 0; }
+    .btn-expand:hover { border-color: #ccc; color: #555; }
+    .btn-expand.open { border-color: #f59e0b; color: #f59e0b; background: #fffbeb; }
+
+    /* ── Inline edit (contact header) ── */
+    .edit-fields { display: flex; gap: 8px; flex: 1; min-width: 0; align-items: center; flex-wrap: wrap; }
+    .edit-input { border: 1.5px solid #e5e5e5; border-radius: 8px; padding: 8px 11px; font-size: 14px; font-family: inherit; color: #1a1a1a; outline: none; min-width: 0; }
+    .edit-input:focus { border-color: #f59e0b; }
+    .edit-input.name-input { flex: 2; min-width: 120px; font-weight: 600; }
+    .edit-input.mobile-input { flex: 1; min-width: 100px; }
+    .edit-btns { display: flex; gap: 6px; flex-shrink: 0; }
+    .btn-save { padding: 8px 14px; border-radius: 8px; border: none; background: #f59e0b; color: white; font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .btn-save:hover { background: #d97706; }
+    .btn-cancel { padding: 8px 12px; border-radius: 8px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-cancel:hover { border-color: #ccc; }
+
+    /* ── Addresses section ── */
+    .addresses-section { border-top: 1px solid #f0f0f0; padding: 12px 20px 16px; display: none; }
+    .addresses-section.open { display: block; }
+    .no-addresses { font-size: 13px; color: #bbb; padding: 4px 0 10px; font-style: italic; }
+
+    .address-row { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; margin-bottom: 4px; }
+    .address-row:hover { background: #fafafa; }
+    .addr-dot { width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; flex-shrink: 0; }
+    .addr-text-wrap { flex: 1; min-width: 0; }
+    .addr-label-text { font-size: 11px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 1px; }
+    .addr-main-text { font-size: 13px; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .addr-actions { display: flex; gap: 5px; flex-shrink: 0; }
+    .btn-xs { padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1.5px solid #e5e5e5; background: white; color: #555; }
+    .btn-xs:hover { border-color: #ccc; }
+    .btn-xs.danger { color: #ef4444; border-color: #fee2e2; }
+    .btn-xs.danger:hover { background: #fff5f5; border-color: #ef4444; }
+
+    /* Inline address edit */
+    .addr-edit-row { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: 8px; background: #fafafa; margin-bottom: 4px; flex-wrap: wrap; }
+    .addr-edit-row .edit-input { font-size: 13px; padding: 7px 10px; }
+    .addr-edit-row .label-input { width: 110px; min-width: 80px; }
+    .addr-edit-row .addr-input { flex: 1; min-width: 160px; }
+
+    /* Add address form */
+    .add-addr-row { display: flex; gap: 8px; align-items: center; padding: 8px 12px; margin-top: 4px; flex-wrap: wrap; }
+    .add-addr-row .edit-input { font-size: 13px; padding: 7px 10px; }
+    .add-addr-row .label-input { width: 110px; min-width: 80px; }
+    .add-addr-row .addr-input { flex: 1; min-width: 160px; }
+
+    .btn-add-addr { padding: 8px 14px; border-radius: 8px; border: 1.5px dashed #d5d5d5; background: white; color: #888; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; margin-top: 6px; width: 100%; text-align: center; transition: all 0.15s; }
+    .btn-add-addr:hover { border-color: #f59e0b; color: #d97706; background: #fffbeb; }
+
+    /* ── Modals ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.visible { display: flex; }
+    .modal-box { background: white; border-radius: 16px; padding: 28px 24px 24px; width: 100%; max-width: 440px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-box h3 { font-size: 18px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px; }
+    .modal-box p.modal-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e5e5; border-radius: 10px; font-size: 14px; font-family: inherit; color: #1a1a1a; outline: none; }
+    .form-input:focus { border-color: #f59e0b; }
+    .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+    .modal-cancel { flex: 1; padding: 13px; border-radius: 10px; border: 1.5px solid #e5e5e5; background: white; color: #555; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .modal-cancel:hover { border-color: #ccc; }
+    .modal-confirm { flex: 1; padding: 13px; border-radius: 10px; border: none; background: #f59e0b; color: white; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .modal-confirm:hover { background: #d97706; }
+    .modal-confirm:disabled { background: #ddd; color: #999; cursor: not-allowed; }
+
+    /* Import modal extra */
+    .modal-box.wide { max-width: 580px; }
+    .file-drop { border: 2px dashed #e5e5e5; border-radius: 12px; padding: 32px 20px; text-align: center; cursor: pointer; transition: all 0.15s; }
+    .file-drop:hover { border-color: #f59e0b; background: #fffbeb; }
+    .file-drop svg { display: block; margin: 0 auto 10px; color: #ccc; }
+    .file-drop p { font-size: 14px; color: #888; }
+    .file-drop strong { color: #555; }
+    .file-input-hidden { display: none; }
+
+    /* Preview table */
+    .preview-section { margin-top: 16px; }
+    .preview-label { font-size: 12px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px; }
+    .mapping-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .mapping-chip { font-size: 12px; padding: 4px 10px; border-radius: 20px; font-weight: 600; }
+    .mapping-chip.found { background: #dcfce7; color: #166534; }
+    .mapping-chip.missing { background: #f3f4f6; color: #9ca3af; }
+    .preview-table-wrap { overflow-x: auto; max-height: 180px; border: 1px solid #eee; border-radius: 8px; }
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .preview-table th { background: #fafafa; padding: 8px 10px; text-align: left; font-size: 11px; font-weight: 700; color: #888; border-bottom: 1px solid #eee; white-space: nowrap; }
+    .preview-table td { padding: 7px 10px; border-bottom: 1px solid #f5f5f5; color: #444; white-space: nowrap; }
+    .preview-table tr:last-child td { border-bottom: none; }
+    .col-highlight { background: #fffbeb; }
+    .import-result { padding: 14px 16px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; margin-top: 14px; font-size: 14px; color: #166534; font-weight: 600; }
+    .import-result.has-errors { background: #fff7ed; border-color: #fed7aa; color: #92400e; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 600; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+    .toast.show { opacity: 1; }
+
+    /* Confirm modal */
+    .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+    .confirm-overlay.visible { display: flex; }
+
+    @media (max-width: 768px) {
+      .main { margin-left: 0; }
+      .content { padding: 16px 16px 80px; }
+      .topbar { padding: 16px 20px 20px; flex-wrap: wrap; gap: 12px; }
+      .topbar-actions { width: 100%; }
+      .topbar-actions .btn-secondary, .topbar-actions .btn-primary { flex: 1; text-align: center; }
+      .toolbar { flex-wrap: wrap; }
+      .search-wrap { max-width: 100%; }
+      .count-label { margin-left: 0; }
+      .client-header { flex-wrap: wrap; gap: 10px; }
+      .card-actions { margin-left: auto; }
+      .addr-badge { display: none; }
+    }
   </style>
 </head>
 <body>
   <div id="sidebar-root"></div>
 
-  <div class="main">
-    <div class="topbar">
-      <img src="/logo.svg" alt="Drova" class="topbar-logo">
-      <h1>Clients</h1>
-      <p>Customers you've delivered for</p>
-    </div>
-    <div class="content">
-      <div class="card" id="clientsCard"><div style="padding:40px;text-align:center;color:#aaa;">Loading...</div></div>
+  <!-- Add Client modal -->
+  <div class="modal-overlay" id="addClientModal">
+    <div class="modal-box">
+      <h3>Add Client</h3>
+      <p class="modal-sub">Create a new client contact</p>
+      <div class="form-group">
+        <label class="form-label" for="addClientName">Name <span style="color:#ef4444">*</span></label>
+        <input class="form-input" id="addClientName" type="text" placeholder="e.g. John Smith" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="addClientMobile">Mobile</label>
+        <input class="form-input" id="addClientMobile" type="tel" placeholder="e.g. 0400 000 000" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="addClientAddress">Address <span style="font-weight:400;text-transform:none;color:#aaa">(optional)</span></label>
+        <input class="form-input" id="addClientAddress" type="text" placeholder="e.g. 123 Farm Rd, Goulburn NSW" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="addClientLabel">Address Label <span style="font-weight:400;text-transform:none;color:#aaa">(optional)</span></label>
+        <input class="form-input" id="addClientLabel" type="text" placeholder="e.g. Home Farm" autocomplete="off">
+      </div>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeAddModal()">Cancel</button>
+        <button class="modal-confirm" id="addClientBtn" onclick="submitAddClient()">Add Client</button>
+      </div>
     </div>
   </div>
 
-  <script>
-    document.getElementById('sidebar-root').innerHTML = renderSidebar('clients');
-    document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+  <!-- Import modal -->
+  <div class="modal-overlay" id="importModal">
+    <div class="modal-box wide">
+      <h3>Import CSV / Excel</h3>
+      <p class="modal-sub">Bulk import clients from a spreadsheet. Columns are detected automatically.</p>
 
-    function formatDate(str) {
-      return new Date(str + 'Z').toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' });
+      <div class="file-drop" id="fileDrop" onclick="document.getElementById('fileInput').click()">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        <p><strong>Click to choose file</strong></p>
+        <p style="font-size:12px;color:#bbb;margin-top:4px">CSV, XLSX, or XLS</p>
+      </div>
+      <input type="file" id="fileInput" class="file-input-hidden" accept=".csv,.xlsx,.xls">
+
+      <div id="previewSection" class="preview-section" style="display:none"></div>
+      <div id="importResult" style="display:none"></div>
+
+      <div class="modal-btns" style="margin-top:16px">
+        <button class="modal-cancel" onclick="closeImportModal()">Cancel</button>
+        <button class="modal-confirm" id="importBtn" onclick="runImport()" style="display:none">Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm delete modal -->
+  <div class="confirm-overlay" id="confirmModal">
+    <div class="modal-box">
+      <h3 id="confirmTitle">Are you sure?</h3>
+      <p class="modal-sub" id="confirmBody">This cannot be undone.</p>
+      <div class="modal-btns">
+        <button class="modal-cancel" onclick="closeConfirm()">Cancel</button>
+        <button class="modal-confirm" style="background:#ef4444;" id="confirmOkBtn" onclick="runConfirm()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <img src="/logo.svg" alt="Drova" class="topbar-logo">
+        <h1>Clients</h1>
+        <p>Manage client contacts and addresses</p>
+      </div>
+      <div class="topbar-actions">
+        <button class="btn-secondary" onclick="openImportModal()">
+          <svg style="display:inline;vertical-align:-3px;margin-right:5px" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Import CSV / Excel
+        </button>
+        <button class="btn-primary" onclick="openAddModal()">+ Add Client</button>
+      </div>
+    </div>
+    <div class="content">
+      <div class="toolbar">
+        <div class="search-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="search-input" id="searchInput" type="text" placeholder="Search clients..." oninput="renderList()">
+        </div>
+        <div class="count-label" id="countLabel"></div>
+      </div>
+      <div id="clientList">
+        <div style="padding:40px;text-align:center;color:#bbb;font-size:14px;">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  document.getElementById('sidebar-root').innerHTML = renderSidebar('clients');
+  document.head.insertAdjacentHTML('beforeend', `<style>${SIDEBAR_CSS}</style>`);
+
+  // ── State ─────────────────────────────────────────────────────────────────
+  let contactsMap = {};   // id → contact object (with .addresses array)
+  let editingContact = null;   // contact id being edited
+  let editingAddr = null;      // address id being edited
+  let expandedContacts = new Set();
+  let addingAddrFor = null;    // contact id showing add-addr form
+
+  // ── Toast ─────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('show'), 3000);
+  }
+
+  // ── Confirm modal ──────────────────────────────────────────────────────────
+  let confirmFn = null;
+  function confirm(title, body, fn) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmBody').textContent = body;
+    confirmFn = fn;
+    document.getElementById('confirmModal').classList.add('visible');
+  }
+  function closeConfirm() {
+    document.getElementById('confirmModal').classList.remove('visible');
+    confirmFn = null;
+  }
+  function runConfirm() {
+    if (confirmFn) { confirmFn(); confirmFn = null; }
+    closeConfirm();
+  }
+  document.getElementById('confirmModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeConfirm(); });
+
+  // ── Load data ──────────────────────────────────────────────────────────────
+  async function loadContacts() {
+    try {
+      const res = await fetch('/api/contacts');
+      const contacts = await res.json();
+      contactsMap = {};
+      for (const c of contacts) contactsMap[c.id] = c;
+      renderList();
+    } catch {
+      document.getElementById('clientList').innerHTML = '<div style="padding:40px;text-align:center;color:#ef4444;font-size:14px;">Failed to load clients.</div>';
+    }
+  }
+
+  // ── Render list ────────────────────────────────────────────────────────────
+  function renderList() {
+    const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+    let all = Object.values(contactsMap).sort((a, b) => a.name.localeCompare(b.name));
+    const filtered = q ? all.filter(c => c.name.toLowerCase().includes(q) || (c.mobile || '').includes(q)) : all;
+
+    const label = document.getElementById('countLabel');
+    label.textContent = filtered.length === 1 ? '1 client' : `${filtered.length} clients`;
+
+    const list = document.getElementById('clientList');
+    if (!filtered.length && !q) {
+      list.innerHTML = `
+        <div class="empty-state">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.85"/></svg>
+          <h3>No clients yet</h3>
+          <p>Add a client manually or import a spreadsheet to get started.</p>
+        </div>`;
+      return;
+    }
+    if (!filtered.length) {
+      list.innerHTML = '<div class="empty-state" style="padding:40px 20px;"><h3 style="font-size:16px;">No results</h3><p>No clients match your search.</p></div>';
+      return;
     }
 
-    function avatarLetter(mobile) {
-      return mobile ? mobile.slice(-2) : '?';
-    }
+    list.innerHTML = filtered.map(c => cardHTML(c)).join('');
+  }
 
-    async function load() {
-      const res = await fetch('/api/clients');
-      const clients = await res.json();
-      const card = document.getElementById('clientsCard');
+  function initials(name) {
+    return (name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  }
 
-      if (!clients.length) {
-        card.innerHTML = `<div class="empty"><div class="empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#ddd" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75M21 21v-2a4 4 0 0 0-3-3.85"/></svg></div><h3>No clients yet</h3><p>Clients appear here automatically once you create jobs.</p></div>`;
-        return;
+  function cardHTML(c) {
+    const isEditing = editingContact === c.id;
+    const isExpanded = expandedContacts.has(c.id);
+    const addrCount = (c.addresses || []).length;
+
+    const headerHTML = isEditing ? `
+      <div class="client-avatar">${initials(c.name)}</div>
+      <div class="edit-fields">
+        <input class="edit-input name-input" id="editName_${c.id}" value="${esc(c.name)}" placeholder="Name" autocomplete="off">
+        <input class="edit-input mobile-input" id="editMobile_${c.id}" value="${esc(c.mobile || '')}" placeholder="Mobile" autocomplete="off">
+      </div>
+      <div class="edit-btns">
+        <button class="btn-save" onclick="saveContact(${c.id})">Save</button>
+        <button class="btn-cancel" onclick="cancelEditContact(${c.id})">Cancel</button>
+      </div>
+    ` : `
+      <div class="client-avatar">${initials(c.name)}</div>
+      <div class="client-info">
+        <div class="client-name">${esc(c.name)}</div>
+        <div class="client-mobile">${esc(c.mobile || '—')}</div>
+      </div>
+      <span class="addr-badge${addrCount ? ' has-addrs' : ''}">${addrCount} address${addrCount !== 1 ? 'es' : ''}</span>
+      <div class="card-actions">
+        <button class="btn-icon amber" onclick="startEditContact(${c.id})">Edit</button>
+        <button class="btn-icon danger" onclick="deleteContact(${c.id})">Delete</button>
+        <button class="btn-expand${isExpanded ? ' open' : ''}" onclick="toggleExpand(${c.id})" title="${isExpanded ? 'Collapse' : 'Expand addresses'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            ${isExpanded ? '<polyline points="18 15 12 9 6 15"/>' : '<polyline points="6 9 12 15 18 9"/>'}
+          </svg>
+        </button>
+      </div>
+    `;
+
+    const addrRowsHTML = (c.addresses || []).map(a => {
+      if (editingAddr === a.id) {
+        return `
+          <div class="addr-edit-row" id="addrrow_${a.id}">
+            <input class="edit-input label-input" id="editAddrLabel_${a.id}" value="${esc(a.label || '')}" placeholder="Label">
+            <input class="edit-input addr-input" id="editAddrAddr_${a.id}" value="${esc(a.address)}" placeholder="Address" autocomplete="off">
+            <button class="btn-save" onclick="saveAddr(${a.id}, ${c.id})">Save</button>
+            <button class="btn-cancel" onclick="cancelEditAddr(${c.id})">Cancel</button>
+          </div>`;
+      }
+      return `
+        <div class="address-row" id="addrrow_${a.id}">
+          <div class="addr-dot"></div>
+          <div class="addr-text-wrap">
+            ${a.label ? `<div class="addr-label-text">${esc(a.label)}</div>` : ''}
+            <div class="addr-main-text">${esc(a.address)}</div>
+          </div>
+          <div class="addr-actions">
+            <button class="btn-xs" onclick="startEditAddr(${a.id}, ${c.id})">Edit</button>
+            <button class="btn-xs danger" onclick="deleteAddr(${a.id}, ${c.id})">Delete</button>
+          </div>
+        </div>`;
+    }).join('');
+
+    const addAddrFormHTML = addingAddrFor === c.id ? `
+      <div class="add-addr-row" id="addAddrForm_${c.id}">
+        <input class="edit-input label-input" id="newAddrLabel_${c.id}" placeholder="Label (optional)" autocomplete="off">
+        <input class="edit-input addr-input" id="newAddrAddr_${c.id}" placeholder="Address" autocomplete="off">
+        <button class="btn-save" onclick="submitAddAddr(${c.id})">Save</button>
+        <button class="btn-cancel" onclick="cancelAddAddr(${c.id})">Cancel</button>
+      </div>` : `
+      <button class="btn-add-addr" onclick="showAddAddrForm(${c.id})">+ Add Address</button>`;
+
+    return `
+      <div class="client-card" id="client_${c.id}">
+        <div class="client-header">${headerHTML}</div>
+        <div class="addresses-section${isExpanded ? ' open' : ''}" id="addrs_${c.id}">
+          ${addrCount === 0 && addingAddrFor !== c.id ? '<div class="no-addresses">No saved addresses yet.</div>' : ''}
+          ${addrRowsHTML}
+          ${addAddrFormHTML}
+        </div>
+      </div>`;
+  }
+
+  function esc(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function refreshCard(contactId) {
+    const c = contactsMap[contactId];
+    if (!c) return;
+    const existing = document.getElementById(`client_${contactId}`);
+    if (!existing) { renderList(); return; }
+    const tmp = document.createElement('div');
+    tmp.innerHTML = cardHTML(c);
+    existing.replaceWith(tmp.firstElementChild);
+  }
+
+  // ── Contact CRUD ───────────────────────────────────────────────────────────
+  function startEditContact(id) {
+    editingContact = id;
+    editingAddr = null;
+    addingAddrFor = null;
+    refreshCard(id);
+    const el = document.getElementById(`editName_${id}`);
+    if (el) el.focus();
+  }
+
+  function cancelEditContact(id) {
+    editingContact = null;
+    refreshCard(id);
+  }
+
+  async function saveContact(id) {
+    const name = document.getElementById(`editName_${id}`)?.value?.trim();
+    const mobile = document.getElementById(`editMobile_${id}`)?.value?.trim();
+    if (!name) { showToast('Name is required'); return; }
+    try {
+      const res = await fetch(`/api/contacts/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mobile })
+      });
+      if (!res.ok) { const d = await res.json(); showToast(d.error || 'Save failed'); return; }
+      contactsMap[id].name = name;
+      contactsMap[id].mobile = mobile || null;
+      editingContact = null;
+      refreshCard(id);
+      showToast('Client updated');
+    } catch { showToast('Save failed'); }
+  }
+
+  function deleteContact(id) {
+    const c = contactsMap[id];
+    confirm('Delete client?', `"${c.name}" and all their addresses will be permanently removed.`, async () => {
+      try {
+        await fetch(`/api/contacts/${id}`, { method: 'DELETE' });
+        delete contactsMap[id];
+        if (expandedContacts.has(id)) expandedContacts.delete(id);
+        renderList();
+        showToast('Client deleted');
+      } catch { showToast('Delete failed'); }
+    });
+  }
+
+  // ── Address expand/collapse ────────────────────────────────────────────────
+  function toggleExpand(id) {
+    if (expandedContacts.has(id)) { expandedContacts.delete(id); }
+    else { expandedContacts.add(id); }
+    refreshCard(id);
+  }
+
+  // ── Address CRUD ───────────────────────────────────────────────────────────
+  function startEditAddr(addrId, contactId) {
+    editingAddr = addrId;
+    addingAddrFor = null;
+    expandedContacts.add(contactId);
+    refreshCard(contactId);
+    const el = document.getElementById(`editAddrLabel_${addrId}`);
+    if (el) el.focus();
+  }
+
+  function cancelEditAddr(contactId) {
+    editingAddr = null;
+    refreshCard(contactId);
+  }
+
+  async function saveAddr(addrId, contactId) {
+    const label = document.getElementById(`editAddrLabel_${addrId}`)?.value?.trim();
+    const address = document.getElementById(`editAddrAddr_${addrId}`)?.value?.trim();
+    if (!address) { showToast('Address is required'); return; }
+    try {
+      const res = await fetch(`/api/contact-addresses/${addrId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label, address })
+      });
+      if (!res.ok) { const d = await res.json(); showToast(d.error || 'Save failed'); return; }
+      const contact = contactsMap[contactId];
+      const a = contact.addresses.find(x => x.id === addrId);
+      if (a) { a.label = label || null; a.address = address; }
+      editingAddr = null;
+      refreshCard(contactId);
+      showToast('Address updated');
+    } catch { showToast('Save failed'); }
+  }
+
+  function deleteAddr(addrId, contactId) {
+    const c = contactsMap[contactId];
+    const a = c.addresses.find(x => x.id === addrId);
+    confirm('Delete address?', `"${a?.address || 'this address'}" will be permanently removed.`, async () => {
+      try {
+        await fetch(`/api/contact-addresses/${addrId}`, { method: 'DELETE' });
+        c.addresses = c.addresses.filter(x => x.id !== addrId);
+        refreshCard(contactId);
+        showToast('Address deleted');
+      } catch { showToast('Delete failed'); }
+    });
+  }
+
+  function showAddAddrForm(contactId) {
+    addingAddrFor = contactId;
+    editingAddr = null;
+    expandedContacts.add(contactId);
+    refreshCard(contactId);
+    const el = document.getElementById(`newAddrAddr_${contactId}`);
+    if (el) el.focus();
+  }
+
+  function cancelAddAddr(contactId) {
+    addingAddrFor = null;
+    refreshCard(contactId);
+  }
+
+  async function submitAddAddr(contactId) {
+    const label = document.getElementById(`newAddrLabel_${contactId}`)?.value?.trim();
+    const address = document.getElementById(`newAddrAddr_${contactId}`)?.value?.trim();
+    if (!address) { showToast('Address is required'); return; }
+    try {
+      const res = await fetch(`/api/contacts/${contactId}/addresses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ label, address })
+      });
+      if (!res.ok) { const d = await res.json(); showToast(d.error || 'Save failed'); return; }
+      const newAddr = await res.json();
+      contactsMap[contactId].addresses.push(newAddr);
+      addingAddrFor = null;
+      refreshCard(contactId);
+      showToast('Address added');
+    } catch { showToast('Save failed'); }
+  }
+
+  // ── Add Client modal ───────────────────────────────────────────────────────
+  function openAddModal() {
+    document.getElementById('addClientName').value = '';
+    document.getElementById('addClientMobile').value = '';
+    document.getElementById('addClientAddress').value = '';
+    document.getElementById('addClientLabel').value = '';
+    document.getElementById('addClientModal').classList.add('visible');
+    setTimeout(() => document.getElementById('addClientName').focus(), 50);
+  }
+  function closeAddModal() {
+    document.getElementById('addClientModal').classList.remove('visible');
+  }
+  document.getElementById('addClientModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeAddModal(); });
+  document.getElementById('addClientName').addEventListener('keydown', e => { if (e.key === 'Enter') submitAddClient(); });
+
+  async function submitAddClient() {
+    const name = document.getElementById('addClientName').value.trim();
+    const mobile = document.getElementById('addClientMobile').value.trim();
+    const address = document.getElementById('addClientAddress').value.trim();
+    const label = document.getElementById('addClientLabel').value.trim();
+    if (!name) { document.getElementById('addClientName').focus(); showToast('Name is required'); return; }
+
+    const btn = document.getElementById('addClientBtn');
+    btn.disabled = true; btn.textContent = 'Adding…';
+    try {
+      const res = await fetch('/api/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mobile })
+      });
+      if (!res.ok) { const d = await res.json(); showToast(d.error || 'Failed'); return; }
+      const contact = await res.json();
+      contactsMap[contact.id] = contact;
+
+      if (address) {
+        const aRes = await fetch(`/api/contacts/${contact.id}/addresses`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ label, address })
+        });
+        if (aRes.ok) {
+          const newAddr = await aRes.json();
+          contactsMap[contact.id].addresses.push(newAddr);
+          expandedContacts.add(contact.id);
+        }
       }
 
-      card.innerHTML = `
-        <table>
-          <thead><tr><th>Client</th><th>Total Jobs</th><th>Last Job</th></tr></thead>
-          <tbody>
-            ${clients.map(c => `
-              <tr>
-                <td>
-                  <div class="client-cell">
-                    <div class="avatar"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a6fa8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div>
-                    <div>
-                      <div class="client-name">${c.customerName || 'Unknown'}</div>
-                      <div class="client-mobile">${c.customerMobile}</div>
-                    </div>
-                  </div>
-                </td>
-                <td><span class="jobs-count">${c.totalJobs} job${c.totalJobs !== 1 ? 's' : ''}</span></td>
-                <td class="date-cell">${formatDate(c.lastJob)}</td>
-              </tr>`).join('')}
-          </tbody>
-        </table>`;
-    }
+      closeAddModal();
+      renderList();
+      showToast('Client added');
+    } catch { showToast('Failed to add client'); }
+    finally { btn.disabled = false; btn.textContent = 'Add Client'; }
+  }
 
-    load();
-  </script>
+  // ── Import modal ───────────────────────────────────────────────────────────
+  let importFile = null;
+  let importMapping = null;
+
+  function openImportModal() {
+    importFile = null;
+    importMapping = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('previewSection').style.display = 'none';
+    document.getElementById('previewSection').innerHTML = '';
+    document.getElementById('importResult').style.display = 'none';
+    document.getElementById('importBtn').style.display = 'none';
+    document.getElementById('fileDrop').style.display = 'block';
+    document.getElementById('importModal').classList.add('visible');
+  }
+  function closeImportModal() {
+    document.getElementById('importModal').classList.remove('visible');
+  }
+  document.getElementById('importModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeImportModal(); });
+
+  // Drag-and-drop on file drop zone
+  const fileDrop = document.getElementById('fileDrop');
+  fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.style.borderColor = '#f59e0b'; });
+  fileDrop.addEventListener('dragleave', () => { fileDrop.style.borderColor = ''; });
+  fileDrop.addEventListener('drop', e => {
+    e.preventDefault(); fileDrop.style.borderColor = '';
+    const file = e.dataTransfer.files[0];
+    if (file) handleFileSelected(file);
+  });
+
+  document.getElementById('fileInput').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (file) handleFileSelected(file);
+  });
+
+  async function handleFileSelected(file) {
+    importFile = file;
+    const previewSection = document.getElementById('previewSection');
+    const importBtn = document.getElementById('importBtn');
+    importBtn.style.display = 'none';
+    importBtn.textContent = 'Import';
+    importBtn.disabled = false;
+    document.getElementById('importResult').style.display = 'none';
+    previewSection.style.display = 'block';
+    previewSection.innerHTML = '<div style="text-align:center;color:#aaa;padding:12px;font-size:13px;">Loading preview…</div>';
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('preview', 'true');
+
+    try {
+      const res = await fetch('/api/contacts/import', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) { previewSection.innerHTML = `<div style="color:#ef4444;font-size:14px;">${data.error || 'Preview failed'}</div>`; return; }
+
+      importMapping = data.mapping;
+      const mappedCols = new Set(Object.values(data.mapping).filter(Boolean));
+
+      const chipHTML = (role, col) => col
+        ? `<span class="mapping-chip found">${role}: <strong>${col}</strong></span>`
+        : `<span class="mapping-chip missing">${role}: not found</span>`;
+
+      const headerCells = data.headers.map(h =>
+        `<th class="${mappedCols.has(h) ? 'col-highlight' : ''}">${esc(h)}</th>`
+      ).join('');
+
+      const rowsHTML = data.preview.map(row =>
+        `<tr>${data.headers.map(h => `<td class="${mappedCols.has(h) ? 'col-highlight' : ''}">${esc(String(row[h] || ''))}</td>`).join('')}</tr>`
+      ).join('');
+
+      previewSection.innerHTML = `
+        <div class="preview-label">Column mapping detected</div>
+        <div class="mapping-chips">
+          ${chipHTML('Name', data.mapping.name)}
+          ${chipHTML('Mobile', data.mapping.mobile)}
+          ${chipHTML('Address', data.mapping.address)}
+          ${chipHTML('Label', data.mapping.label)}
+        </div>
+        <div class="preview-label">Preview (first ${data.preview.length} of ${data.total} rows)</div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead><tr>${headerCells}</tr></thead>
+            <tbody>${rowsHTML}</tbody>
+          </table>
+        </div>`;
+
+      importBtn.style.display = '';
+    } catch { previewSection.innerHTML = '<div style="color:#ef4444;font-size:14px;">Failed to load preview.</div>'; }
+  }
+
+  async function runImport() {
+    if (!importFile) return;
+    const btn = document.getElementById('importBtn');
+    btn.disabled = true; btn.textContent = 'Importing…';
+    const resultEl = document.getElementById('importResult');
+    resultEl.style.display = 'none';
+
+    const fd = new FormData();
+    fd.append('file', importFile);
+
+    try {
+      const res = await fetch('/api/contacts/import', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) {
+        resultEl.className = 'import-result has-errors';
+        resultEl.style.display = 'block';
+        resultEl.textContent = data.error || 'Import failed';
+        btn.disabled = false; btn.textContent = 'Retry';
+        return;
+      }
+      const hasErrors = data.errors && data.errors.length > 0;
+      resultEl.className = `import-result${hasErrors ? ' has-errors' : ''}`;
+      resultEl.style.display = 'block';
+      resultEl.innerHTML = `Imported <strong>${data.imported}</strong> client${data.imported !== 1 ? 's' : ''}, <strong>${data.skipped}</strong> skipped (already exist${data.skipped !== 1 ? '' : 's'}).${hasErrors ? `<br><small>${data.errors.slice(0,3).join(', ')}</small>` : ''}`;
+      btn.style.display = 'none';
+      // Reload contacts
+      await loadContacts();
+    } catch {
+      resultEl.className = 'import-result has-errors';
+      resultEl.style.display = 'block';
+      resultEl.textContent = 'Import failed — server error.';
+      btn.disabled = false; btn.textContent = 'Retry';
+    }
+  }
+
+  // ── Keyboard shortcuts ─────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (editingContact) { cancelEditContact(editingContact); return; }
+      if (editingAddr) {
+        const c = Object.values(contactsMap).find(c => c.addresses.some(a => a.id === editingAddr));
+        if (c) cancelEditAddr(c.id);
+        return;
+      }
+      closeAddModal();
+      closeImportModal();
+      closeConfirm();
+    }
+  });
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
+  loadContacts();
+</script>
 </body>
 </html>

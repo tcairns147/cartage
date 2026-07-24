@@ -6,6 +6,9 @@ const twilio = require('twilio');
 const cookieParser = require('cookie-parser');
 const fs = require('fs');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const XLSX = require('xlsx');
+const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
 const db = createClient({
@@ -1000,6 +1003,158 @@ app.delete('/api/contact-addresses/:id', requireAuth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('DELETE /api/contact-addresses/:id error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /api/contacts/:id — edit contact name/mobile
+app.put('/api/contacts/:id', requireAuth, async (req, res) => {
+  try {
+    const contact = await dbGet('SELECT id FROM contacts WHERE id = ? AND companyId = ?', [req.params.id, req.company.id]);
+    if (!contact) return res.status(404).json({ error: 'Not found' });
+    const { name, mobile } = req.body;
+    if (!name) return res.status(400).json({ error: 'Name required' });
+    await dbRun('UPDATE contacts SET name = ?, mobile = ? WHERE id = ?', [name, mobile || null, req.params.id]);
+    res.json({ id: Number(req.params.id), name, mobile: mobile || null });
+  } catch (err) {
+    console.error('PUT /api/contacts/:id error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// PUT /api/contact-addresses/:id — edit contact address
+app.put('/api/contact-addresses/:id', requireAuth, async (req, res) => {
+  try {
+    const addr = await dbGet(
+      'SELECT id FROM contact_addresses WHERE id = ? AND companyId = ?',
+      [req.params.id, req.company.id]
+    );
+    if (!addr) return res.status(404).json({ error: 'Not found' });
+    const { label, address, lat, lng } = req.body;
+    if (!address) return res.status(400).json({ error: 'Address required' });
+    await dbRun(
+      'UPDATE contact_addresses SET label = ?, address = ?, lat = ?, lng = ? WHERE id = ?',
+      [label || null, address, lat || null, lng || null, req.params.id]
+    );
+    res.json({ id: Number(req.params.id), label: label || null, address, lat: lat || null, lng: lng || null });
+  } catch (err) {
+    console.error('PUT /api/contact-addresses/:id error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// POST /api/contacts/import — CSV/Excel bulk import
+app.post('/api/contacts/import', requireAuth, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const isPreview = req.body.preview === 'true';
+
+    // Parse file into rows
+    let rows = [];
+    const ext = (req.file.originalname || '').split('.').pop().toLowerCase();
+
+    if (ext === 'csv') {
+      const text = req.file.buffer.toString('utf-8');
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (!lines.length) return res.status(400).json({ error: 'Empty file' });
+
+      const parseCSVLine = (line) => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+          const ch = line[i];
+          if (ch === '"') { inQuotes = !inQuotes; }
+          else if (ch === ',' && !inQuotes) { result.push(current.trim()); current = ''; }
+          else { current += ch; }
+        }
+        result.push(current.trim());
+        return result;
+      };
+
+      const headers = parseCSVLine(lines[0]);
+      rows = lines.slice(1).map(line => {
+        const vals = parseCSVLine(line);
+        const row = {};
+        headers.forEach((h, i) => { row[h] = vals[i] !== undefined ? vals[i] : ''; });
+        return row;
+      }).filter(r => Object.values(r).some(v => v));
+    } else {
+      // XLSX / XLS
+      const workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    }
+
+    if (!rows.length) return res.status(400).json({ error: 'No data rows found' });
+
+    // Auto-detect column mapping
+    const headers = Object.keys(rows[0]);
+    const findCol = (patterns) => headers.find(h => patterns.some(p => h.toLowerCase().includes(p))) || null;
+    const nameCol    = findCol(['name', 'client', 'customer', 'farm', 'property', 'contact']);
+    const mobileCol  = findCol(['phone', 'mobile', 'number', 'tel', 'contact']);
+    const addressCol = findCol(['address', 'location', 'street', 'farm', 'property', 'site']);
+    const labelCol   = findCol(['label', 'site', 'type', 'tag', 'category']);
+
+    const mapping = { name: nameCol, mobile: mobileCol, address: addressCol, label: labelCol };
+
+    if (isPreview) {
+      return res.json({ preview: rows.slice(0, 5), mapping, headers, total: rows.length });
+    }
+
+    // Run actual import
+    let imported = 0;
+    let skipped  = 0;
+    const errors = [];
+
+    for (const row of rows) {
+      try {
+        const name    = nameCol    ? String(row[nameCol]    || '').trim() : '';
+        const mobile  = mobileCol  ? String(row[mobileCol]  || '').trim() : '';
+        const address = addressCol ? String(row[addressCol] || '').trim() : '';
+        const label   = labelCol   ? String(row[labelCol]   || '').trim() : '';
+
+        if (!name) { skipped++; continue; }
+
+        // Find or create contact (case-insensitive)
+        let contact = await dbGet(
+          'SELECT id FROM contacts WHERE companyId = ? AND LOWER(name) = LOWER(?)',
+          [req.company.id, name]
+        );
+
+        if (!contact) {
+          const result = await dbRun(
+            'INSERT INTO contacts (companyId, name, mobile) VALUES (?, ?, ?)',
+            [req.company.id, name, mobile || null]
+          );
+          contact = { id: Number(result.lastInsertRowid) };
+          imported++;
+        } else {
+          skipped++;
+        }
+
+        // Add address if provided and not already saved
+        if (address && contact) {
+          const existingAddr = await dbGet(
+            'SELECT id FROM contact_addresses WHERE contactId = ? AND LOWER(address) = LOWER(?)',
+            [contact.id, address]
+          );
+          if (!existingAddr) {
+            await dbRun(
+              'INSERT INTO contact_addresses (contactId, companyId, label, address) VALUES (?, ?, ?, ?)',
+              [contact.id, req.company.id, label || null, address]
+            );
+          }
+        }
+      } catch (rowErr) {
+        errors.push(rowErr.message);
+      }
+    }
+
+    res.json({ imported, skipped, errors });
+  } catch (err) {
+    console.error('POST /api/contacts/import error:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });

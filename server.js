@@ -185,6 +185,14 @@ async function initDb() {
   }
   try { await dbRun(`ALTER TABLE jobs ADD COLUMN sortOrder INTEGER DEFAULT 0`); } catch {}
 
+  await dbRun(`CREATE TABLE IF NOT EXISTS job_locations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    jobId TEXT NOT NULL,
+    lat REAL NOT NULL,
+    lng REAL NOT NULL,
+    recordedAt TEXT DEFAULT (datetime('now'))
+  )`);
+
   // Seed companies
   const companies = [
     { name: 'Sturgiss Pastoral Company Pty Ltd', slug: 'sturgiss', passcode: 'hay2025', accountType: 'carrier' },
@@ -659,6 +667,8 @@ app.post('/jobs/:id/location', async (req, res) => {
      WHERE id = ?`,
     [lat, lng, lat, lng, now, now, extraKm, req.params.id]
   );
+  // Store raw GPS point for accurate road-snapped distance calculation on completion
+  await dbRun('INSERT INTO job_locations (jobId, lat, lng) VALUES (?, ?, ?)', [req.params.id, lat, lng]);
   if (job && !job.notified15min && job.deliveryLat && job.deliveryLng && job.customerMobile) {
     const km = distanceKm(lat, lng, job.deliveryLat, job.deliveryLng);
     const notify = job.notifyMinsBefore || 15;
@@ -729,6 +739,46 @@ app.post('/jobs/:id/complete', async (req, res) => {
     }
   }
   res.json({ success: true });
+
+  // Calculate accurate road-snapped distance from stored GPS points
+  try {
+    const points = await dbAll('SELECT lat, lng FROM job_locations WHERE jobId = ? ORDER BY recordedAt ASC', [req.params.id]);
+    if (points.length >= 2) {
+      const apiKey = process.env.GOOGLE_MAPS_KEY || process.env.GOOGLE_PLACES_KEY;
+      if (apiKey) {
+        // Sample down to 100 evenly-spaced points if needed (Roads API limit)
+        let sampled = points;
+        if (points.length > 100) {
+          sampled = [];
+          for (let i = 0; i < 100; i++) {
+            const idx = Math.round(i * (points.length - 1) / 99);
+            sampled.push(points[idx]);
+          }
+        }
+        const path = sampled.map(p => `${p.lat},${p.lng}`).join('|');
+        const roadsUrl = `https://roads.googleapis.com/v1/snapToRoads?path=${encodeURIComponent(path)}&interpolate=true&key=${apiKey}`;
+        const roadsRes = await fetch(roadsUrl);
+        const roadsData = await roadsRes.json();
+        if (roadsData.snappedPoints && roadsData.snappedPoints.length >= 2) {
+          let snappedKm = 0;
+          for (let i = 1; i < roadsData.snappedPoints.length; i++) {
+            const a = roadsData.snappedPoints[i - 1].location;
+            const b = roadsData.snappedPoints[i].location;
+            snappedKm += distanceKm(a.latitude, a.longitude, b.latitude, b.longitude);
+          }
+          await dbRun('UPDATE jobs SET distanceTravelledKm = ? WHERE id = ?', [snappedKm, req.params.id]);
+          console.log(`Roads API distance for job ${req.params.id}: ${snappedKm.toFixed(2)} km from ${roadsData.snappedPoints.length} snapped points`);
+        } else {
+          console.warn(`Roads API returned no snapped points for job ${req.params.id}:`, JSON.stringify(roadsData).slice(0, 200));
+        }
+      }
+    }
+    // Clean up stored GPS points regardless of whether the API call succeeded
+    await dbRun('DELETE FROM job_locations WHERE jobId = ?', [req.params.id]);
+  } catch (err) {
+    console.error(`Roads API error for job ${req.params.id}:`, err.message);
+    // Fall back to existing accumulated distanceTravelledKm — do not overwrite with 0
+  }
 });
 
 // Trial analytics — authenticated, scoped to company

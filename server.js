@@ -642,8 +642,8 @@ app.post('/jobs/:id/location', async (req, res) => {
   let extraKm = 0;
   if (job && job.lastKnownLat && job.lastKnownLng) {
     extraKm = distanceKm(job.lastKnownLat, job.lastKnownLng, lat, lng);
-    // Ignore implausible jumps (>5km between updates — likely GPS glitch)
-    if (extraKm > 5) extraKm = 0;
+    // Ignore implausible jumps (>5km) and small GPS drift (<0.03km / 30m)
+    if (extraKm > 5 || extraKm < 0.03) extraKm = 0;
   }
 
   await dbRun(
